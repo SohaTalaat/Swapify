@@ -1,0 +1,15 @@
+# Laravel
+backend/vendor/
+backend/node_modules/
+backend/storage/
+backend/.env
+
+# Angular
+frontend/node_modules/
+frontend/dist/
+
+# General
+*.env
+.idea/
+.vscode/
+.DS_Store
