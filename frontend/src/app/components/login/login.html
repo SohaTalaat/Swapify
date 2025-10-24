@@ -1,0 +1,37 @@
+<div
+  class="d-flex justify-content-center align-items-center flex-column"
+  style="min-height: 77.5vh"
+>
+  <div class="card p-4 shadow" style="max-width: 400px; width: 100%">
+    <h4 class="text-center mb-3">Login</h4>
+    <form>
+      <div class="mb-3">
+        <label>Email</label>
+        <input type="email" class="form-control" placeholder="Enter email" />
+      </div>
+      <div class="mb-3">
+        <label>Password</label>
+        <input type="password" class="form-control" placeholder="Enter password" />
+      </div>
+      <button class="btn w-100" style="background-color: #ee6931; color: white">Login</button>
+      <p class="text-center mt-3">Don’t have an account? <a routerLink="/register">Register</a></p>
+    </form>
+    <hr />
+    <div class="withgoo d text-center">
+      <p>Login with Google</p>
+      <button
+        class="btn mt-2"
+        style="
+          background-color: #ee6931;
+          color: white;
+          height: 50px;
+          width: 50px;
+          border-radius: 50%;
+          text-align: center;
+        "
+      >
+        <i class="fa-brands fa-google"></i>
+      </button>
+    </div>
+  </div>
+</div>
