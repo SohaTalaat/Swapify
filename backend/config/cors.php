@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register', 'user'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:4200'],  //Angular dev URL
+    'allowed_origins' => ['http://127.0.0.1:4200', 'http://localhost:4200', 'http://127.0.0.1:8000'],  //Angular dev URL
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +29,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,  // Pure Token_Bsed, No cookies
+    'supports_credentials' => true,
 
 ];
