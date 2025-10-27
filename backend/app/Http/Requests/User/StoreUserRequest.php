@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Requests\IDVerification;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreIDVerificationRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -22,8 +22,7 @@ class StoreIDVerificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_document_url' => 'required|url|max:255',
-            'selfie_url' => 'required|url|max:255',
+            //
         ];
     }
 }
