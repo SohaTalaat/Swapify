@@ -11,7 +11,7 @@ class StoreSubscriptionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,8 @@ class StoreSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'tier' => 'required|string|in:free,premium,pro',
+            'payment_method' => 'nullable|string|max:100',
         ];
     }
 }

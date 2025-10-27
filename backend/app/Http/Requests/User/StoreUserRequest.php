@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Dispute;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDisputeRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,9 +22,7 @@ class StoreDisputeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'barter_id' => 'required|exists:barters,id',
-            'reason' => 'required|string|max:255',
-            'description' => 'required|string|min:10|max:2000',
+            //
         ];
     }
 }

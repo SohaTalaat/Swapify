@@ -11,7 +11,7 @@ class StoreIDVerificationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,8 @@ class StoreIDVerificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'id_document_url' => 'required|url|max:255',
+            'selfie_url' => 'required|url|max:255',
         ];
     }
 }
