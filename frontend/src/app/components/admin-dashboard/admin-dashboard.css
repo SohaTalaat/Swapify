@@ -1,0 +1,103 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fc;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.sidebar {
+  width: 250px;
+  background: linear-gradient(180deg, #ee6931, #fc8552);
+  color: white;
+  padding: 25px 15px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.menu li {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+}
+.menu li:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.menu li.active {
+  background: white;
+  color: #ee6931;
+  font-weight: 600;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  animation: fadeIn 0.3s ease;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+.stat-card .icon {
+  font-size: 2rem;
+  color: #ee6931;
+  margin-bottom: 10px;
+}
+
+.table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.alert {
+  border-radius: 10px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-around;
+  }
+}

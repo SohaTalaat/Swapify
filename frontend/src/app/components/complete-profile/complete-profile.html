@@ -1,0 +1,65 @@
+<div class="profile-container d-flex justify-content-center align-items-center">
+  <div class="profile-card p-4 shadow-lg">
+    <h3 class="text-center mb-4 fw-bold text-gradient">Complete Your Profile</h3>
+
+    <div class="text-center mb-4 position-relative">
+      <div class="avatar-wrapper mx-auto">
+        <img
+          *ngIf="imagePreview"
+          [src]="imagePreview"
+          alt="Preview"
+          class="rounded-circle avatar-img"
+        />
+        <div *ngIf="!imagePreview" class="avatar-placeholder">
+          <i class="fa-solid fa-user" style="color: #ee6931"></i>
+        </div>
+        <label for="profilePicture" class="upload-btn">
+          <i class="fa-solid fa-camera"></i>
+        </label>
+        <input type="file" id="profilePicture" (change)="onFileSelected($event)" accept="image/*" />
+      </div>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #form="ngForm">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Username</label>
+        <input
+          type="text"
+          class="form-control modern-input"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="Choose a unique username"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">City / Location</label>
+        <input
+          type="text"
+          class="form-control modern-input"
+          [(ngModel)]="city"
+          name="city"
+          placeholder="Where are you from?"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Bio</label>
+        <textarea
+          class="form-control modern-input"
+          rows="3"
+          [(ngModel)]="bio"
+          name="bio"
+          placeholder="Tell us about yourself..."
+          required
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-gradient w-100 mt-3 py-2 fw-semibold">
+        Save & Continue <i class="fa-solid fa-arrow-right ms-1"></i>
+      </button>
+    </form>
+  </div>
+</div>

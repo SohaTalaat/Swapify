@@ -1,0 +1,100 @@
+/* Background gradient */
+.profile-container {
+  min-height: 100vh;
+  /* background: linear-gradient(135deg, #e77e50, #fc8552); */
+  background-image: url('../../../../public/assets/p1.jpeg');
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+}
+
+/* Card style (glassmorphism) */
+.profile-card {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: black;
+  transition: all 0.3s ease;
+}
+.profile-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(to right, #ffffff, #d2d2ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Avatar area */
+.avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+.avatar-img,
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ee6a3188;
+}
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 2rem;
+}
+
+.upload-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: linear-gradient(135deg, #ee6931, #ee6931);
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+  color: white;
+  border: 2px solid white;
+}
+.upload-btn:hover {
+  opacity: 0.9;
+}
+input[type='file'] {
+  display: none;
+}
+
+/* Modern inputs */
+.form-control {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: black;
+}
+input::placeholder {
+  color: rgba(0, 0, 0, 0.541);
+}
+input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  border-color: #fff;
+}
+
+/* Gradient button */
+.btn-gradient {
+  background: linear-gradient(90deg, #ee6931, #f86425);
+  border: none;
+  color: white;
+  border-radius: 30px;
+  transition: 0.3s;
+}
+.btn-gradient:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 15px rgba(37, 117, 252, 0.4);
+}
