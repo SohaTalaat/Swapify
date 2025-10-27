@@ -35,7 +35,6 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::ignoreRoutes();
 
-
         // Disable all default Fortify views
         Fortify::loginView(fn() => abort(404));
         Fortify::registerView(fn() => abort(404));

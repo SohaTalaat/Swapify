@@ -15,9 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // $middleware->api(append: [
-        //     EnsureEmailIsVerified::class,
-        // ]);
+        $middleware->api(append: [
+            EnsureEmailIsVerified::class,
+        ]);
         $middleware->web(append: [
             EnsureFrontendRequestsAreStateful::class,
 
