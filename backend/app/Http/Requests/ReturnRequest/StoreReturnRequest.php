@@ -11,7 +11,7 @@ class StoreReturnRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,10 @@ class StoreReturnRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'barter_id' => 'required|exists:barters,id',
+            'reason' => 'required|string|max:255',
+            'description' => 'required|string|min:10|max:2000',
+            'evidence_url' => 'nullable|url',
         ];
     }
 }
