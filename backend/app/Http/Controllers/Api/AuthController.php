@@ -27,17 +27,21 @@ class AuthController extends Controller
             'full_name' => 'nullable|string|max:100',
         ]);
 
+        // Generate Token
+        $verification_token = Str::random(64);
+
         $user = User::create([
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'full_name' => $data['full_name'] ?? null,
-            'verification_token' => Str::random(64),
+            'verification_token' => $verification_token
+
         ]);
 
         // Send verification email
         Mail::send('emails.verify', [
-            'url' => url("/api/email/verify?email={$user->email}&token={$user->verification_token}")
+            'url' => url("/api/email/verify?email={$user->email}&token={$verification_token}")
         ], function ($message) use ($user) {
             $message->to($user->email)
                 ->subject('Verify your Swapify account');
@@ -62,14 +66,13 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || $user->email_verified_at) {
-            return response()->json(['error' => 'Invalid or expired verification link'], 400);
+            return redirect('http://localhost:4200/verification-failed?reason=invalid');
         }
 
         $user->email_verified_at = now();
-        $user->verification_token = null;
         $user->save();
 
-        return response()->json(['message' => 'Email verified successfully. You can now log in.']);
+        return redirect("http://localhost:4200/complete-profile?email={$request->email}");
     }
 
     // ───────────────────────────────
