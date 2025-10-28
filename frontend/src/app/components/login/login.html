@@ -6,14 +6,29 @@
         <label>Email</label>
         <input type="email" class="form-control" placeholder="Enter email" />
       </div>
+
       <div class="mb-3">
         <label>Password</label>
         <input type="password" class="form-control" placeholder="Enter password" />
       </div>
+
+      <!-- رابط نسيان كلمة المرور -->
+      <div class="text-end mb-3">
+        <a routerLink="/forgot-password" style="color: black; font-size: 0.9rem">
+          Forgot your password?
+        </a>
+      </div>
+
       <button class="btn w-100" style="background-color: #ee6931; color: white">Login</button>
-      <p class="text-center mt-3">Don’t have an account? <a routerLink="/register">Register</a></p>
+
+      <p class="text-center mt-3">
+        Don’t have an account?
+        <a routerLink="/register" style="color: #ee6931">Register</a>
+      </p>
     </form>
+
     <hr />
+
     <div class="withgoo d text-center">
       <p>Login with Google</p>
       <button
