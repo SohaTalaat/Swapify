@@ -13,12 +13,13 @@ use App\Http\Controllers\Api\{
     NotificationController,
     ReviewController,
     DisputeController,
-    EmailVerificationController,
+    FileUploadController,
     ReturnRequestController,
     SubscriptionController,
     IDVerificationController,
-    PasswordResetController
 };
+use App\Models\IDVerification;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -29,7 +30,17 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
+//Email verification
+Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 
+// Profile Completion
+Route::post('/profile/complete', [AuthController::class, 'completeProfile']);
+
+// Password Reset
+Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+
+// Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
 
     // User routes
@@ -72,4 +83,27 @@ Route::middleware('auth:sanctum')->group(function () {
     // Subscriptions and ID Verification routes
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
+
+    // Uploading files
+    Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
+    Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);
 });
+
+// Admin Only Routes for uploaded files
+Route::get('/admin/id-verification/{id}', function ($id) {
+    $idVerification = IDVerification::findOrFail($id);
+
+    // Generate temporary signed URLs (1-hour expiry)
+    $idSignedUrl = Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
+        Cloudinary::cloudinary()->uploadApi()->asset($idVerification->id_document_url)->publicId,
+        ['expires_at' => now()->addHour()->timestamp]
+    );
+
+    return response()->json([
+        'id_document_url' => $idSignedUrl,
+        'selfie_url' => Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
+            Cloudinary::cloudinary()->uploadApi()->asset($idVerification->selfie_url)->publicId,
+            ['expires_at' => now()->addHour()->timestamp]
+        )
+    ]);
+})->middleware(['auth:sanctum', 'admin']);
