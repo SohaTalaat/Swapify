@@ -1,0 +1,55 @@
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #fc8552, #ee6931);
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.error-code {
+  font-size: 8rem;
+  font-weight: 800;
+  animation: float 2s ease-in-out infinite;
+}
+
+.error-title {
+  font-size: 2rem;
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+.error-message {
+  max-width: 400px;
+  margin: 15px auto 30px;
+  opacity: 0.9;
+}
+
+.back-home {
+  display: inline-block;
+  padding: 12px 25px;
+  border: 2px solid white;
+  border-radius: 30px;
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+}
+.back-home:hover {
+  background: white;
+  color: #ee6931;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
