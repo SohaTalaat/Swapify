@@ -28,3 +28,70 @@ a {
 .form-control {
   background-color: #ffffff8f !important;
 }
+.success-box {
+  background-color: #e8f5e9;
+  color: #256029;
+  border: 1px solid #c8e6c9;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  width: 460px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.success-box .icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+.error small {
+  color: #e53935;
+  font-size: 0.85rem;
+}
+
+.message-box {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  width: 350px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.message-box.success {
+  border-left: 6px solid #43a047;
+}
+
+.message-box.error {
+  border-left: 6px solid #e53935;
+}
+
+.message-box .icon {
+  font-size: 50px;
+  margin-bottom: 1rem;
+}
+
+.message-box.success .icon {
+  color: #43a047;
+}
+
+.message-box.error .icon {
+  color: #e53935;
+}
+
+.message-box p {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
