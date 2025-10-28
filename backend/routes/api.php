@@ -13,9 +13,11 @@ use App\Http\Controllers\Api\{
     NotificationController,
     ReviewController,
     DisputeController,
+    EmailVerificationController,
     ReturnRequestController,
     SubscriptionController,
-    IDVerificationController
+    IDVerificationController,
+    PasswordResetController
 };
 
 Route::get('/user', function (Request $request) {
@@ -30,19 +32,19 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // User routes 
+    // User routes
     Route::get('/user/profile', [UserController::class, 'profile']);
 
     Route::put('/user', [UserController::class, 'update']);
 
-    // Categories routes 
+    // Categories routes
 
     Route::apiResource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
-    //Listing routes 
+    //Listing routes
 
     Route::apiResource('listings', ListingController::class);
-    //Barters routes 
+    //Barters routes
 
     Route::apiResource('barters', BarterController::class);
     // Chats and Messages routes
@@ -54,20 +56,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
-    // Reviews routes 
+    // Reviews routes
 
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'store']);
 
-    // Disputes routes 
+    // Disputes routes
 
     Route::apiResource('disputes', DisputeController::class)->only(['index', 'store', 'show']);
 
-    // Return requests routes 
+    // Return requests routes
 
     Route::apiResource('returns', ReturnRequestController::class)->only(['index', 'store', 'show']);
 
 
-    // Subscriptions and ID Verification routes 
+    // Subscriptions and ID Verification routes
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
 });
