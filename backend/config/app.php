@@ -57,6 +57,8 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        CloudinaryLabs\CloudinaryLaravel\CloudinaryServiceProvider::class,
+
 
         /*
     |--------------------------------------------------------------------------
@@ -70,6 +72,9 @@ return [
         // App\Providers\RouteServiceProvider::class,
     ],
 
+    'aliases' => [
+        'Cloudinary' => CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------

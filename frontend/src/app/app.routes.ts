@@ -7,7 +7,11 @@ import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Notfound } from './components/notfound/notfound';
 import { ForgotPassword } from './components/forgot-password/forgot-password';
 import { ResetPassword } from './components/reset-password/reset-password';
-
+import { ProfilePage } from './components/profile-page/profile-page';
+import { About } from './components/about/about';
+import { Contact } from './components/contact/contact';
+import { Faq } from './components/faq/faq';
+import { TermsPrivacy } from './components/terms-privacy/terms-privacy';
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'login', component: Login },
@@ -16,6 +20,10 @@ export const routes: Routes = [
   { path: 'dashbord', component: AdminDashboard },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
-{path: 'profile-page', component: ProfilePage},
+  { path: 'profile', component: ProfilePage },
+  { path: 'about', component: About },
+  { path: 'contact', component: Contact },
+  { path: 'faq', component: Faq },
+  { path: 'terms-privacy', component: TermsPrivacy },
   { path: '**', component: Notfound },
 ];

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\{
     ReturnRequestController,
     SubscriptionController,
     IDVerificationController,
+    CompleteProfile, //abanoub
 };
 use App\Models\IDVerification;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -34,7 +35,9 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 
 // Profile Completion
-Route::post('/profile/complete', [AuthController::class, 'completeProfile']);
+// Route::post('/profile/complete', [AuthController::class, 'completeProfile']);
+Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);  //abanoub
+Route::get('/profile/{email}', [CompleteProfile::class, 'getProfile']);
 
 // Password Reset
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
