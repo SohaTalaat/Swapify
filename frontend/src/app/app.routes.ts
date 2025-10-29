@@ -11,6 +11,15 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'complete-profile', component: CompleteProfile },
   { path: 'dashbord', component: AdminDashboard },
+
+
+
+
+
+
+
+
+
   { path: 'profile-page', component: ProfilePage },
 
   { path: '**', redirectTo: '' },
