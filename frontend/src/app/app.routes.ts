@@ -16,7 +16,6 @@ export const routes: Routes = [
   { path: 'dashbord', component: AdminDashboard },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
-   { path: 'profile-page', component: ProfilePage },
-
+{path: 'profile-page', component: ProfilePage},
   { path: '**', component: Notfound },
 ];
