@@ -1,0 +1,76 @@
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  rel="stylesheet"
+/>
+
+<div class="container profile-page">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-lg-3 col-md-4 col-12 mb-4">
+      <div class="profile-sidebar">
+        <div class="user-heading text-center">
+          <img
+            [src]="userData.profile_picture_url || 'assets/default-avatar.png'"
+            alt="Profile Picture"
+            class="avatar"
+          />
+          <h4 class="mt-2">{{ userData.full_name }}</h4>
+          <p>{{ userData.email }}</p>
+        </div>
+
+        <ul class="nav flex-column mt-3">
+          <li>
+            <a class="active" href="#"><i class="fa fa-user"></i> Profile</a>
+          </li>
+          <li>
+            <a href="#"><i class="fa fa-calendar"></i> Recent Activity</a>
+          </li>
+          <li>
+            <a href="#"><i class="fa fa-edit"></i> Edit Profile</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="col-lg-9 col-md-8 col-12">
+      <div class="profile-info">
+        <div class="bio-section p-4 shadow-sm rounded mb-4">
+          <h5 class="fw-bold text-gradient mb-3">About</h5>
+          <p class="bio-text">{{ userData.bio }}</p>
+
+          <div class="row mt-3">
+            <div class="col-md-6 mb-2">
+              <i class="fa-solid fa-envelope me-2 text-primary"></i>
+              {{ userData.email }}
+            </div>
+            <div class="col-md-6 mb-2">
+              <i class="fa-solid fa-location-dot me-2 text-danger"></i>
+              {{ userData.location }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Shopping Cart -->
+        <div class="shopping-cart shadow-sm rounded p-4">
+          <h5 class="fw-bold mb-3"><i class="fa fa-bag-shopping me-2"></i> Shopping Bag</h5>
+
+          <div class="cart-item" *ngFor="let item of [1, 2, 3]">
+            <img
+              src="https://images.pexels.com/photos/238118/pexels-photo-238118.jpeg"
+              alt="Product"
+              class="item-img"
+            />
+            <div class="item-details">
+              <h6>Product Name</h6>
+              <p class="text-muted small">Short description</p>
+            </div>
+            <input type="number" min="1" value="1" class="item-qty" />
+            <div class="item-price">$549</div>
+            <button class="delete-btn"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

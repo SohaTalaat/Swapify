@@ -24,7 +24,6 @@ class ListingController extends Controller
     {
         $listing = Auth::user()->listings()->create($request->validated());
 
-        // لو فيه صور
         if ($request->has('images')) {
             foreach ($request->images as $url) {
                 $listing->images()->create(['image_url' => $url]);

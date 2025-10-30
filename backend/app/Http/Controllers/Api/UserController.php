@@ -13,7 +13,9 @@ class UserController extends Controller
      */
     public function profile()
     {
-        $user = Auth::user()->load([
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->load([
             'addresses:id,user_id,label,city,country,is_default',
             'subscription:id,user_id,tier,is_active,end_date',
             'idverification:id,user_id,status',
@@ -30,6 +32,8 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request)
     {
+        /** @var \App\Models\User $user */
+
         $user = Auth::user();
         $user->update($request->validated());
 

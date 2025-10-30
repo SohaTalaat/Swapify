@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(append: [
-            EnsureEmailIsVerified::class,
+            // EnsureEmailIsVerified::class,
         ]);
         $middleware->web(append: [
             EnsureFrontendRequestsAreStateful::class,
@@ -26,3 +26,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+
+

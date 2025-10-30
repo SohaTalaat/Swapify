@@ -1,0 +1,171 @@
+/* General Page Styles */
+.profile-page {
+  padding: 30px 15px;
+  font-family: 'Open Sans', sans-serif;
+  background: #f9fafc;
+  color: #333;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+.profile-sidebar .user-heading {
+  text-align: center;
+}
+
+.profile-sidebar .avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ee6931;
+  transition: transform 0.3s;
+}
+.profile-sidebar .avatar:hover {
+  transform: scale(1.05);
+}
+
+.profile-sidebar h4 {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.profile-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.profile-sidebar ul li {
+  margin-bottom: 10px;
+}
+
+.profile-sidebar ul li a {
+  display: block;
+  color: #555;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+.profile-sidebar ul li a:hover,
+.profile-sidebar ul li a.active {
+  background: #ee6931;
+  color: #fff;
+}
+
+/* Bio Info */
+.bio-section {
+  background: #fff;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ee6931, #ff9e61);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bio-text {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Shopping Cart */
+.shopping-cart {
+  background: #fff;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #eee;
+  padding: 10px 0;
+  gap: 10px;
+}
+
+.cart-item:first-child {
+  border-top: none;
+}
+
+.item-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.item-details {
+  flex-grow: 1;
+  min-width: 120px;
+}
+
+.item-qty {
+  width: 50px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #333;
+}
+
+.delete-btn {
+  background: #ff4d4d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.delete-btn:hover {
+  background: #e63939;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .profile-sidebar {
+    margin-bottom: 20px;
+  }
+
+  .cart-item {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .item-details {
+    width: 100%;
+  }
+}
+
+@media (max-width: 575px) {
+  .profile-page {
+    padding: 15px;
+  }
+
+  .profile-sidebar .avatar {
+    width: 90px;
+    height: 90px;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .item-img {
+    width: 100%;
+    max-width: 200px;
+  }
+}
