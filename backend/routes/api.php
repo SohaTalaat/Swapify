@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 
 // Profile Completion
-Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);  //abanoub
+Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);
 Route::get('/profile/{email}', [CompleteProfile::class, 'getProfile']);
 
 // Password Reset
