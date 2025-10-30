@@ -11,6 +11,7 @@ import { Profile } from '../../services/profile';
 })
 export class CompleteProfile {
   full_name = '';
+  phone = '';
   city = '';
   bio = '';
   email = localStorage.getItem('email') || ''; // خده من التسجيل السابق
@@ -32,7 +33,7 @@ export class CompleteProfile {
   }
 
   onSubmit() {
-    if (!this.full_name || !this.city || !this.bio) {
+    if (!this.full_name || !this.phone || !this.city || !this.bio) {
       alert('Please complete all fields!');
       return;
     }
@@ -40,6 +41,7 @@ export class CompleteProfile {
     const formData = new FormData();
     formData.append('email', this.email);
     formData.append('full_name', this.full_name);
+    formData.append('phone', this.phone);
     formData.append('location', this.city);
     formData.append('bio', this.bio);
 

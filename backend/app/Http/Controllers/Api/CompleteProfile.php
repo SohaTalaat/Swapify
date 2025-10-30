@@ -14,6 +14,7 @@ class CompleteProfile extends Controller
         $data = $request->validate([
             'email' => 'required|email',
             'full_name' => 'required|string|max:255',
+            'phone' => 'required|max:11',
             'location' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:500',
             'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',

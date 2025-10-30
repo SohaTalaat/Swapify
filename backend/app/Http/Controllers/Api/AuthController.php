@@ -127,7 +127,7 @@ class AuthController extends Controller
             $user->save();
 
             Mail::send('emails.reset', [
-                'url' => url("/api/password/reset?email={$user->email}&token={$token}")
+            'url' => "http://localhost:4200/reset-password?email={$user->email}&token={$token}"
             ], function ($message) use ($user) {
                 $message->to($user->email)
                     ->subject('Reset your Swapify password');
