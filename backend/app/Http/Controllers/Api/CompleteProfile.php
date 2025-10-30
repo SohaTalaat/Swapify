@@ -26,16 +26,19 @@ class CompleteProfile extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        // ✅ لو الصورة موجودة نرفعها
         if ($request->hasFile('profile_picture')) {
             $path = $request->file('profile_picture')->store('profiles', 'public');
             $data['profile_picture_url'] = asset('storage/' . $path);
         }
 
-        // نحذف المفتاح القديم لو مش متبعت
         unset($data['profile_picture']);
 
-        $user->update($data);
+        $user->update([
+            'full_name' => $data['full_name'],
+            'location' => $data['location'] ?? $user->location,
+            'bio' => $data['bio'] ?? $user->bio,
+            'profile_picture_url' => $data['profile_picture_url'] ?? $user->profile_picture_url,
+        ]);
 
         $token = $user->createToken('swapify_token')->plainTextToken;
 
@@ -46,14 +49,13 @@ class CompleteProfile extends Controller
         ]);
     }
     public function getProfile($email)
-{
-    $user = User::where('email', $email)->first();
+    {
+        $user = User::where('email', $email)->first();
 
-    if (!$user) {
-        return response()->json(['message' => 'User not found'], 404);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        return response()->json($user);
     }
-
-    return response()->json($user);
-}
-
 }

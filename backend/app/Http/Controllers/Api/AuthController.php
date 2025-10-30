@@ -41,10 +41,15 @@ class AuthController extends Controller
 
         // Send verification email
         Mail::send('emails.verify', [
-            'url' => url("/api/email/verify?email={$user->email}&token={$verification_token}")
+            'url' => url("/api/email/verify?email={$user->email}&token={$verification_token}"),
+            'user' => $user
         ], function ($message) use ($user) {
             $message->to($user->email)
-                ->subject('Verify your Swapify account');
+                ->subject('Verify your Swapify account')
+                ->attach(public_path('images/logo.png'), [
+                    'as' => 'logo.png',
+                    'mime' => 'image/png'
+                ]);
         });
 
         return response()->json([
@@ -127,10 +132,15 @@ class AuthController extends Controller
             $user->save();
 
             Mail::send('emails.reset', [
-            'url' => "http://localhost:4200/reset-password?email={$user->email}&token={$token}"
+                'url' => url("/api/password/reset?email={$user->email}&token={$token}"),
+                'user' => $user
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                    ->subject('Reset your Swapify password');
+                    ->subject('Reset your Swapify password')
+                    ->attach(public_path('images/logo.png'), [
+                        'as' => 'logo.png',
+                        'mime' => 'image/png'
+                    ]);;
             });
         }
 
@@ -138,6 +148,27 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'If your email is registered, you will receive a password reset link.'
         ]);
+    }
+
+    public function showResetForm(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+        ]);
+
+        // Validate token is valid and not expired
+        $user = User::where('email', $request->email)
+            ->where('password_reset_token', $request->token)
+            ->where('password_reset_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return redirect('http://localhost:4200/reset-password?error=invalid');
+        }
+
+        //  Redirect to Angular with email + token
+        return redirect("http://localhost:4200/reset-password?email={$request->email}&token={$request->token}");
     }
 
     public function resetPassword(Request $request)

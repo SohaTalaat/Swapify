@@ -7,9 +7,9 @@ import { Observable } from 'rxjs';
 })
 export class Profile {
   private apiUrl = 'http://127.0.0.1:8000/api/profile/complete';
-  constructor(private http: HttpClient) {}
-  completeProfile(data: any): Observable<any> {
-    return this.http.post(this.apiUrl, data);
+  constructor(private http: HttpClient) { }
+  completeProfile(formData: FormData): Observable<any> {
+    return this.http.post(this.apiUrl, formData);
   }
   getProfile(email: string) {
     return this.http.get(`http://127.0.0.1:8000/api/profile/${email}`);
