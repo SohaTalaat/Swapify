@@ -35,12 +35,12 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 
 // Profile Completion
-// Route::post('/profile/complete', [AuthController::class, 'completeProfile']);
 Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);  //abanoub
 Route::get('/profile/{email}', [CompleteProfile::class, 'getProfile']);
 
 // Password Reset
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+Route::get('/password/reset', [AuthController::class, 'showResetForm']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 
 // Protected Routes
@@ -87,9 +87,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
 
-    // Uploading files
-    Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
+    // Files Upload
     Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);
+    Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
+    Route::post('/upload/id-verification', [FileUploadController::class, 'uploadIdVerification']);
 });
 
 // Admin Only Routes for uploaded files
