@@ -34,9 +34,6 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 //Email verification
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 
-// Profile Completion
-Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);
-Route::get('/profile/{email}', [CompleteProfile::class, 'getProfile']);
 
 // Password Reset
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
@@ -86,6 +83,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Subscriptions and ID Verification routes
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
+
+    // Profile Completion
+    Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);
+    Route::get('/profile/{email}', [CompleteProfile::class, 'getProfile']);
 
     // Files Upload
     Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);

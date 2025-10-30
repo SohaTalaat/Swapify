@@ -8,16 +8,17 @@ import { Profile } from '../../services/profile';
   styleUrl: './profile-page.css',
 })
 export class ProfilePage {
-  userData: any = null;
+  userData: any = {};
   loading = true;
 
-  constructor(private profileService: Profile) {}
+  constructor(private profileService: Profile) { }
 
   ngOnInit() {
-    const email = localStorage.getItem('email'); // أو جيبه من التوكن لو عندك
+    const email = localStorage.getItem('email');
     if (email) {
       this.profileService.getProfile(email).subscribe({
         next: (res: any) => {
+          console.log(res)
           this.userData = res.data ?? res;
           this.loading = false;
         },
