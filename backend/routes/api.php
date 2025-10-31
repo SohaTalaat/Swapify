@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 //Email verification
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
+Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
 
 
 // Password Reset

@@ -27,10 +27,6 @@
             margin-bottom: 20px;
         }
 
-        .header img {
-            height: 60px;
-        }
-
         h1 {
             font-size: 22px;
             color: #222;
@@ -47,7 +43,7 @@
             display: inline-block;
             margin: 25px 0;
             padding: 12px 25px;
-            background-color: #00a86b;
+            background-color: #ee6931;
             color: #fff !important;
             text-decoration: none;
             border-radius: 6px;

@@ -22,15 +22,6 @@
             padding: 30px;
         }
 
-        .logo {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .logo img {
-            height: 60px;
-        }
-
         h1 {
             font-size: 22px;
             color: #222;
