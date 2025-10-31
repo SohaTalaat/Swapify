@@ -12,12 +12,14 @@ import { About } from './components/about/about';
 import { Contact } from './components/contact/contact';
 import { Faq } from './components/faq/faq';
 import { TermsPrivacy } from './components/terms-privacy/terms-privacy';
+import { LoginCallback } from './pages/login-callback/login-callback';
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'login', component: Login },
+  { path: 'login/callback', component: LoginCallback },
   { path: 'register', component: Register },
   { path: 'complete-profile', component: CompleteProfile },
-  { path: 'dashbord', component: AdminDashboard },
+  { path: 'dashboard', component: AdminDashboard },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: 'profile', component: ProfilePage },

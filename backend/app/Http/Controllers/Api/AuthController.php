@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -35,7 +34,8 @@ class AuthController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'full_name' => $data['full_name'] ?? null,
-            'verification_token' => $verification_token
+            'verification_token' => $verification_token,
+            'verification_expires_at' => now()->addHours(24)
 
         ]);
 
@@ -70,14 +70,53 @@ class AuthController extends Controller
             ->where('verification_token', $request->token)
             ->first();
 
-        if (!$user || $user->email_verified_at) {
-            return redirect('http://localhost:4200/verification-failed?reason=invalid');
+        if (!$user || $user->email_verified_at || $user->verification_expires_at < now()) {
+            return redirect('http://localhost:4200/verification-failed?reason=invalid_or_expired');
         }
 
+        // Mark as verifies
         $user->email_verified_at = now();
+
+        // One-time use token
+        $user->verification_token = null;
+        $user->verification_expires_at = null;
         $user->save();
 
         return redirect("http://localhost:4200/complete-profile?email={$request->email}");
+    }
+
+    public function resenVerificationEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
+
+        // Only allow existing unverified users
+        if (! $user || $user->email_verified_at) {
+            return response()->json([
+                'message' => 'Email verification sent again, please check you email'
+            ]);
+        }
+
+        $user->verification_token = Str::random(64);
+        $user->verification_expires_at = now()->addHours(24);
+        $user->save();
+
+        //Send Email again
+        Mail::send('emails.verify', [
+            'url' => url("/api/email/verify?email={$user->email}&token={$user->verification_token}"),
+            'user' => $user
+        ], function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Verify your Swapify account')
+                ->attach(public_path('images/logo.png'), [
+                    'as' => 'logo.png',
+                    'mime' => 'image/png'
+                ]);
+        });
+
+        return response()->json([
+            'message' => 'A new verification link has been sent to your email.'
+        ]);
     }
 
     // ───────────────────────────────
@@ -107,6 +146,7 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('swapify_token')->plainTextToken;
+        $user->update(['last_login_at' => now()]);
 
         return response()->json([
             'message' => 'Login successful',

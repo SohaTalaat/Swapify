@@ -18,7 +18,6 @@ export class ProfilePage {
     if (email) {
       this.profileService.getProfile(email).subscribe({
         next: (res: any) => {
-          console.log(res)
           this.userData = res.data ?? res;
           this.loading = false;
         },

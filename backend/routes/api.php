@@ -17,7 +17,8 @@ use App\Http\Controllers\Api\{
     ReturnRequestController,
     SubscriptionController,
     IDVerificationController,
-    CompleteProfile, //abanoub
+    CompleteProfile,
+    GoogleAuthController
 };
 use App\Models\IDVerification;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -26,13 +27,19 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
+// Normal auth
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
+// Google Auth
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+
 //Email verification
 Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
+Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
 
 
 // Password Reset

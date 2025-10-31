@@ -1,0 +1,8 @@
+<div class="callback-container" [ngClass]="status">
+  <div class="loader" *ngIf="status === 'loading'"></div>
+
+  <div class="icon success" *ngIf="status === 'success'">✔</div>
+  <div class="icon error" *ngIf="status === 'error'">✖</div>
+
+  <p class="message">{{ message }}</p>
+</div>
