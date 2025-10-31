@@ -58,4 +58,7 @@ export class Login {
     this.successMessage.set(null);
     this.errorMessage.set(null);
   }
+  loginWithGoogle() {
+    window.location.href = 'http://127.0.0.1:8000/api/auth/google/redirect';
+  }
 }
