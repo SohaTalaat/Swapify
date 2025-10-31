@@ -1,0 +1,73 @@
+/* ===== Hero Section ===== */
+.about-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  min-height: 30vh;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+  /* background-image: url('assets/bg-pattern.svg'); */
+  background-size: cover;
+  background-position: center;
+}
+
+.highlight {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 12px;
+  border-radius: 10px;
+}
+
+/* ===== Glass Card ===== */
+.glass-card {
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ===== Features ===== */
+.feature-card {
+  border-radius: 15px;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Text Effects ===== */
+.text-gradient {
+  background: linear-gradient(90deg, #ee6931, #fc8552);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeInUp 1s ease forwards;
+}
+.delay-1 {
+  animation-delay: 0.5s;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .about-hero h1 {
+    font-size: 2rem;
+  }
+  .feature-card {
+    margin-bottom: 20px;
+  }
+}

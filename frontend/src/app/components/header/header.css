@@ -1,0 +1,9 @@
+.notif {
+  color: white;
+  font-size: 20px;
+  padding-right: 30px;
+  cursor: pointer;
+}
+.notif:hover {
+  color: #ffae00;
+}

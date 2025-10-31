@@ -19,7 +19,7 @@ export class CompleteProfile {
   profilePicture: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
 
-  constructor(private router: Router, private profileService: Profile) { }
+  constructor(private router: Router, private profileService: Profile) {}
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -57,6 +57,5 @@ export class CompleteProfile {
       const msg = err?.error?.error || 'Something went wrong';
       alert(msg);
     }
-
   }
 }

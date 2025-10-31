@@ -1,24 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
-
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-login-callback',
   imports: [CommonModule],
   templateUrl: './login-callback.html',
-  styleUrl: './login-callback.css'
+  styleUrl: './login-callback.css',
 })
 export class LoginCallback implements OnInit {
   status: 'loading' | 'success' | 'error' = 'loading';
   message = 'Logging you in...';
+  private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private route: ActivatedRoute, private router: Router) { }
+  constructor(private route: ActivatedRoute, private router: Router, private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       const token = params['token'];
+      const email = params['email']; // 👈 هنا ناخد الإيميل
       const error = params['error'];
 
       if (error) {
@@ -31,7 +32,11 @@ export class LoginCallback implements OnInit {
       if (token) {
         this.status = 'success';
         this.message = 'Login successful! Redirecting...';
-        localStorage.setItem('token', token);
+
+        // 👇 خزّن البيانات في localStorage
+        localStorage.setItem('swapify_token', token);
+        if (email) localStorage.setItem('email', email);
+
         setTimeout(() => this.router.navigate(['/profile']), 1500);
       } else {
         this.status = 'error';

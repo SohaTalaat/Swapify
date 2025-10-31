@@ -32,6 +32,10 @@ export class Register {
 
     this.auth.register(this.registerForm.value).subscribe({
       next: (res) => {
+        if (res.token) {
+          localStorage.setItem('swapify_token', res.token);
+          localStorage.setItem('email', res.user.email);
+        }
         console.log('✅ Registration success:', res);
         this.successMessage.set(
           'Account created successfully! Please check your email to activate the account.'

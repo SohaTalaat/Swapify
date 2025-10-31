@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Profile } from '../../services/profile';
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-profile-page',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.css',
 })
@@ -11,7 +13,7 @@ export class ProfilePage {
   userData: any = {};
   loading = true;
 
-  constructor(private profileService: Profile) { }
+  constructor(private profileService: Profile) {}
 
   ngOnInit() {
     const email = localStorage.getItem('email');

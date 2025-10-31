@@ -10,7 +10,7 @@
       <div class="profile-sidebar">
         <div class="user-heading text-center">
           <img
-            [src]="userData.profile_picture_url || 'assets/default-avatar.png'"
+            [src]="userData.profile_picture_url || 'assets/avatar.png'"
             alt="Profile Picture"
             class="avatar"
           />
@@ -27,7 +27,7 @@
             <a href="#"><i class="fa fa-calendar"></i> Recent Activity</a>
           </li>
           <li>
-            <a href="#"><i class="fa fa-edit"></i> Edit Profile</a>
+            <a routerLink="/complete-profile"><i class="fa fa-edit"></i> Edit Profile</a>
           </li>
         </ul>
       </div>

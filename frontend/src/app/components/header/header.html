@@ -19,19 +19,41 @@
     >
       <span class="navbar-toggler-icon"></span>
     </button>
-
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" routerLink="/">Home</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/about">About</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/contact">Contact</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/faq">Faq</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/terms-privacy">TermsPrivacy</a></li>
+      </ul>
+    </div>
 
-        <li class="nav-item"><a class="nav-link" routerLink="/login">Login</a></li>
-        <li class="nav-item">
-          <a class="nav-link ms-2" routerLink="/register">Register</a>
-        </li>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <!-- When not logged in -->
+        <ng-container *ngIf="!isLoggedIn">
+          <li class="nav-item"><a class="nav-link" routerLink="/login">Login</a></li>
+          <li class="nav-item">
+            <a class="nav-link ms-2" routerLink="/register">Register</a>
+          </li>
+        </ng-container>
+
+        <!-- When logged in -->
+        <ng-container *ngIf="isLoggedIn">
+          <li class="nav-item d-flex align-items-center">
+            <i class="fa-solid fa-bell notif"></i>
+            <a
+              routerLink="profile"
+              class="text-white me-2"
+              style="text-decoration: none; cursor: pointer"
+              ><img
+                src="{{ profileImg }}"
+                alt=""
+                style="width: 30px; height: 30px; border-radius: 50%"
+              />
+            </a>
+            <button class="btn btn-danger btn-sm" (click)="logout()">Logout</button>
+          </li>
+        </ng-container>
       </ul>
     </div>
   </div>

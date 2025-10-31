@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 @Component({
@@ -12,6 +12,7 @@ import { Auth } from '../../services/auth';
 export class Login {
   private fb = inject(FormBuilder);
   private auth = inject(Auth);
+  private router = inject(Router);
 
   successMessage = signal<string | null>(null);
   errorMessage = signal<string | null>(null);
@@ -36,16 +37,18 @@ export class Login {
 
     this.auth.login(this.loginForm.value).subscribe({
       next: (res) => {
-        // Store the token in localStorage
         if (res.token) {
-          localStorage.setItem('swapify_token', res.token);
+          this.auth.setToken(res.token); // ✅ update login state globally
         }
 
-        this.successMessage.set('✅ Logged in successfully!');
-        // console.log('User token:', res.token);
         localStorage.setItem('email', res.user.email);
+        localStorage.setItem('role', res.user.role); // ✅ خزّن الدور
+        this.auth.setToken(res.token);
+        this.auth.setUserData(res.user); // 👈 يحدث الـ header فورًا
 
+        this.successMessage.set('✅ Logged in successfully!');
         this.loginForm.reset();
+        this.router.navigate(['/']);
       },
       error: (err) => {
         console.error(err);

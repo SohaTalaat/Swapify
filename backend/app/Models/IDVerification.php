@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class IDVerification extends Model
 {
+        protected $table = 'id_verifications'; // 👈 أضف هذا السطر
+
     protected $fillable = [
         'user_id',
         'id_document_url',

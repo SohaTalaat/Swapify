@@ -13,16 +13,18 @@ import { Contact } from './components/contact/contact';
 import { Faq } from './components/faq/faq';
 import { TermsPrivacy } from './components/terms-privacy/terms-privacy';
 import { LoginCallback } from './pages/login-callback/login-callback';
+import { authGuard } from './guards/auth-guard';
+import { adminGuard } from './guards/admin-guard';
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'login', component: Login },
   { path: 'login/callback', component: LoginCallback },
   { path: 'register', component: Register },
-  { path: 'complete-profile', component: CompleteProfile },
-  { path: 'dashboard', component: AdminDashboard },
+  { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
+  { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
-  { path: 'profile', component: ProfilePage },
+  { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
   { path: 'about', component: About },
   { path: 'contact', component: Contact },
   { path: 'faq', component: Faq },
