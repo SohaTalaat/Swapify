@@ -104,14 +104,16 @@ class FileUploadController extends Controller
         ]);
 
         try {
+            $user = $request->user();
+            $userId = $user->id ?? 'guest_' . Str::random(6);
             $uploadApi = new UploadApi();
-            $userId = $request->user()->id ?? 'guest_' . Str::random(6);
 
             // Upload ID document
             $idUpload = $uploadApi->upload(
                 $request->file('id_document')->getRealPath(),
                 [
                     'folder' => 'swapify/ids/private',
+                    'type' => 'private',
                     'public_id' => 'id_' . $userId . '_' . now()->timestamp,
                     'resource_type' => 'auto',
                     'overwrite' => false,
@@ -123,6 +125,7 @@ class FileUploadController extends Controller
                 $request->file('selfie')->getRealPath(),
                 [
                     'folder' => 'swapify/ids/private',
+                    'type' => 'private',
                     'public_id' => 'selfie_' . $userId . '_' . now()->timestamp,
                     'resource_type' => 'image',
                     'overwrite' => false,
@@ -131,21 +134,20 @@ class FileUploadController extends Controller
 
             // Save in DB
             $idVerification = IDVerification::updateOrCreate(
-                ['user_id' => $request->user()->id],
+                ['user_id' => $user->id],
                 [
-                    'id_document_url' => $idUpload['secure_url'],
-                    'selfie_url' => $selfieUpload['secure_url'],
+                    'id_document_url' => $idUpload['secure_url'] ?? null,
+                    'selfie_url' => $selfieUpload['secure_url'] ?? null,
+                    'id_document_public_id' => $idUpload['public_id'] ?? null,
+                    'selfie_public_id' => $selfieUpload['public_id'] ?? null,
                     'status' => 'pending',
                 ]
             );
 
             return response()->json([
                 'message' => 'ID verification documents uploaded successfully',
-                'id_verification' => [
-                    'id' => $idVerification->id,
-                    'status' => 'pending',
-                ],
-            ]);
+                'id_verification' => $idVerification,
+            ], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'ID upload failed: ' . $e->getMessage()], 500);
         }

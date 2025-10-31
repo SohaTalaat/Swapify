@@ -18,10 +18,9 @@ use App\Http\Controllers\Api\{
     SubscriptionController,
     IDVerificationController,
     CompleteProfile,
-    GoogleAuthController
+    GoogleAuthController,
+    Admin\AdminIDVerificationController
 };
-use App\Models\IDVerification;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -102,20 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Admin Only Routes for uploaded files
-Route::get('/admin/id-verification/{id}', function ($id) {
-    $idVerification = IDVerification::findOrFail($id);
-
-    // Generate temporary signed URLs (1-hour expiry)
-    $idSignedUrl = Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
-        Cloudinary::cloudinary()->uploadApi()->asset($idVerification->id_document_url)->publicId,
-        ['expires_at' => now()->addHour()->timestamp]
-    );
-
-    return response()->json([
-        'id_document_url' => $idSignedUrl,
-        'selfie_url' => Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
-            Cloudinary::cloudinary()->uploadApi()->asset($idVerification->selfie_url)->publicId,
-            ['expires_at' => now()->addHour()->timestamp]
-        )
-    ]);
-})->middleware(['auth:sanctum', 'admin']);
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('id-verification/{id}', [AdminIDVerificationController::class, 'show']);
+    Route::post('id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
+    Route::post('id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+});
