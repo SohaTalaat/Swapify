@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -72,7 +71,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || $user->email_verified_at || $user->verification_expires_at < now()) {
-            return redirect('http://localhost:4200/verification-failed?reason=invalid_or_exoired');
+            return redirect('http://localhost:4200/verification-failed?reason=invalid_or_expired');
         }
 
         // Mark as verifies
