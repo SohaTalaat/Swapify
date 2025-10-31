@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Profile } from '../../services/profile';
+import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-complete-profile',
   imports: [CommonModule, FormsModule],
@@ -11,9 +12,10 @@ import { Profile } from '../../services/profile';
 })
 export class CompleteProfile {
   full_name = '';
+  phone = '';
   city = '';
   bio = '';
-  email = localStorage.getItem('email') || ''; // خده من التسجيل السابق
+  email = localStorage.getItem('email') || '';
   profilePicture: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
 
@@ -24,15 +26,14 @@ export class CompleteProfile {
     if (file) {
       this.profilePicture = file;
 
-      // للعرض فقط (Preview)
       const reader = new FileReader();
       reader.onload = () => (this.imagePreview = reader.result);
       reader.readAsDataURL(file);
     }
   }
 
-  onSubmit() {
-    if (!this.full_name || !this.city || !this.bio) {
+  async onSubmit() {
+    if (!this.full_name || !this.phone || !this.city || !this.bio) {
       alert('Please complete all fields!');
       return;
     }
@@ -40,22 +41,22 @@ export class CompleteProfile {
     const formData = new FormData();
     formData.append('email', this.email);
     formData.append('full_name', this.full_name);
+    formData.append('phone', this.phone);
     formData.append('location', this.city);
     formData.append('bio', this.bio);
 
-    if (this.profilePicture) {
-      formData.append('profile_picture', this.profilePicture);
+    try {
+      await firstValueFrom(this.profileService.completeProfile(formData));
+      if (this.profilePicture) {
+        await firstValueFrom(this.profileService.uploadProfilePicture(this.profilePicture));
+      }
+      alert('Profile completed successfully!');
+      this.router.navigate(['/profile']);
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.error?.error || 'Something went wrong';
+      alert(msg);
     }
 
-    this.profileService.completeProfile(formData).subscribe({
-      next: (res) => {
-        alert('Profile completed successfully!');
-        this.router.navigate(['/profile']);
-      },
-      error: (err) => {
-        console.error(err);
-        alert('Something went wrong!');
-      },
-    });
   }
 }

@@ -42,7 +42,7 @@ export class Login {
         }
 
         this.successMessage.set('✅ Logged in successfully!');
-        console.log('User token:', res.token);
+        // console.log('User token:', res.token);
         localStorage.setItem('email', res.user.email);
 
         this.loginForm.reset();

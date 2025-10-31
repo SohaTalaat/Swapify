@@ -16,6 +16,7 @@
           />
           <h4 class="mt-2">{{ userData.full_name }}</h4>
           <p>{{ userData.email }}</p>
+          <p>{{ userData.phone }}</p>
         </div>
 
         <ul class="nav flex-column mt-3">
@@ -40,13 +41,17 @@
           <p class="bio-text">{{ userData.bio }}</p>
 
           <div class="row mt-3">
-            <div class="col-md-6 mb-2">
-              <i class="fa-solid fa-envelope me-2 text-primary"></i>
+            <div class="col-md-4 mb-2">
+              <i class="fa-solid fa-envelope me-2 text-danger"></i>
               {{ userData.email }}
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-md-4 mb-2">
               <i class="fa-solid fa-location-dot me-2 text-danger"></i>
               {{ userData.location }}
+            </div>
+            <div class="col-md-4 mb-2">
+              <i class="fa-solid fa-phone me-2 text-danger"></i>
+              {{ userData.phone }}
             </div>
           </div>
         </div>

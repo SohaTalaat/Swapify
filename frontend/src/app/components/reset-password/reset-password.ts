@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 @Component({
   selector: 'app-reset-password',
   imports: [CommonModule, FormsModule, RouterLink],
@@ -11,19 +12,38 @@ import { Router, RouterLink } from '@angular/router';
 export class ResetPassword {
   newPassword = '';
   confirmPassword = '';
+  email = '';
+  token = '';
 
-  constructor(private router: Router) {}
+  constructor(private route: ActivatedRoute, private router: Router, private http: HttpClient) {}
+
+  ngOnInit() {
+    this.email = this.route.snapshot.queryParamMap.get('email') || '';
+    this.token = this.route.snapshot.queryParamMap.get('token') || '';
+  }
 
   onSubmit() {
-    if (this.newPassword.length < 6) {
-      alert('Password must be at least 6 characters.');
-      return;
-    }
     if (this.newPassword !== this.confirmPassword) {
       alert('Passwords do not match.');
       return;
     }
-    alert('Password reset successful!');
-    this.router.navigate(['/login']);
+
+    this.http
+      .post('http://127.0.0.1:8000/api/password/reset', {
+        email: this.email,
+        token: this.token,
+        password: this.newPassword,
+        password_confirmation: this.confirmPassword,
+      })
+      .subscribe({
+        next: (res: any) => {
+          alert('Password reset successful! Please log in.');
+          this.router.navigate(['/login']);
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Invalid or expired link.');
+        },
+      });
   }
 }
