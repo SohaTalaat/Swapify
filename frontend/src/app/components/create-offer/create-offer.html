@@ -1,0 +1,43 @@
+<div class="create-offer-page py-5 d-flex justify-content-center">
+  <div class="card p-4 shadow form-card">
+    <h3 class="text-gradient text-center mb-4">
+      <i class="fa-solid fa-plus me-2"></i>Create New Offer
+    </h3>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label>Title</label>
+        <input type="text" class="form-control" [(ngModel)]="offer.title" name="title" required />
+      </div>
+
+      <div class="mb-3">
+        <label>Description</label>
+        <textarea
+          class="form-control"
+          rows="3"
+          [(ngModel)]="offer.description"
+          name="description"
+        ></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label>Type</label>
+        <select class="form-select" [(ngModel)]="offer.type" name="type">
+          <option value="Product">Product</option>
+          <option value="Service">Service</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label>What do you want in return?</label>
+        <input type="text" class="form-control" [(ngModel)]="offer.want" name="want" />
+      </div>
+
+      <div class="text-center">
+        <button class="btn btn-gradient w-100" type="submit">
+          <i class="fa-solid fa-check me-2"></i>Submit Offer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

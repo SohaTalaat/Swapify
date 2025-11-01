@@ -1,0 +1,31 @@
+<div class="barters-hero text-center text-white py-5">
+  <h1 class="fw-bold">My Barters</h1>
+  <p class="lead">Track your ongoing and completed exchanges</p>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <div class="col-md-6" *ngFor="let b of barters">
+      <div class="barter-card shadow-sm p-4 d-flex align-items-center justify-content-between">
+        <div>
+          <h5 class="fw-bold mb-1">
+            <i class="fa-solid fa-handshake me-2 text-warning"></i>{{ b.title }}
+          </h5>
+          <p class="text-muted small mb-1">
+            <i class="fa-solid fa-user me-1"></i> With: {{ b.partner }}
+          </p>
+          <span
+            class="badge"
+            [ngClass]="{
+              'bg-success': b.status === 'Completed',
+              'bg-warning text-dark': b.status === 'Ongoing'
+            }"
+          >
+            {{ b.status }}
+          </span>
+        </div>
+        <button class="btn btn-gradient" (click)="viewDetails(b.id)">Details</button>
+      </div>
+    </div>
+  </div>
+</div>

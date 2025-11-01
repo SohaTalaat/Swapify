@@ -40,13 +40,66 @@
 
         <!-- When logged in -->
         <ng-container *ngIf="isLoggedIn">
-          <li class="nav-item d-flex align-items-center">
-            <i class="fa-solid fa-bell notif"></i>
+          <li class="nav-item d-flex align-items-center position-relative notification-wrapper">
+            <!-- Bell Icon -->
+            <i
+              class="fa-solid fa-bell notif"
+              (click)="toggleNotifications()"
+              style="cursor: pointer; font-size: 20px; position: relative"
+            ></i>
+
+            <!-- Badge for unread count -->
+            <span *ngIf="unreadCount > 0" class="badge-count">{{ unreadCount }}</span>
+
+            <!-- Notification Dropdown -->
+            <!-- Notification Dropdown -->
+            <div
+              *ngIf="showNotifications"
+              class="notification-dropdown shadow-lg p-3"
+              (click)="$event.stopPropagation()"
+            >
+              <h6 class="text-muted mb-2">Recent Notifications</h6>
+              <hr class="my-2" />
+
+              <!-- لو مفيش إشعارات -->
+              <div *ngIf="notifications.length === 0" class="text-center text-muted py-2">
+                No new notifications
+              </div>
+
+              <!-- عرض أول 3 إشعارات -->
+              <div
+                *ngFor="let n of notifications.slice(0, 3)"
+                class="dropdown-item d-flex align-items-start mb-2"
+              >
+                <i
+                  class="fa-solid me-2 mt-1"
+                  [ngClass]="{
+                    'fa-handshake text-success': n.type === 'barter',
+                    'fa-tag text-primary': n.type === 'offer',
+                    'fa-message text-warning': n.type === 'message'
+                  }"
+                ></i>
+                <div>
+                  <p class="mb-0 fw-semibold">{{ n.title }}</p>
+                  <small class="text-muted">{{ n.time }}</small>
+                </div>
+              </div>
+
+              <!-- زر المزيد -->
+              <div class="text-center mt-3">
+                <button class="btn btn-sm btn-gradient w-100" (click)="goToNotifications()">
+                  View All Notifications
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile and Logout -->
             <a
               routerLink="profile"
               class="text-white me-2"
               style="text-decoration: none; cursor: pointer"
-              ><img
+            >
+              <img
                 src="{{ profileImg }}"
                 alt=""
                 style="width: 30px; height: 30px; border-radius: 50%"

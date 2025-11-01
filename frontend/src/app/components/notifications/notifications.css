@@ -1,0 +1,90 @@
+/* Hero Section */
+.notifications-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  background-size: cover;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.notifications-hero::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+/* Container */
+.notifications-container {
+  background-color: #f8f9fb;
+  min-height: 70vh;
+}
+
+/* Card */
+.notification-card {
+  border-radius: 16px;
+  background: #fff;
+  max-width: 700px;
+  margin: auto;
+}
+
+.notification-item {
+  border-radius: 10px;
+  transition: 0.3s ease;
+  background-color: #fff;
+  border: 1px solid rgba(238, 105, 49, 0.08);
+}
+
+.notification-item.unread {
+  background-color: rgba(255, 240, 230, 0.7);
+  border-left: 4px solid #ee6931;
+}
+
+.notification-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(238, 105, 49, 0.15);
+}
+
+/* Button */
+.btn-outline-primary {
+  border-color: #ee6931;
+  color: #ee6931;
+}
+.btn-outline-primary:hover {
+  background-color: #ee6931;
+  color: white;
+}
+
+/* Animation */
+@keyframes float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+.animate-fade {
+  opacity: 0;
+  animation: fadeIn 1s ease forwards;
+}
+.delay-1 {
+  animation-delay: 0.4s;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

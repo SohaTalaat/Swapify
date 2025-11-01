@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-admin-dashboard',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './admin-dashboard.html',
-  styleUrl: './admin-dashboard.css',
+  styleUrls: ['./admin-dashboard.css'],
 })
 export class AdminDashboard {
   activeSection = 'overview';

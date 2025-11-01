@@ -17,7 +17,13 @@ import { authGuard } from './guards/auth-guard';
 import { adminGuard } from './guards/admin-guard';
 import { BrowseOffers } from './components/browse-offers/browse-offers';
 import { OfferDetails } from './components/offer-details/offer-details';
-
+import { MyOffers } from './components/my-offers/my-offers';
+import { CreateOffer } from './components/create-offer/create-offer';
+import { EditOffer } from './components/edit-offer/edit-offer';
+import { MyBarters } from './components/my-barters/my-barters';
+import { BarterDetails } from './components/barter-details/barter-details';
+import { StartBarter } from './components/start-barter/start-barter';
+import { Notifications } from './components/notifications/notifications';
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'login', component: Login },
@@ -25,6 +31,13 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'offers', component: BrowseOffers, canActivate: [authGuard] },
   { path: 'OfferDetails/:id', component: OfferDetails, canActivate: [authGuard] },
+  { path: 'MyOffers', component: MyOffers, canActivate: [authGuard] },
+  { path: 'create-offer', component: CreateOffer, canActivate: [authGuard] },
+  { path: 'edit-offer/:id', component: EditOffer, canActivate: [authGuard] },
+  { path: 'my-barters', component: MyBarters, canActivate: [authGuard] },
+  { path: 'barter-details/:id', component: BarterDetails, canActivate: [authGuard] },
+  { path: 'start-barter', component: StartBarter, canActivate: [authGuard] },
+  { path: 'notifications', component: Notifications, canActivate: [authGuard] },
 
   { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
   { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },

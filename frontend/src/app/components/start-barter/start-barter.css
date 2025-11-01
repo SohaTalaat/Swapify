@@ -1,0 +1,111 @@
+/* ===== Hero Section ===== */
+.barter-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  color: white;
+  min-height: 30vh;
+  /* background-image: url('assets/bg-pattern.svg'); */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.barter-hero::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+/* ===== Card Section ===== */
+.start-barter {
+  background-color: #f8f9fb;
+  min-height: 70vh;
+  /* background-image: url('assets/waves.svg'); */
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.barter-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  max-width: 500px;
+  width: 100%;
+  transition: 0.3s;
+}
+
+.barter-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(238, 105, 49, 0.25);
+}
+
+/* Inputs */
+.modern-input {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(238, 105, 49, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: 0.2s;
+}
+
+.modern-input:focus {
+  border-color: #ee6931;
+  box-shadow: 0 0 8px rgba(238, 105, 49, 0.4);
+}
+
+/* Button Gradient */
+.btn-gradient {
+  background: linear-gradient(90deg, #ee6931, #f86425);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.btn-gradient:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(238, 105, 49, 0.4);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(to right, #ee6931, #f86425);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animation */
+@keyframes float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+.animate-fade {
+  opacity: 0;
+  animation: fadeIn 1s ease forwards;
+}
+.delay-1 {
+  animation-delay: 0.4s;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

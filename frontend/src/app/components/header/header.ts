@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
@@ -13,14 +13,57 @@ export class Header implements OnInit {
   isLoggedIn = false;
   username: string | null = null;
   profileImg: string | null = null;
+  showNotifications = false;
+  unreadCount = 3;
 
-  constructor(private auth: Auth, private router: Router) {}
+  notifications = [
+    {
+      id: 1,
+      title: 'New barter request from Sara Ahmed',
+      type: 'barter',
+      time: '2 minutes ago',
+      read: false,
+    },
+    {
+      id: 2,
+      title: 'Your offer “Logo Design” got a comment',
+      type: 'offer',
+      time: '1 hour ago',
+      read: true,
+    },
+    {
+      id: 3,
+      title: 'New message from Omar',
+      type: 'message',
+      time: '3 hours ago',
+      read: false,
+    },
+  ];
+
+  constructor(private auth: Auth, private router: Router, private zone: NgZone) {
+    document.addEventListener('click', (event: any) => {
+      const target = event.target;
+      if (!target.closest('.notification-wrapper')) {
+        this.zone.run(() => (this.showNotifications = false));
+      }
+    });
+  }
+
+  toggleNotifications() {
+    this.zone.run(() => {
+      this.showNotifications = !this.showNotifications;
+    });
+  }
+
+  goToNotifications() {
+    this.showNotifications = false;
+    this.router.navigate(['/notifications']);
+  }
 
   ngOnInit() {
     const token = localStorage.getItem('swapify_token');
     this.isLoggedIn = !!token;
 
-    // اقرأ البيانات المحفوظة من localStorage
     const user = {
       username: localStorage.getItem('username'),
       profileImg: localStorage.getItem('profileImg'),
@@ -30,7 +73,6 @@ export class Header implements OnInit {
       this.profileImg = user.profileImg;
     }
 
-    // 🔥 اشترك في إشعارات تسجيل الدخول / تغيير الصورة
     this.auth.userData.subscribe((userData) => {
       if (userData) {
         this.username = userData.username;
@@ -41,10 +83,7 @@ export class Header implements OnInit {
       }
     });
 
-    // اشترك أيضًا في حالة تسجيل الدخول
-    this.auth.isLoggedIn.subscribe((status) => {
-      this.isLoggedIn = status;
-    });
+    this.auth.isLoggedIn.subscribe((status) => (this.isLoggedIn = status));
   }
 
   logout() {

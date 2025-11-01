@@ -1,0 +1,57 @@
+<!-- Hero Section -->
+<div class="barter-hero text-center text-white py-5">
+  <h1 class="fw-bold animate-fade">
+    <i class="fa-solid fa-right-left me-2"></i> Start a New Barter
+  </h1>
+  <p class="lead animate-fade delay-1">
+    Exchange your skills or products — no money needed, just creativity!
+  </p>
+</div>
+
+<!-- Barter Form -->
+<div class="start-barter d-flex justify-content-center align-items-center py-5">
+  <div class="barter-card shadow-lg p-5">
+    <h4 class="fw-bold text-center mb-4 text-gradient">
+      <i class="fa-solid fa-handshake me-2"></i> Create Your Barter Offer
+    </h4>
+
+    <form>
+      <div class="mb-4">
+        <label class="form-label fw-semibold"><i class="fa-solid fa-box me-2"></i>Your Offer</label>
+        <select class="form-select modern-input" [(ngModel)]="selectedOffer" name="offer">
+          <option *ngFor="let offer of userOffers" [value]="offer.id">{{ offer.title }}</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold"
+          ><i class="fa-solid fa-gift me-2"></i>What Do You Want?</label
+        >
+        <input
+          type="text"
+          class="form-control modern-input"
+          [(ngModel)]="wantedItem"
+          name="wantedItem"
+          placeholder="e.g. Content Writing or Photography"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold"
+          ><i class="fa-solid fa-message me-2"></i>Message (optional)</label
+        >
+        <textarea
+          class="form-control modern-input"
+          rows="3"
+          [(ngModel)]="message"
+          name="message"
+          placeholder="Add a message to explain your barter idea..."
+        ></textarea>
+      </div>
+
+      <button class="btn btn-gradient w-100" type="button" (click)="startBarter()">
+        <i class="fa-solid fa-paper-plane me-2"></i>Start Barter
+      </button>
+    </form>
+  </div>
+</div>

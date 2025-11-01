@@ -24,8 +24,9 @@
             <a class="active" href="#"><i class="fa fa-user"></i> Profile</a>
           </li>
           <li>
-            <a href="#"><i class="fa fa-calendar"></i> Recent Activity</a>
+            <a routerLink="/my-barters"><i class="fa fa-calendar"></i> My Barters</a>
           </li>
+
           <li>
             <a routerLink="/complete-profile"><i class="fa fa-edit"></i> Edit Profile</a>
           </li>
@@ -58,22 +59,7 @@
 
         <!-- Shopping Cart -->
         <div class="shopping-cart shadow-sm rounded p-4">
-          <h5 class="fw-bold mb-3"><i class="fa fa-bag-shopping me-2"></i> Shopping Bag</h5>
-
-          <div class="cart-item" *ngFor="let item of [1, 2, 3]">
-            <img
-              src="https://images.pexels.com/photos/238118/pexels-photo-238118.jpeg"
-              alt="Product"
-              class="item-img"
-            />
-            <div class="item-details">
-              <h6>Product Name</h6>
-              <p class="text-muted small">Short description</p>
-            </div>
-            <input type="number" min="1" value="1" class="item-qty" />
-            <div class="item-price">$549</div>
-            <button class="delete-btn"><i class="fa fa-trash"></i></button>
-          </div>
+          <app-my-offers></app-my-offers>
         </div>
       </div>
     </div>

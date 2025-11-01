@@ -1,0 +1,55 @@
+<div class="barter-details py-5">
+  <div class="container">
+    <h2 class="fw-bold mb-4 text-center">
+      <i class="fa-solid fa-handshake me-2 text-warning"></i> Barter Details
+    </h2>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card p-3 mb-3 shadow-sm">
+          <h5>Offer from You</h5>
+          <img [src]="barter.yourOffer.image" class="img-fluid rounded mb-2" />
+          <p>{{ barter.yourOffer.title }}</p>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card p-3 mb-3 shadow-sm">
+          <h5>Offer from {{ barter.partner }}</h5>
+          <img [src]="barter.partnerOffer.image" class="img-fluid rounded mb-2" />
+          <p>{{ barter.partnerOffer.title }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="status mt-4 text-center">
+      <span
+        class="badge"
+        [ngClass]="{
+          'bg-success': barter.status === 'Completed',
+          'bg-warning text-dark': barter.status === 'Ongoing'
+        }"
+      >
+        {{ barter.status }}
+      </span>
+    </div>
+
+    <div class="chat-section mt-5">
+      <h5 class="mb-3">Messages</h5>
+      <div class="chat-box p-3 mb-3 shadow-sm">
+        <div *ngFor="let msg of barter.messages" class="mb-2">
+          <strong>{{ msg.sender }}:</strong> {{ msg.text }}
+        </div>
+      </div>
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Type a message..."
+          [(ngModel)]="newMessage"
+        />
+        <button class="btn btn-gradient" (click)="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
