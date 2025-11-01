@@ -21,7 +21,7 @@ export const routes: Routes = [
   { path: 'login/callback', component: LoginCallback },
   { path: 'register', component: Register },
   { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
-  { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },
+  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
