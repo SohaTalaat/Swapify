@@ -1,0 +1,36 @@
+.offer-details {
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+
+.offer-img {
+  max-width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transition: transform 0.4s ease;
+}
+.offer-img:hover {
+  transform: scale(1.03);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ee6931, #fc8552);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, #ee6931, #f86425);
+  border: none;
+  color: white;
+  border-radius: 30px;
+  transition: 0.3s;
+}
+.btn-gradient:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(238, 105, 49, 0.3);
+}
+
+.rating i {
+  font-size: 1.1rem;
+}

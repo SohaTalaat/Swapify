@@ -35,8 +35,12 @@ class GoogleAuthController extends Controller
         $token = $user->createToken('swapify_token')->plainTextToken;
 
         return redirect()->away(
-            'http://localhost:4200/login/callback?token=' . $token . '&email=' . urlencode($user->email)
+            'http://localhost:4200/login/callback?' .
+            'token=' . $token .
+            '&email=' . urlencode($user->email) .
+            '&profileImg=' . urlencode($user->profile_picture_url)
         );
+
     } catch (\Exception $e) {
         return redirect()->away('http://localhost:4200/login/callback?error=' . urlencode($e->getMessage()));
     }

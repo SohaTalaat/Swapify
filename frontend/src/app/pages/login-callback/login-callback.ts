@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Auth } from '../../services/auth'; // ✅ استيراد الخدمة
 
 @Component({
   selector: 'app-login-callback',
@@ -14,12 +15,18 @@ export class LoginCallback implements OnInit {
   message = 'Logging you in...';
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private route: ActivatedRoute, private router: Router, private http: HttpClient) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private http: HttpClient,
+    private auth: Auth // ✅ نضيف الخدمة هنا
+  ) {}
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
       const token = params['token'];
-      const email = params['email']; // 👈 هنا ناخد الإيميل
+      const email = params['email'];
+      const profileImg = params['profileImg'];
       const error = params['error'];
 
       if (error) {
@@ -33,9 +40,17 @@ export class LoginCallback implements OnInit {
         this.status = 'success';
         this.message = 'Login successful! Redirecting...';
 
-        // 👇 خزّن البيانات في localStorage
+        // ✅ خزّن البيانات
         localStorage.setItem('swapify_token', token);
         if (email) localStorage.setItem('email', email);
+        if (profileImg) localStorage.setItem('profileImg', profileImg);
+
+        // ✅ حدّث Auth service علشان الـ Header يعرف
+        this.auth.userData.next({
+          username: email?.split('@')[0] || 'User',
+          profile_picture_url: profileImg,
+        });
+        this.auth.loggedIn.next(true);
 
         setTimeout(() => this.router.navigate(['/profile']), 1500);
       } else {
