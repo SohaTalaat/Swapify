@@ -40,7 +40,7 @@ export const routes: Routes = [
   { path: 'notifications', component: Notifications, canActivate: [authGuard] },
 
   { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
-  { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },
+  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
