@@ -1,4 +1,119 @@
-.faq-page {
+/* ===== Hero Section ===== */
+.faq-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  min-height: 30vh;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated floating glow */
+.faq-hero::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+/* ===== Section Styling ===== */
+.faq-section {
   background-color: #f7f7f7;
   min-height: 100vh;
+}
+
+/* ===== Image Styling ===== */
+.faq-img {
+  /* max-width: 90%; */
+  width: 1000px;
+  transition: transform 0.4s ease;
+}
+.faq-img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== Accordion (Glass Style) ===== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.accordion-button {
+  font-weight: 600;
+  color: #333;
+  transition: 0.3s;
+}
+.accordion-button:not(.collapsed) {
+  background-color: rgba(238, 105, 49, 0.1);
+  color: #ee6931;
+  box-shadow: none;
+}
+.accordion-body {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* ===== Animations ===== */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(25px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeInUp 1s ease forwards;
+}
+.animate-slide {
+  animation: slideInLeft 1s ease forwards;
+}
+
+.highlight {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 3px 12px;
+  border-radius: 12px;
+  color: white;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .faq-section {
+    text-align: center;
+  }
+  .faq-img {
+    max-width: 250px;
+    margin-bottom: 20px;
+  }
 }

@@ -15,11 +15,17 @@ import { TermsPrivacy } from './components/terms-privacy/terms-privacy';
 import { LoginCallback } from './pages/login-callback/login-callback';
 import { authGuard } from './guards/auth-guard';
 import { adminGuard } from './guards/admin-guard';
+import { BrowseOffers } from './components/browse-offers/browse-offers';
+import { OfferDetails } from './components/offer-details/offer-details';
+
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'login', component: Login },
   { path: 'login/callback', component: LoginCallback },
   { path: 'register', component: Register },
+  { path: 'offers', component: BrowseOffers, canActivate: [authGuard] },
+  { path: 'OfferDetails/:id', component: OfferDetails, canActivate: [authGuard] },
+
   { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
   { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
   { path: 'forgot-password', component: ForgotPassword },

@@ -25,5 +25,20 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\NewMessageSent::class => [
             \App\Listeners\CreateMessageNotification::class,
         ],
+        \App\Events\NewMessageSent::class => [
+            \App\Listeners\CreateMessageNotification::class,
+        ],
+        \App\Events\NewReviewCreated::class => [
+            \App\Listeners\CreateReviewNotification::class,
+        ],
+        \App\Events\BarterStatusUpdated::class => [
+            \App\Listeners\CreateBarterStatusNotification::class,
+        ],
+        \App\Events\ReturnRequestCreated::class => [
+            \App\Listeners\CreateReturnRequestNotification::class,
+        ],
+        \App\Events\DisputeOpened::class => [
+            \App\Listeners\CreateDisputeNotification::class,
+        ],
     ];
 }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\PaymobController;
+
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -105,4 +107,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('id-verification/{id}', [AdminIDVerificationController::class, 'show']);
     Route::post('id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
     Route::post('id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+    Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
 });
