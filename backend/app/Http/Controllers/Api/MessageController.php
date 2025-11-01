@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewMessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\Chat;
@@ -30,15 +31,19 @@ class MessageController extends Controller
      */
     public function store(StoreMessageRequest $request, Chat $chat)
     {
-        // Ensure the user is part of the barter linked to this chat
         if (!$chat->barter->participants->contains(Auth::id())) {
             abort(403, 'You are not part of this chat');
         }
 
-        return $chat->messages()->create([
+        $message = $chat->messages()->create([
             'sender_id' => Auth::id(),
             'content' => $request->content,
             'is_read' => false,
-        ])->load('sender:id,username,profile_picture_url');
+        ]);
+
+        // Fire event so listeners create notifications (and possibly other side effects)
+        event(new NewMessageSent($message));
+
+        return $message->load('sender:id,username,profile_picture_url');
     }
 }
