@@ -100,6 +100,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);
     Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
     Route::post('/upload/id-verification', [FileUploadController::class, 'uploadIdVerification']);
+
+    // Payment
+    Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
 });
 
 // Admin Only Routes for uploaded files
@@ -107,6 +111,4 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('id-verification/{id}', [AdminIDVerificationController::class, 'show']);
     Route::post('id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
     Route::post('id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
-    Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
-    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
 });
