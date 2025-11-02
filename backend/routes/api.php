@@ -39,7 +39,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleC
 
 
 //Email verification
-Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
+// Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
 
 

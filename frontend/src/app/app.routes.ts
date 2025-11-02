@@ -24,29 +24,42 @@ import { MyBarters } from './components/my-barters/my-barters';
 import { BarterDetails } from './components/barter-details/barter-details';
 import { StartBarter } from './components/start-barter/start-barter';
 import { Notifications } from './components/notifications/notifications';
+import { UpdateProfile } from './components/update-profile/update-profile';
+
 export const routes: Routes = [
+  // Public routes
   { path: '', component: Home },
   { path: 'login', component: Login },
   { path: 'login/callback', component: LoginCallback },
   { path: 'register', component: Register },
-  { path: 'offers', component: BrowseOffers, canActivate: [authGuard] },
-  { path: 'OfferDetails/:id', component: OfferDetails, canActivate: [authGuard] },
-  { path: 'MyOffers', component: MyOffers, canActivate: [authGuard] },
-  { path: 'create-offer', component: CreateOffer, canActivate: [authGuard] },
-  { path: 'edit-offer/:id', component: EditOffer, canActivate: [authGuard] },
-  { path: 'my-barters', component: MyBarters, canActivate: [authGuard] },
-  { path: 'barter-details/:id', component: BarterDetails, canActivate: [authGuard] },
-  { path: 'start-barter', component: StartBarter, canActivate: [authGuard] },
-  { path: 'notifications', component: Notifications, canActivate: [authGuard] },
-
-  { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
-  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
-  { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
   { path: 'about', component: About },
   { path: 'contact', component: Contact },
   { path: 'faq', component: Faq },
   { path: 'terms-privacy', component: TermsPrivacy },
+
+  // Offers
+  { path: 'offers', component: BrowseOffers },
+  { path: 'offer-details/:id', component: OfferDetails },
+  { path: 'my-offers', component: MyOffers, canActivate: [authGuard] },
+  { path: 'create-offer', component: CreateOffer, canActivate: [authGuard] },
+  { path: 'edit-offer/:id', component: EditOffer, canActivate: [authGuard] },
+
+  // Barters
+  { path: 'my-barters', component: MyBarters, canActivate: [authGuard] },
+  { path: 'barter-details/:id', component: BarterDetails, canActivate: [authGuard] },
+  { path: 'start-barter', component: StartBarter, canActivate: [authGuard] },
+
+  // User
+  { path: 'notifications', component: Notifications, canActivate: [authGuard] },
+  { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
+  { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
+  { path: 'update-profile', component: UpdateProfile, canActivate: [authGuard] },
+
+  // Admin
+  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
+
+  // Fallback
   { path: '**', component: Notfound },
 ];

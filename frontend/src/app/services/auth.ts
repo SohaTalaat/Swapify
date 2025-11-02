@@ -91,4 +91,13 @@ export class Auth {
     const tokenExists = !!localStorage.getItem('swapify_token');
     this.loggedIn.next(tokenExists);
   }
+  updateUserData(user: any) {
+    this.userData.next(user);
+    if (user.profile_picture_url) {
+      localStorage.setItem('profileImg', user.profile_picture_url);
+    }
+    if (user.username) {
+      localStorage.setItem('username', user.username);
+    }
+  }
 }
