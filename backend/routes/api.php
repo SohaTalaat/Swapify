@@ -107,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payment
     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
     Route::post('/paymob/callback', [PaymobController::class, 'callback']);
+    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 });
 
 // Admin Only Routes for uploaded files
