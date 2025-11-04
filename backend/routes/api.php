@@ -61,11 +61,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
     //Listing routes
-Route::get('/listings/my', [ListingController::class, 'myOffers']);
+    Route::get('/listings/my', [ListingController::class, 'myOffers']);
 
     Route::apiResource('listings', ListingController::class);
     Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
-Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+    Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);
@@ -107,6 +108,7 @@ Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
     // Payment
     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
     Route::post('/paymob/callback', [PaymobController::class, 'callback']);
+    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 });
 
 // Admin Only Routes for uploaded files
