@@ -12,6 +12,7 @@
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "*",
         "cloudinary/cloudinary_php": "*",
+        "darkaonline/l5-swagger": "^9.0",
         "guzzlehttp/guzzle": "^7.10",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
@@ -20,7 +21,6 @@
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "*",
-        "darkaonline/l5-swagger": "^9.0",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",

@@ -48,7 +48,7 @@ class ListingController extends Controller
     // }
 
 
-       public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -58,7 +58,6 @@ class ListingController extends Controller
             'images.*' => 'image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
-        // إنشاء العرض
         $listing = Listing::create([
             'user_id' => auth()->id(),
             'title' => $request->title,
@@ -70,18 +69,17 @@ class ListingController extends Controller
             'desired_in_return' => $request->desired_in_return,
         ]);
 
-        // رفع الصور إلى Cloudinary
-      if ($request->hasFile('images')) {
-    foreach ($request->file('images') as $image) {
-        $uploadedFileUrl = Cloudinary::uploadApi()->upload($image->getRealPath(), [
-            'folder' => 'swapify/listings',
-        ])['secure_url'];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $uploadedFileUrl = Cloudinary::uploadApi()->upload($image->getRealPath(), [
+                    'folder' => 'swapify/listings',
+                ])['secure_url'];
 
-        $listing->images()->create([
-            'image_url' => $uploadedFileUrl,
-        ]);
-    }
-}
+                $listing->images()->create([
+                    'image_url' => $uploadedFileUrl,
+                ]);
+            }
+        }
 
 
         return response()->json([
@@ -101,43 +99,37 @@ class ListingController extends Controller
         return $listing->load(['category', 'images']);
     }
 
-public function destroy($id)
-{
-    $listing = Listing::findOrFail($id);
+    public function destroy($id)
+    {
+        $listing = Listing::findOrFail($id);
 
-    // حذف الصور من Cloudinary قبل حذف العرض
-    foreach ($listing->images as $image) {
-        try {
-            // استخراج public_id من الرابط
-            $publicId = basename(parse_url($image->image_url, PHP_URL_PATH), '.' . pathinfo($image->image_url, PATHINFO_EXTENSION));
+        foreach ($listing->images as $image) {
+            try {
+                $publicId = basename(parse_url($image->image_url, PHP_URL_PATH), '.' . pathinfo($image->image_url, PATHINFO_EXTENSION));
 
-            // ✅ الطريقة الصحيحة لحذف الصورة من Cloudinary
-            \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::uploadApi()->destroy('swapify/listings/' . $publicId);
-            
-            $image->delete();
-        } catch (\Exception $e) {
-            \Log::error('خطأ أثناء حذف الصورة من Cloudinary: ' . $e->getMessage());
+                \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::uploadApi()->destroy('swapify/listings/' . $publicId);
+
+                $image->delete();
+            } catch (\Exception $e) {
+                \Log::error('خطأ أثناء حذف الصورة من Cloudinary: ' . $e->getMessage());
+            }
         }
+
+        $listing->delete();
+
+        return response()->json(['message' => 'Offer deleted successfully']);
     }
 
-    $listing->delete();
-
-    return response()->json(['message' => 'Offer deleted successfully']);
-}
 
 
+    public function myOffers(Request $request) //abanoub
+    {
+        $user = $request->user();
 
-// ListingController.php
-public function myOffers(Request $request)
-{
-    $user = $request->user();
+        $offers = $user->listings()
+            ->with(['category', 'images'])
+            ->get();
 
-    $offers = $user->listings()
-        ->select('id', 'title', 'user_id') // فقط ما تحتاجه
-        ->with(['category:id,name', 'images:image_url'])
-        ->get();
-
-    return response()->json($offers);
-}
-
+        return response()->json($offers);
+    }
 }
