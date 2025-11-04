@@ -127,12 +127,14 @@ public function destroy($id)
 
 
 
-    public function myOffers(Request $request) //abanoub
+// ListingController.php
+public function myOffers(Request $request)
 {
     $user = $request->user();
 
     $offers = $user->listings()
-        ->with(['category', 'images'])
+        ->select('id', 'title', 'user_id') // فقط ما تحتاجه
+        ->with(['category:id,name', 'images:image_url'])
         ->get();
 
     return response()->json($offers);
