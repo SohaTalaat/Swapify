@@ -16,10 +16,18 @@ class Payment extends Model
         'currency',
         'status',
         'transaction_id',
-        'details'
+        'details',
     ];
 
     protected $casts = [
-        'details' => 'array'
+        'details' => 'array',
     ];
+
+    /**
+     *  Each payment belongs to one user
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
