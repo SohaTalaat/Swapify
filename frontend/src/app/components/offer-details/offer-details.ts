@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Offer } from '../../services/offer';
 
 @Component({
   selector: 'app-offer-details',
@@ -9,23 +10,37 @@ import { CommonModule } from '@angular/common';
   styleUrl: './offer-details.css',
 })
 export class OfferDetails {
-  offer = {
-    title: 'Logo Design Service',
-    user: 'Ahmed Hassan',
-    category: 'Service',
-    location: 'Cairo, Egypt',
-    description:
-      'I will design a professional, modern logo tailored to your brand identity. Includes 3 revisions.',
-    want: 'Content Writing Service',
-    image: 'assets/offers/design.jpg',
-    rating: 4.8,
-  };
-  offerId: number | null = null;
+  offer: any = null;
+  loading = true;
+  offerId!: number;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private offerService: Offer) {}
 
   ngOnInit() {
     this.offerId = Number(this.route.snapshot.paramMap.get('id'));
-    console.log('Opened Offer ID:', this.offerId);
+    this.loadOffer();
+  }
+
+  /** ✅ جلب تفاصيل العرض من API */
+  loadOffer() {
+    this.offerService.getOne(this.offerId).subscribe({
+      next: (res: any) => {
+        console.log('✅ Offer details:', res);
+        this.offer = {
+          title: res.title,
+          user: res.user?.username || 'Anonymous',
+          category: res.category?.name || 'Uncategorized',
+          location: res.availability_info || 'Unknown',
+          description: res.description,
+          want: res.desired_in_return || 'Not specified',
+          image: res.images?.[0]?.image_url || 'assets/no-image.png',
+        };
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('❌ Error loading offer:', err);
+        this.loading = false;
+      },
+    });
   }
 }

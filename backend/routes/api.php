@@ -63,6 +63,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //Listing routes
 
     Route::apiResource('listings', ListingController::class);
+    Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
+Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);

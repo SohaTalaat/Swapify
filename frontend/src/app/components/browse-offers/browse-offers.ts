@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-
+import { Offer } from '../../services/offer';
 @Component({
   selector: 'app-browse-offers',
   standalone: true,
@@ -11,43 +11,39 @@ import { Router } from '@angular/router';
   styleUrls: ['./browse-offers.css'],
 })
 export class BrowseOffers {
-  constructor(private router: Router) {} // ✅ لازم نعرّف الـ Router هنا
-
-  offers = [
-    {
-      id: 1,
-      title: 'Logo Design Service',
-      category: 'Service',
-      location: 'Cairo, Egypt',
-      image:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmJBRw3VdEFAEJy3EvCjuF_zVYXEba0iBmMw&s',
-      want: 'Content Writing',
-      user: 'Ahmed Hassan',
-    },
-    {
-      id: 2,
-      title: 'Used iPhone 11',
-      category: 'Product',
-      location: 'Alexandria, Egypt',
-      image:
-        'https://opensooq-images.os-cdn.com/previews/2048x0/25/54/2554c3cff82552b694812d8c18414055d86850a9b923dab132589e71ee54ab51.jpg.webp',
-      want: 'Bluetooth Headphones',
-      user: 'Sara Ali',
-    },
-    {
-      id: 3,
-      title: 'Web Development',
-      category: 'Service',
-      location: 'Giza, Egypt',
-      image:
-        'https://media.licdn.com/dms/image/v2/D5612AQHyLFkv9YBcGA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1715058774193?e=2147483647&v=beta&t=7yqv62DbvJWPvycGiDX4FGb79GOPsVB_dreB-SHh36E',
-      want: 'UI/UX Design',
-      user: 'Omar Youssef',
-    },
-  ];
-
+  offers: any[] = [];
   selectedCategory = 'All';
   searchTerm = '';
+  loading = true;
+
+  constructor(private router: Router, private offerService: Offer) {}
+
+  ngOnInit() {
+    this.loadOffers();
+  }
+
+  loadOffers() {
+    this.offerService.getAll().subscribe({
+      next: (res: any) => {
+        console.log('✅ Response from API:', res); // 👈 شوّف في console
+        this.offers = res.map((offer: any) => ({
+          id: offer.id,
+          title: offer.title,
+          category: offer.category?.name || 'Uncategorized',
+          location: offer.availability_info || 'Unknown', // 👈 مفيش location في البيانات، استخدم availability_info أو type
+          image: offer.images?.[0]?.image_url || 'assets/no-image.png',
+          want: offer.desired_in_return || 'Not specified', // 👈 اسم الحقل الحقيقي من الـ API
+          user: offer.user?.username || 'Anonymous',
+        }));
+        console.log('🎯 Parsed Offers:', this.offers);
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('❌ Error loading offers:', err);
+        this.loading = false;
+      },
+    });
+  }
 
   get filteredOffers() {
     return this.offers.filter((o) => {
@@ -59,7 +55,6 @@ export class BrowseOffers {
   }
 
   viewOffer(id: number) {
-    console.log('Navigating to offer', id);
-    this.router.navigate(['/OfferDetails', id]); // ✅ استخدم نفس الاسم اللي في routes
+    this.router.navigate(['/offer-details', id]);
   }
 }
