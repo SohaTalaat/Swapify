@@ -93,6 +93,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(IDVerification::class);
     }
+    public function verificationsReviewed()
+    {
+        return $this->hasMany(IDVerification::class, 'verified_by_admin_id');
+    }
 
     public function subscription()
     {
