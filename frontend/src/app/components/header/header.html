@@ -19,19 +19,95 @@
     >
       <span class="navbar-toggler-icon"></span>
     </button>
-
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" routerLink="/">Home</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/about">About</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/offers">Offers</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/contact">Contact</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/faq">Faq</a></li>
-        <li class="nav-item"><a class="nav-link" routerLink="/terms-privacy">TermsPrivacy</a></li>
+      </ul>
+    </div>
 
-        <li class="nav-item"><a class="nav-link" routerLink="/login">Login</a></li>
-        <li class="nav-item">
-          <a class="nav-link ms-2" routerLink="/register">Register</a>
-        </li>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <!-- When not logged in -->
+        <ng-container *ngIf="!isLoggedIn">
+          <li class="nav-item"><a class="nav-link" routerLink="/login">Login</a></li>
+          <li class="nav-item">
+            <a class="nav-link ms-2" routerLink="/register">Register</a>
+          </li>
+        </ng-container>
+
+        <!-- When logged in -->
+        <ng-container *ngIf="isLoggedIn">
+          <li class="nav-item d-flex align-items-center position-relative notification-wrapper">
+            <!-- Bell Icon -->
+            <i
+              class="fa-solid fa-bell notif"
+              (click)="toggleNotifications()"
+              style="cursor: pointer; font-size: 20px; position: relative"
+            ></i>
+
+            <!-- Badge for unread count -->
+            <span *ngIf="unreadCount > 0" class="badge-count">{{ unreadCount }}</span>
+
+            <!-- Notification Dropdown -->
+            <!-- Notification Dropdown -->
+            <div
+              *ngIf="showNotifications"
+              class="notification-dropdown shadow-lg p-3"
+              (click)="$event.stopPropagation()"
+            >
+              <h6 class="text-muted mb-2">Recent Notifications</h6>
+              <hr class="my-2" />
+
+              <!-- لو مفيش إشعارات -->
+              <div *ngIf="notifications.length === 0" class="text-center text-muted py-2">
+                No new notifications
+              </div>
+
+              <!-- عرض أول 3 إشعارات -->
+              <div
+                *ngFor="let n of notifications.slice(0, 3)"
+                class="dropdown-item d-flex align-items-start mb-2"
+              >
+                <i
+                  class="fa-solid me-2 mt-1"
+                  [ngClass]="{
+                    'fa-handshake text-success': n.type === 'barter',
+                    'fa-tag text-primary': n.type === 'offer',
+                    'fa-message text-warning': n.type === 'message'
+                  }"
+                ></i>
+                <div>
+                  <p class="mb-0 fw-semibold">{{ n.title }}</p>
+                  <small class="text-muted">{{ n.time }}</small>
+                </div>
+              </div>
+
+              <!-- زر المزيد -->
+              <div class="text-center mt-3">
+                <button class="btn btn-sm btn-gradient w-100" (click)="goToNotifications()">
+                  View All Notifications
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile and Logout -->
+            <a
+              routerLink="profile"
+              class="text-white me-2"
+              style="text-decoration: none; cursor: pointer"
+            >
+              <img
+                src="{{ profileImg }}"
+                alt=""
+                style="width: 30px; height: 30px; border-radius: 50%"
+              />
+            </a>
+            <button class="btn btn-danger btn-sm" (click)="logout()">Logout</button>
+          </li>
+        </ng-container>
       </ul>
     </div>
   </div>

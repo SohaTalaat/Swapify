@@ -22,20 +22,24 @@ class GoogleAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            $user = User::firstOrCreate([
-                'email' => $googleUser->getEmail()
-            ], [
-                'username' => Str::slug($googleUser->getName()) . '_' . Str::random(5),
-                'full_name' => $googleUser->getName(),
-                'profile_picture_url' => $googleUser->getAvatar(),
-                'password' => bcrypt(uniqid()), // Random Password
-            ]);
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->getEmail()],
+                [
+                    'username' => Str::slug($googleUser->getName()) . '_' . Str::random(5),
+                    'full_name' => $googleUser->getName(),
+                    'profile_picture_url' => $googleUser->getAvatar(),
+                    'password' => bcrypt(uniqid()),
+                ]
+            );
 
-            // Generate token
             $token = $user->createToken('swapify_token')->plainTextToken;
 
-            // Return to Angular
-            return redirect()->away('http://localhost:4200/login/callback?token=' . $token);
+            return redirect()->away(
+                'http://localhost:4200/login/callback?' .
+                    'token=' . $token .
+                    '&email=' . urlencode($user->email) .
+                    '&profileImg=' . urlencode($user->profile_picture_url)
+            );
         } catch (\Exception $e) {
             return redirect()->away('http://localhost:4200/login/callback?error=' . urlencode($e->getMessage()));
         }

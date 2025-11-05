@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Profile } from '../../services/profile';
+import { Auth } from '../../services/auth';
 import { firstValueFrom } from 'rxjs';
+
 @Component({
   selector: 'app-complete-profile',
   imports: [CommonModule, FormsModule],
@@ -19,7 +21,28 @@ export class CompleteProfile {
   profilePicture: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
 
-  constructor(private router: Router, private profileService: Profile) { }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private profileService: Profile,
+    private auth: Auth // ✅ أضفنا خدمة الـ Auth هنا
+  ) {}
+
+  ngOnInit() {
+    // ✅ حفظ التوكن القادم من رابط التفعيل
+    const token = this.route.snapshot.queryParamMap.get('token');
+    const email = this.route.snapshot.queryParamMap.get('email');
+
+    if (token) {
+      localStorage.setItem('swapify_token', token);
+      this.auth.setToken(token); // ✅ تحديث حالة تسجيل الدخول فورًا
+    }
+
+    if (email) {
+      localStorage.setItem('email', email);
+      this.email = email;
+    }
+  }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -46,17 +69,28 @@ export class CompleteProfile {
     formData.append('bio', this.bio);
 
     try {
-      await firstValueFrom(this.profileService.completeProfile(formData));
+      const res = await firstValueFrom(this.profileService.completeProfile(formData));
+
       if (this.profilePicture) {
         await firstValueFrom(this.profileService.uploadProfilePicture(this.profilePicture));
       }
-      alert('Profile completed successfully!');
-      this.router.navigate(['/profile']);
+
+      // ✅ تحديث بيانات المستخدم في Auth
+      this.auth.setUserData({
+        username: this.full_name,
+        profile_picture_url: this.imagePreview || 'assets/avatar.png',
+        email: this.email,
+        role: 'user',
+      });
+
+      alert('Profile completed successfully! 🎉');
+
+      // ✅ إعادة التوجيه إلى الصفحة الرئيسية
+      this.router.navigate(['/']);
     } catch (err: any) {
       console.error(err);
       const msg = err?.error?.error || 'Something went wrong';
       alert(msg);
     }
-
   }
 }

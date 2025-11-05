@@ -1,0 +1,47 @@
+<!-- Hero Section -->
+<div class="browse-hero text-center text-white py-5">
+  <h1 class="fw-bold mb-3 animate-fade"><span class="highlight">Browse Offers</span></h1>
+  <p class="lead animate-fade delay-1">
+    Explore hundreds of products & services waiting to be swapped!
+  </p>
+</div>
+
+<!-- Filter Section -->
+<div class="filters py-4 bg-light">
+  <div class="container d-flex flex-wrap justify-content-center align-items-center gap-3">
+    <input
+      type="text"
+      class="form-control search-input"
+      placeholder="Search offers..."
+      [(ngModel)]="searchTerm"
+    />
+
+    <select class="form-select category-select" [(ngModel)]="selectedCategory">
+      <option value="All">All Categories</option>
+      <option value="Product">Products</option>
+      <option value="Service">Services</option>
+    </select>
+  </div>
+</div>
+
+<!-- Offers Grid -->
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+    <div class="col-md-4" *ngFor="let offer of filteredOffers" (click)="viewOffer(offer.id)">
+      <div class="offer-card shadow-sm">
+        <img [src]="offer.image" class="offer-img" alt="Offer Image" />
+        <div class="offer-content p-3">
+          <h5 class="fw-bold">{{ offer.title }}</h5>
+          <p class="text-muted small mb-1">{{ offer.category }} · {{ offer.location }}</p>
+          <p class="want"><i class="fa-solid fa-repeat me-2"></i>Wants: {{ offer.want }}</p>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="text-muted small">
+              <i class="fa-solid fa-user me-1"></i>{{ offer.user }}
+            </span>
+            <button class="btn btn-sm btn-gradient">View Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

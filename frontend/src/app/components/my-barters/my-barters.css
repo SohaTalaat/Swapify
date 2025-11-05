@@ -1,0 +1,28 @@
+.barters-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  color: white;
+}
+
+.barter-card {
+  border-radius: 15px;
+  transition: 0.3s;
+  background: white;
+}
+
+.barter-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, #ee6931, #f86425);
+  color: white;
+  border-radius: 30px;
+  border: none;
+  padding: 6px 18px;
+  transition: 0.3s;
+}
+
+.btn-gradient:hover {
+  transform: scale(1.05);
+}

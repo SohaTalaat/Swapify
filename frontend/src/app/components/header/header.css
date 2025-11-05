@@ -1,0 +1,75 @@
+.notif {
+  color: white;
+  font-size: 20px;
+  padding-right: 30px;
+  cursor: pointer;
+}
+.notif:hover {
+  color: #ffae00;
+}
+/* Notification Badge */
+.badge-count {
+  position: absolute;
+  top: -5px;
+  right: 110px;
+  background-color: #ee6931;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  width: 280px;
+  background: #fff;
+  border-radius: 10px;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+  font-size: 12px;
+}
+
+.dropdown-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #f6f6f6;
+}
+
+.badge-count {
+  position: absolute;
+  top: -10px;
+  right: 113px;
+  background: #ff3d00;
+  color: white;
+  font-size: 10px;
+  border-radius: 50%;
+  padding: 3px 5px;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  color: white;
+  border: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .badge-count {
+    right: 333px;
+  }
+}

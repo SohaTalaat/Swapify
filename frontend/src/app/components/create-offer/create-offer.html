@@ -1,0 +1,95 @@
+<div class="create-offer-page py-5 d-flex justify-content-center">
+  <div class="card p-4 shadow form-card" style="max-width: 600px; width: 100%">
+    <h3 class="text-gradient text-center mb-4">
+      <i class="fa-solid fa-plus me-2"></i>Create New Offer
+    </h3>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label>Title</label>
+        <input type="text" class="form-control" [(ngModel)]="offer.title" name="title" required />
+      </div>
+
+      <div class="mb-3">
+        <label>Description</label>
+        <textarea
+          class="form-control"
+          rows="3"
+          [(ngModel)]="offer.description"
+          name="description"
+        ></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label>Category</label>
+        <select class="form-select" [(ngModel)]="offer.category_id" name="category_id" required>
+          <option value="">Select Category</option>
+          <option value="1">Electronics</option>
+          <option value="2">Clothing</option>
+          <option value="3">Services</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label>Type</label>
+        <select class="form-select" [(ngModel)]="offer.type" name="type">
+          <option value="product">Product</option>
+          <option value="service">Service</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label>Condition</label>
+        <input type="text" class="form-control" [(ngModel)]="offer.condition" name="condition" />
+      </div>
+
+      <div class="mb-3">
+        <label>Availability Info</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="offer.availability_info"
+          name="availability_info"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label>Desired In Return</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="offer.desired_in_return"
+          name="desired_in_return"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label>Upload Images</label>
+        <input
+          type="file"
+          class="form-control"
+          (change)="onFileSelected($event)"
+          multiple
+          accept="image/*"
+        />
+      </div>
+
+      <!-- ✅ Preview -->
+      <div class="image-preview d-flex flex-wrap gap-2 mb-3">
+        <img
+          *ngFor="let url of previewUrls"
+          [src]="url"
+          class="rounded shadow-sm"
+          style="width: 80px; height: 80px; object-fit: cover"
+        />
+      </div>
+
+      <div class="text-center">
+        <button class="btn btn-gradient w-100" type="submit" [disabled]="loading">
+          <i class="fa-solid" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+          {{ loading ? 'Creating...' : 'Submit Offer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

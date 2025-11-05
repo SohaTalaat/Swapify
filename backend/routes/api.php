@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\PaymobController;
+
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,10 +20,9 @@ use App\Http\Controllers\Api\{
     SubscriptionController,
     IDVerificationController,
     CompleteProfile,
-    GoogleAuthController
+    GoogleAuthController,
+    Admin\AdminIDVerificationController
 };
-use App\Models\IDVerification;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -38,7 +39,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleC
 
 
 //Email verification
-Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
+// Route::get('/email/verify', [AuthController::class, 'verifyEmail']);
 Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
 
 
@@ -60,8 +61,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
     //Listing routes
+    Route::get('/listings/my', [ListingController::class, 'myOffers']);
 
     Route::apiResource('listings', ListingController::class);
+    Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
+    Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);
@@ -99,23 +103,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);
     Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
     Route::post('/upload/id-verification', [FileUploadController::class, 'uploadIdVerification']);
+
+    // Payment
+    Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
+    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 });
 
 // Admin Only Routes for uploaded files
-Route::get('/admin/id-verification/{id}', function ($id) {
-    $idVerification = IDVerification::findOrFail($id);
-
-    // Generate temporary signed URLs (1-hour expiry)
-    $idSignedUrl = Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
-        Cloudinary::cloudinary()->uploadApi()->asset($idVerification->id_document_url)->publicId,
-        ['expires_at' => now()->addHour()->timestamp]
-    );
-
-    return response()->json([
-        'id_document_url' => $idSignedUrl,
-        'selfie_url' => Cloudinary::cloudinary()->uploadApi()->createDownloadToken(
-            Cloudinary::cloudinary()->uploadApi()->asset($idVerification->selfie_url)->publicId,
-            ['expires_at' => now()->addHour()->timestamp]
-        )
-    ]);
-})->middleware(['auth:sanctum', 'admin']);
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('id-verification/{id}', [AdminIDVerificationController::class, 'show']);
+    Route::post('id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
+    Route::post('id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+});

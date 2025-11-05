@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class Profile {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token'); // use the exact key
@@ -27,14 +27,24 @@ export class Profile {
   uploadProfilePicture(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('profile_picture', file);
+
     return this.http.post(`${this.apiUrl}/upload/profile-picture`, formData, {
       headers: this.getAuthHeaders(),
     });
   }
 
-
   getProfile(email: string) {
-
     return this.http.get(`${this.apiUrl}/profile/${email}`, { headers: this.getAuthHeaders() });
+  }
+  getProfile2(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/user`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+  // ✅ Update user profile
+  updateProfile(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/user?_method=PUT`, formData, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }

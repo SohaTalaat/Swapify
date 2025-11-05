@@ -1,0 +1,108 @@
+<!-- src/app/components/start-barter/start-barter.html -->
+<div class="barter-hero text-center text-white py-5">
+  <h1 class="fw-bold animate-fade">Start a New Barter</h1>
+  <p class="lead animate-fade delay-1">Exchange your skills or products — no money needed!</p>
+</div>
+
+<div class="start-barter d-flex justify-content-center py-5">
+  <div class="barter-card shadow-lg p-5">
+    <h4 class="fw-bold text-center mb-4 text-gradient">Create Your Barter Offer</h4>
+
+    <form (ngSubmit)="startBarter()" #form="ngForm">
+      <!-- Your Offer -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Your Offer</label>
+        <select
+          class="form-select modern-input"
+          [(ngModel)]="selectedOfferId"
+          name="offer"
+          required
+        >
+          <option [ngValue]="null" disabled>Select your offer</option>
+          <option *ngFor="let offer of userOffers" [ngValue]="offer.id">
+            {{ offer.title }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Requested Item -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Requested Item</label>
+        <select
+          class="form-select modern-input"
+          [(ngModel)]="selectedRequestedId"
+          name="requested"
+          (change)="onRequestedListingSelected()"
+          required
+        >
+          <option [ngValue]="null" disabled>Select what you want</option>
+          <option *ngFor="let listing of othersOffers" [ngValue]="listing.id">
+            {{ listing.title }} (by {{ listing.user?.username || 'User' }})
+          </option>
+        </select>
+        <small *ngIf="wantedItemTitle" class="text-success d-block">
+          Selected: <strong>{{ wantedItemTitle }}</strong>
+        </small>
+      </div>
+
+      <!-- Exchange Type -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Exchange Type</label>
+        <select
+          class="form-select modern-input"
+          [(ngModel)]="exchangeType"
+          name="exchangeType"
+          required
+        >
+          <option value="in_person">In Person</option>
+          <option value="delivery">Delivery</option>
+        </select>
+      </div>
+
+      <!-- In-Person Details -->
+      <div *ngIf="exchangeType === 'in_person'">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Meeting Location</label>
+          <input
+            type="text"
+            class="form-control modern-input"
+            [(ngModel)]="meetingLocation"
+            name="meetingLocation"
+            placeholder="e.g. Coffee Shop, Downtown"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Meeting Time</label>
+          <input
+            type="datetime-local"
+            class="form-control modern-input"
+            [(ngModel)]="meetingTime"
+            name="meetingTime"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Delivery Address -->
+      <div *ngIf="exchangeType === 'delivery'" class="mb-3">
+        <label class="form-label fw-semibold">Shipping Address</label>
+        <select
+          class="form-select modern-input"
+          [(ngModel)]="shippingAddressId"
+          name="shippingAddress"
+          required
+        >
+          <option [ngValue]="null">Select address</option>
+          <!-- يمكن جلب العناوين من API لاحقًا -->
+          <option value="1">123 Main St, Cairo</option>
+          <option value="2">456 Nile Ave, Giza</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-gradient w-100" [disabled]="isLoading || !form.valid">
+        {{ isLoading ? 'Creating...' : 'Start Barter' }}
+      </button>
+    </form>
+  </div>
+</div>

@@ -5,6 +5,7 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
+/* ===== Sidebar ===== */
 .sidebar {
   width: 250px;
   background: linear-gradient(180deg, #ee6931, #fc8552);
@@ -12,20 +13,23 @@
   padding: 25px 15px;
   border-top-right-radius: 20px;
   border-bottom-right-radius: 20px;
+  box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .brand {
   font-weight: 600;
-  font-size: 1.2rem;
-  margin-bottom: 30px;
+  font-size: 1.3rem;
+  margin-bottom: 35px;
   display: flex;
   align-items: center;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .menu li {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  border-radius: 12px;
   cursor: pointer;
   transition: 0.3s;
   display: flex;
@@ -33,19 +37,23 @@
 }
 .menu li:hover {
   background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
 }
 .menu li.active {
   background: white;
   color: #ee6931;
   font-weight: 600;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* ===== Main Content ===== */
 .main-content {
   flex-grow: 1;
   padding: 30px;
   animation: fadeIn 0.3s ease;
 }
 
+/* ===== Cards ===== */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -56,7 +64,7 @@
 .stat-card {
   background: white;
   border-radius: 15px;
-  padding: 20px;
+  padding: 25px 20px;
   text-align: center;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s;
@@ -70,15 +78,22 @@
   margin-bottom: 10px;
 }
 
+/* ===== Tables ===== */
 .table {
   border-radius: 10px;
   overflow: hidden;
+  background-color: white;
+}
+.table th {
+  background-color: #ffe0d0;
 }
 
+/* ===== Alerts ===== */
 .alert {
   border-radius: 10px;
 }
 
+/* ===== Animations ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -90,6 +105,7 @@
   }
 }
 
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
@@ -99,5 +115,9 @@
     border-radius: 0;
     display: flex;
     justify-content: space-around;
+  }
+  .menu li {
+    font-size: 0.9rem;
+    padding: 10px;
   }
 }

@@ -1,0 +1,104 @@
+/* ===== Hero Section ===== */
+.terms-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  min-height: 30vh;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.terms-hero::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+/* ===== Page Section ===== */
+.terms-page {
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+
+/* ===== Glass Card ===== */
+.glass-card {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-5px);
+}
+
+/* ===== Text Effects ===== */
+.text-gradient {
+  background: linear-gradient(90deg, #ee6931, #fc8552);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.terms-img {
+  max-width: 85%;
+  transition: transform 0.4s ease;
+}
+.terms-img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== Animations ===== */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(25px);
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeInUp 1s ease forwards;
+}
+.animate-slide {
+  animation: slideInLeft 1.2s ease forwards;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .terms-page {
+    text-align: center;
+  }
+  .terms-img {
+    max-width: 250px;
+    margin-bottom: 20px;
+  }
+}

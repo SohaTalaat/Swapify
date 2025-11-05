@@ -1,0 +1,32 @@
+.create-offer-page {
+  background: linear-gradient(135deg, #fff3ed, #fce3d7);
+  min-height: 100vh;
+}
+.form-card {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 18px;
+  background: white;
+  transition: transform 0.3s;
+}
+.form-card:hover {
+  transform: translateY(-5px);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ee6931, #fc8552);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, #ee6931, #f86425);
+  border: none;
+  color: white;
+  border-radius: 30px;
+  padding: 10px;
+  transition: 0.3s;
+}
+.btn-gradient:hover {
+  transform: scale(1.05);
+}

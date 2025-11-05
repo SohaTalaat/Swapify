@@ -41,7 +41,7 @@ class AuthController extends Controller
 
         // Send verification email
         Mail::send('emails.verify', [
-            'url' => url("/api/email/verify?email={$user->email}&token={$verification_token}"),
+            'url' => url("/email/verify?email={$user->email}&token={$verification_token}"),
             'user' => $user
         ], function ($message) use ($user) {
             $message->to($user->email)
@@ -60,32 +60,39 @@ class AuthController extends Controller
 
     //Verify email
     public function verifyEmail(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'token' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'token' => 'required|string',
+    ]);
 
-        $user = User::where('email', $request->email)
-            ->where('verification_token', $request->token)
-            ->first();
+    $user = User::where('email', $request->email)
+        ->where('verification_token', $request->token)
+        ->first();
 
-        if (!$user || $user->email_verified_at || $user->verification_expires_at < now()) {
-            return redirect('http://localhost:4200/verification-failed?reason=invalid_or_expired');
-        }
-
-        // Mark as verifies
-        $user->email_verified_at = now();
-
-        // One-time use token
-        $user->verification_token = null;
-        $user->verification_expires_at = null;
-        $user->save();
-
-        return redirect("http://localhost:4200/complete-profile?email={$request->email}");
+    if (!$user) {
+        return redirect('http://localhost:4200/verification-failed?reason=invalid');
     }
 
-    public function resenVerificationEmail(Request $request)
+    if ($user->email_verified_at || $user->verification_expires_at < now()) {
+        return redirect('http://localhost:4200/verification-failed?reason=expired');
+    }
+
+    // ✅ فعل الحساب
+    $user->email_verified_at = now();
+    $user->verification_token = null;
+    $user->verification_expires_at = null;
+    $user->save();
+
+    // ✅ أنشئ توكن Sanctum جديد خاص بالمستخدم الحالي
+    $token = $user->createToken('swapify_token')->plainTextToken;
+
+    // ✅ رجّع التوكن والـ email للفرونت
+    return redirect("http://localhost:4200/complete-profile?email={$user->email}&token={$token}");
+}
+
+
+    public function resendVerificationEmail (Request $request)
     {
         $request->validate(['email' => 'required|email']);
         $user = User::where('email', $request->email)->first();

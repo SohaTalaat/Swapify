@@ -1,0 +1,95 @@
+<!-- src/app/components/barter-details/barter-details.html -->
+<div class="barter-details py-5">
+  <div class="container">
+    <h2 class="fw-bold mb-4 text-center">Barter Details</h2>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!isLoading && viewModel">
+      <div class="row">
+        <!-- Your Offer -->
+        <div class="col-md-6">
+          <div class="card p-3 mb-3 shadow-sm">
+            <h5 class="text-primary">Your Offer</h5>
+            <img
+              [src]="viewModel.yourOffer.image"
+              class="img-fluid rounded mb-2"
+              alt="Your offer"
+            />
+            <p class="fw-semibold">{{ viewModel.yourOffer.title }}</p>
+          </div>
+        </div>
+
+        <!-- Partner's Offer -->
+        <div class="col-md-6">
+          <div class="card p-3 mb-3 shadow-sm">
+            <h5 class="text-success">Offer from {{ viewModel.partner }}</h5>
+            <img
+              [src]="viewModel.partnerOffer.image"
+              class="img-fluid rounded mb-2"
+              alt="Partner offer"
+            />
+            <p class="fw-semibold">{{ viewModel.partnerOffer.title }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="status mt-4 text-center">
+        <span
+          class="badge fs-5 px-4 py-2"
+          [ngClass]="{
+            'bg-success': viewModel.status === 'Completed',
+            'bg-warning text-dark':
+              viewModel.status === 'Ongoing' || viewModel.status === 'In Transit',
+            'bg-secondary': viewModel.status === 'Pending',
+            'bg-danger': viewModel.status === 'Cancelled' || viewModel.status === 'Disputed'
+          }"
+        >
+          {{ viewModel.status }}
+        </span>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="chat-section mt-5">
+        <h5 class="mb-3">Messages</h5>
+        <div class="chat-box p-3 mb-3 shadow-sm bg-light" style="height: 300px; overflow-y: auto">
+          <div
+            *ngFor="let msg of viewModel.messages"
+            class="mb-2 d-flex"
+            [ngClass]="msg.sender === 'You' ? 'justify-content-end' : 'justify-content-start'"
+          >
+            <div
+              class="p-2 rounded"
+              [ngClass]="msg.sender === 'You' ? 'bg-primary text-white' : 'bg-secondary text-white'"
+              style="max-width: 70%"
+            >
+              <small class="d-block fw-bold">{{ msg.sender }}</small>
+              <span>{{ msg.text }}</span>
+              <small class="d-block text-end opacity-75">{{ msg.time }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Type a message..."
+            [(ngModel)]="newMessage"
+            (keydown.enter)="sendMessage()"
+          />
+          <button class="btn btn-gradient" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
