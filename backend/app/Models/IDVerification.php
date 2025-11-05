@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class IDVerification extends Model
 {
-        protected $table = 'id_verifications'; // 👈 أضف هذا السطر
+    protected $table = 'id_verifications';
 
    protected $fillable = [
         'user_id',
@@ -25,7 +25,7 @@ class IDVerification extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function verifiedByAdmin()
+    public function admin()
     {
         return $this->belongsTo(User::class, 'verified_by_admin_id');
     }

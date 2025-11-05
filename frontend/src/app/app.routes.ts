@@ -3,7 +3,6 @@ import { Home } from './components/home/home';
 import { Login } from './components/login/login';
 import { Register } from './components/register/register';
 import { CompleteProfile } from './components/complete-profile/complete-profile';
-import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Notfound } from './components/notfound/notfound';
 import { ForgotPassword } from './components/forgot-password/forgot-password';
 import { ResetPassword } from './components/reset-password/reset-password';
@@ -26,6 +25,8 @@ import { StartBarter } from './components/start-barter/start-barter';
 import { Notifications } from './components/notifications/notifications';
 import { UpdateProfile } from './components/update-profile/update-profile';
 import { Verification } from './components/verification/verification';
+import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
+import { Admindashboard } from './components/admindashboard/admindashboard';
 
 export const routes: Routes = [
   // Public routes
@@ -61,7 +62,8 @@ export const routes: Routes = [
   { path: 'id-verification', component: Verification, canActivate: [authGuard] },
 
   // Admin
-  { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },
+  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
+  { path: 'dashboard2', component: Admindashboard, canActivate: [adminGuard] },
 
   // Fallback
   { path: '**', component: Notfound },

@@ -21,8 +21,13 @@ use App\Http\Controllers\Api\{
     IDVerificationController,
     CompleteProfile,
     GoogleAuthController,
-    Admin\AdminIDVerificationController
+    Admin\AdminIDVerificationController,
+    ReportController
 };
+use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Admin\AdminListingController;
+use App\Http\Controllers\Api\Admin\AdminReportController;
+use App\Http\Controllers\Api\Admin\AdminUserController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -93,7 +98,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('returns', ReturnRequestController::class)->only(['index', 'store', 'show']);
 
 
-    // Subscriptions and ID Verification routes
+    // Subscriptions
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/id-verification', [IDVerificationController::class, 'index']);
@@ -106,11 +111,15 @@ Route::middleware('auth:sanctum')->get('/id-verification', [IDVerificationContro
     Route::post('/upload/profile-picture', [FileUploadController::class, 'uploadProfilePicture']);
     Route::post('/upload/listing-image', [FileUploadController::class, 'uploadListingImage']);
     Route::post('/upload/id-verification', [FileUploadController::class, 'uploadIdVerification']);
+    Route::get('/id-verification', [IDVerificationController::class, 'index']); // Status
 
     // Payment
     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
     Route::post('/paymob/callback', [PaymobController::class, 'callback']);
     Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
+
+    //Report
+    Route::post('/reports', [ReportController::class, 'store']);
 });
 
 // Admin Only Routes for uploaded files
@@ -119,4 +128,21 @@ Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function () 
     Route::get('/id-verification/{id}', [AdminIDVerificationController::class, 'show']);
     Route::post('/id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
     Route::post('/id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+
+    //Overview page
+    Route::get('/overview', [AdminController::class, 'overview']);
+
+    //Manage Users
+    Route::get('/users', [AdminUserController::class, 'index']);
+    Route::patch('/users/{id}/ban', [AdminUserController::class, 'ban']);
+    Route::patch('/users/{id}/activate', [AdminUserController::class, 'activate']);
+
+    // Minitor Offers
+    Route::get('/listings', [AdminListingController::class, 'index']);
+    Route::patch('/listings/{id}/toggle', [AdminListingController::class, 'toggleStatus']);
+
+    //Content
+    Route::get('/reports', [AdminReportController::class, 'index']);
+    Route::patch('/reports/{id}/remove', [AdminReportController::class, 'removeOffer']);
+    Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']);
 });
