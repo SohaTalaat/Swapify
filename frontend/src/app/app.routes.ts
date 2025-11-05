@@ -25,6 +25,7 @@ import { BarterDetails } from './components/barter-details/barter-details';
 import { StartBarter } from './components/start-barter/start-barter';
 import { Notifications } from './components/notifications/notifications';
 import { UpdateProfile } from './components/update-profile/update-profile';
+import { Verification } from './components/verification/verification';
 
 export const routes: Routes = [
   // Public routes
@@ -57,8 +58,10 @@ export const routes: Routes = [
   { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
   { path: 'update-profile', component: UpdateProfile, canActivate: [authGuard] },
 
+  { path: 'id-verification', component: Verification, canActivate: [authGuard] },
+
   // Admin
-  { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
+  { path: 'dashbord', component: AdminDashboard, canActivate: [adminGuard] },
 
   // Fallback
   { path: '**', component: Notfound },

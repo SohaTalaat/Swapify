@@ -14,7 +14,15 @@
             alt="Profile Picture"
             class="avatar"
           />
-          <h4 class="mt-2">{{ userData.full_name }}</h4>
+          <h4 class="mt-2">
+            {{ userData.full_name }}
+            <i
+              *ngIf="userData.is_id_verified"
+              class="fa-solid fa-circle-check ms-2"
+              style="color: #ed5b2b"
+              title="موثق"
+            ></i>
+          </h4>
           <p>{{ userData.email }}</p>
           <p>{{ userData.phone }}</p>
         </div>
@@ -24,11 +32,15 @@
             <a class="active" href="#"><i class="fa fa-user"></i> Profile</a>
           </li>
           <li>
-            <a routerLink="/my-barters"><i class="fa fa-calendar"></i> My Barters</a>
-          </li>
-
-          <li>
             <a routerLink="/update-profile"><i class="fa fa-edit"></i> Edit Profile</a>
+          </li>
+          <li>
+            <a routerLink="/id-verification"
+              ><i class="fa-solid fa-id-card"></i> Verification Account</a
+            >
+          </li>
+          <li>
+            <a routerLink="/my-barters"><i class="fa fa-calendar"></i> My Barters</a>
           </li>
         </ul>
       </div>

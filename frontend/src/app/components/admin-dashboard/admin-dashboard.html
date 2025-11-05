@@ -119,23 +119,98 @@
     </section>
 
     <!-- Verification -->
+    <!-- Verification Section -->
     <section *ngIf="activeSection === 'verification'">
-      <h3>Identity Verification</h3>
-      <div class="row mt-3">
-        <div *ngFor="let v of verifications" class="col-md-6">
-          <div class="card shadow-sm p-3 mb-3">
-            <h6>{{ v.user }}</h6>
-            <img [src]="v.idImage" alt="ID" class="img-fluid rounded mt-2 mb-3" />
-            <div>
-              <button class="btn btn-success btn-sm me-2" (click)="approveVerification(v)">
-                Approve
-              </button>
-              <button class="btn btn-danger btn-sm" (click)="rejectVerification(v)">Reject</button>
+      <h3 class="mb-4">Identity Verification Requests</h3>
+
+      <div *ngIf="!loading; else loadingTpl" class="row g-4">
+        <div *ngFor="let v of verifications" class="col-md-6 col-lg-4">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body d-flex flex-column">
+              <!-- User Info -->
+              <div class="d-flex align-items-center mb-3">
+                <img
+                  [src]="v.user.profile_picture_url || 'assets/default-avatar.png'"
+                  class="rounded-circle me-3"
+                  alt="User Avatar"
+                  style="width: 50px; height: 50px; object-fit: cover"
+                />
+                <div>
+                  <h6 class="mb-0">{{ v.user.full_name }}</h6>
+                  <small class="text-muted">{{ v.user.email }}</small>
+                </div>
+              </div>
+
+              <!-- ID & Selfie Images -->
+              <div class="mb-3">
+                <img
+                  [src]="v.id_document_url"
+                  class="img-fluid rounded mb-2 clickable-img"
+                  alt="ID Document"
+                  (click)="openFullscreen(v.id_document_url)"
+                />
+                <img
+                  [src]="v.selfie_url"
+                  class="img-fluid rounded mb-2 clickable-img"
+                  alt="Selfie"
+                  (click)="openFullscreen(v.selfie_url)"
+                />
+              </div>
+
+              <!-- Verification Status -->
+              <p class="mb-1">
+                Status:
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'bg-warning text-dark': v.status === 'pending',
+                    'bg-success': v.status === 'verified',
+                    'bg-danger': v.status === 'rejected'
+                  }"
+                >
+                  {{ v.status | titlecase }}
+                </span>
+              </p>
+              <p *ngIf="v.rejection_reason" class="text-danger small mb-2">
+                Reason: {{ v.rejection_reason }}
+              </p>
+
+              <!-- Action Buttons -->
+              <!-- Action Buttons -->
+              <div class="mt-auto d-flex gap-2" *ngIf="v.status === 'pending'">
+                <button class="btn btn-success flex-fill" (click)="approve(v)">Approve</button>
+                <button class="btn btn-danger flex-fill" (click)="reject(v)">Reject</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ng-template #loadingTpl>
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading verifications...</p>
+        </div>
+      </ng-template>
     </section>
+
+    <!-- Fullscreen Modal -->
+    <div class="modal fade" id="fullscreenModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-body p-0 d-flex justify-content-center align-items-center">
+            <img [src]="fullscreenImg" class="img-fluid" />
+          </div>
+          <button
+            type="button"
+            class="btn-close position-absolute top-0 end-0 m-3"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+      </div>
+    </div>
 
     <!-- Shipping -->
     <section *ngIf="activeSection === 'shipping'">

@@ -35,6 +35,7 @@ export class Register {
         if (res.token) {
           localStorage.setItem('swapify_token', res.token);
           localStorage.setItem('email', res.user.email);
+          localStorage.setItem('swapify_user', JSON.stringify(res.user));
         }
         console.log('✅ Registration success:', res);
         this.successMessage.set(

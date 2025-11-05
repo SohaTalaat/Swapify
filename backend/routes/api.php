@@ -69,6 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);
+    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']);//abanoub
+
     // Chats and Messages routes
     Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
     Route::apiResource('chats.messages', MessageController::class)->shallow();
@@ -94,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Subscriptions and ID Verification routes
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
     Route::post('/id-verification', [IDVerificationController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/id-verification', [IDVerificationController::class, 'index']);
 
     // Profile Completion
     Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);
@@ -111,8 +114,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Admin Only Routes for uploaded files
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::get('id-verification/{id}', [AdminIDVerificationController::class, 'show']);
-    Route::post('id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
-    Route::post('id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function () {
+    Route::get('/id-verification', [AdminIDVerificationController::class, 'index']);
+    Route::get('/id-verification/{id}', [AdminIDVerificationController::class, 'show']);
+    Route::post('/id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
+    Route::post('/id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
 });

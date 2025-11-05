@@ -38,14 +38,21 @@ export class Login {
     this.auth.login(this.loginForm.value).subscribe({
       next: (res) => {
         if (res.token) {
-          this.auth.setToken(res.token); // ✅ update login state globally
+          // ✅ حفظ التوكن
+          this.auth.setToken(res.token);
         }
 
-        localStorage.setItem('email', res.user.email);
-        localStorage.setItem('role', res.user.role); // ✅ خزّن الدور
-        this.auth.setToken(res.token);
-        this.auth.setUserData(res.user); // 👈 يحدث الـ header فورًا
+        if (res.user) {
+          // ✅ حفظ بيانات المستخدم العامة
+          this.auth.setUserData(res.user);
 
+          // ✅ حفظ إضافي لكامل بيانات المستخدم في localStorage
+          localStorage.setItem('swapify_user', JSON.stringify(res.user));
+          localStorage.setItem('email', res.user.email);
+          localStorage.setItem('role', res.user.role || '');
+        }
+
+        // ✅ عرض رسالة النجاح والتنقل
         this.successMessage.set('✅ Logged in successfully!');
         this.loginForm.reset();
         this.router.navigate(['/']);
