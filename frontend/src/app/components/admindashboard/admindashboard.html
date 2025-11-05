@@ -1,0 +1,166 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar shadow">
+    <div class="brand"><i class="fa-solid fa-cubes me-2"></i> Swapify Admin</div>
+
+    <ul class="menu list-unstyled">
+      <li [class.active]="activeSection === 'overview'" (click)="setSection('overview')">
+        <i class="fa-solid fa-chart-line me-2"></i> Overview
+      </li>
+      <li [class.active]="activeSection === 'users'" (click)="setSection('users')">
+        <i class="fa-solid fa-users me-2"></i> Manage Users
+      </li>
+      <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
+        <i class="fa-solid fa-tags me-2"></i> Offers
+      </li>
+      <li [class.active]="activeSection === 'content'" (click)="setSection('content')">
+        <i class="fa-solid fa-ban me-2"></i> Content
+      </li>
+      <li [class.active]="activeSection === 'verification'" (click)="setSection('verification')">
+        <i class="fa-solid fa-id-card me-2"></i> Verification
+      </li>
+      <li [class.active]="activeSection === 'shipping'" (click)="setSection('shipping')">
+        <i class="fa-solid fa-truck me-2"></i> Shipping
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <!-- Overview -->
+    <section *ngIf="activeSection === 'overview'">
+      <h3>Overview</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <i class="fa-solid fa-user-check icon"></i>
+          <h5>Active Users</h5>
+          <p>1,243</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-handshake icon"></i>
+          <h5>Completed Barters</h5>
+          <p>563</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-box icon"></i>
+          <h5>Active Items</h5>
+          <p>342</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Users -->
+    <section *ngIf="activeSection === 'users'">
+      <h3>Manage Users</h3>
+      <table class="table table-striped mt-3 shadow-sm">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of users">
+            <td>{{ u.name }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              <span [class]="u.status === 'Active' ? 'badge bg-success' : 'badge bg-danger'">
+                {{ u.status }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" (click)="toggleUserStatus(u)">
+                {{ u.status === 'Active' ? 'Ban' : 'Activate' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Offers -->
+    <section *ngIf="activeSection === 'offers'">
+      <h3>Monitor Offers</h3>
+      <table class="table table-striped mt-3 shadow-sm">
+        <thead class="table-light">
+          <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of offers">
+            <td>{{ o.title }}</td>
+            <td>{{ o.category }}</td>
+            <td>{{ o.status }}</td>
+            <td>{{ o.user }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Content -->
+    <section *ngIf="activeSection === 'content'">
+      <h3>Inappropriate Content</h3>
+      <div
+        *ngFor="let r of reports"
+        class="alert alert-warning d-flex justify-content-between align-items-center mt-3"
+      >
+        <div>
+          <strong>{{ r.content }}</strong> <br />
+          <small>Reported by: {{ r.reporter }}</small>
+        </div>
+        <button class="btn btn-danger btn-sm">Remove</button>
+      </div>
+    </section>
+
+    <!-- Verification -->
+    <section *ngIf="activeSection === 'verification'">
+      <h3>Identity Verification</h3>
+      <div class="row mt-3">
+        <div *ngFor="let v of verifications" class="col-md-6">
+          <div class="card shadow-sm p-3 mb-3">
+            <h6>{{ v.user }}</h6>
+            <img [src]="v.idImage" alt="ID" class="img-fluid rounded mt-2 mb-3" />
+            <div>
+              <button class="btn btn-success btn-sm me-2" (click)="approveVerification(v)">
+                Approve
+              </button>
+              <button class="btn btn-danger btn-sm" (click)="rejectVerification(v)">Reject</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shipping -->
+    <section *ngIf="activeSection === 'shipping'">
+      <h3>Shipping System</h3>
+      <table class="table table-striped mt-3 shadow-sm">
+        <thead class="table-light">
+          <tr>
+            <th>Item</th>
+            <th>User</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of shipments">
+            <td>{{ s.item }}</td>
+            <td>{{ s.user }}</td>
+            <td>
+              <span
+                [class]="s.status === 'Shipped' ? 'badge bg-success' : 'badge bg-warning text-dark'"
+                >{{ s.status }}</span
+              >
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
