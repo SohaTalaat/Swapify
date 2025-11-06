@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\NotificationCreated;
 use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
@@ -13,6 +14,10 @@ class Notification extends Model
         'is_read',
         'related_barter_id',
         'related_user_id'
+    ];
+
+    protected $dispatchesEvents = [
+        'created' => NotificationCreated::class,
     ];
 
     public function user()
@@ -28,11 +33,5 @@ class Notification extends Model
     public function relatedUser()
     {
         return $this->belongsTo(User::class, 'related_user_id');
-    }
-    protected static function booted()
-    {
-        static::created(function ($notification) {
-            event(new \App\Events\UserNotificationCreated($notification));
-        });
     }
 }
