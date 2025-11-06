@@ -1,0 +1,79 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h2 class="text-center mb-4 text-gradient fw-bold">
+          <i class="fa-solid fa-id-card" style="color: #ed5b2b"></i> ID Verification
+        </h2>
+
+        <!-- Status Alert -->
+        <div *ngIf="status" class="mb-3 text-center">
+          <span
+            class="badge fs-6"
+            [ngClass]="{
+              'bg-warning text-dark': status === 'pending',
+              'bg-success': status === 'verified',
+              'bg-danger': status === 'rejected'
+            }"
+          >
+            {{ status | uppercase }}
+          </span>
+          <p *ngIf="rejectionReason" class="text-danger mt-2">
+            Rejection Reason: {{ rejectionReason }}
+          </p>
+          <p *ngIf="message" class="text-success mt-2">{{ message }}</p>
+        </div>
+
+        <!-- Upload Form -->
+        <form
+          *ngIf="['not_submitted', 'rejected'].includes(status)"
+          (ngSubmit)="submit()"
+          class="verification-form p-4 shadow-sm rounded"
+        >
+          <h5 class="fw-bold text-gradient mb-4">Identity Verification</h5>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">ID Document</label>
+            <input
+              type="file"
+              class="form-control form-control-lg"
+              (change)="onFileChange($event, 'id')"
+              accept="image/*"
+            />
+            <div *ngIf="idDocumentPreview" class="mt-3 preview-wrapper">
+              <img [src]="idDocumentPreview" class="img-preview" alt="ID Preview" />
+            </div>
+            <div *ngIf="!idDocumentPreview" class="mt-2 text-center text-muted">
+              <img src="assets/card.png" alt="Sample ID" class="img-placeholder" />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Selfie</label>
+            <input
+              type="file"
+              class="form-control form-control-lg"
+              (change)="onFileChange($event, 'selfie')"
+              accept="image/*"
+            />
+            <div *ngIf="selfiePreview" class="mt-3 preview-wrapper">
+              <img [src]="selfiePreview" class="img-preview" alt="Selfie Preview" />
+            </div>
+            <div *ngIf="!selfiePreview" class="mt-2 text-center text-muted">
+              <img src="assets/self.png" alt="Sample Selfie" class="img-placeholder" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-gradient w-100 btn-lg" [disabled]="loading">
+            <i *ngIf="loading" class="fas fa-spinner fa-spin me-2"></i>
+            {{ loading ? 'Uploading...' : 'Submit Verification' }}
+          </button>
+
+          <p *ngIf="status === 'rejected'" class="mt-3 text-danger fw-semibold">
+            Your previous request was rejected. Please upload new documents.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

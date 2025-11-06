@@ -19,19 +19,26 @@ export class Auth {
   // ✅ استرجاع البيانات من localStorage (تُستدعى مرة واحدة عند تحميل التطبيق)
   restoreUserData() {
     const token = localStorage.getItem('swapify_token');
-    const username = localStorage.getItem('username');
+    const storedUser = localStorage.getItem('swapify_user');
+    const email = localStorage.getItem('email');
     const profileImg = localStorage.getItem('profileImg');
     const role = localStorage.getItem('role');
-    const email = localStorage.getItem('email');
 
     if (token) {
       this.loggedIn.next(true);
-      this.userData.next({
-        username,
-        profile_picture_url: profileImg || 'assets/avatar.png',
-        role,
-        email,
-      });
+
+      if (storedUser) {
+        // ✅ استرجاع المستخدم كامل من localStorage
+        const user = JSON.parse(storedUser);
+        this.userData.next(user);
+      } else {
+        // ✅ fallback بسيط لو مفيش swapify_user
+        this.userData.next({
+          email,
+          profile_picture_url: profileImg || 'assets/avatar.png',
+          role,
+        });
+      }
     } else {
       this.loggedIn.next(false);
       this.userData.next(null);
@@ -67,6 +74,8 @@ export class Auth {
     localStorage.setItem('username', user.username);
     localStorage.setItem('profileImg', user.profile_picture_url || 'assets/avatar.png');
     localStorage.setItem('role', user.role);
+    localStorage.setItem('swapify_user', JSON.stringify(user));
+
     if (user.email) localStorage.setItem('email', user.email);
     this.userData.next(user);
   }
@@ -78,6 +87,8 @@ export class Auth {
     localStorage.removeItem('username');
     localStorage.removeItem('profileImg');
     localStorage.removeItem('role');
+    localStorage.removeItem('swapify_user');
+
     this.loggedIn.next(false);
     this.userData.next(null);
   }

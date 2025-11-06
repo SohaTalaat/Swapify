@@ -75,6 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);
+    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
+
     // Chats and Messages routes
     Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
     Route::apiResource('chats.messages', MessageController::class)->shallow();
@@ -99,6 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Subscriptions
     Route::apiResource('subscriptions', SubscriptionController::class)->only(['index', 'store']);
+    Route::post('/id-verification', [IDVerificationController::class, 'store']);
+    Route::middleware('auth:sanctum')->get('/id-verification', [IDVerificationController::class, 'index']);
 
     // Profile Completion
     Route::post('/profile/complete', [CompleteProfile::class, 'completeProfile']);
@@ -121,10 +125,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Admin Only Routes for uploaded files
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::get('id-verifications', [AdminIDVerificationController::class, 'index']);
-    Route::get('id-verifications/{id}', [AdminIDVerificationController::class, 'show']);
-    Route::post('id-verifications/{id}/approve', [AdminIDVerificationController::class, 'approve']);
-    Route::post('id-verifications/{id}/reject', [AdminIDVerificationController::class, 'reject']);
+    Route::get('/id-verification', [AdminIDVerificationController::class, 'index']);
+    Route::get('/id-verification/{id}', [AdminIDVerificationController::class, 'show']);
+    Route::post('/id-verification/{id}/approve', [AdminIDVerificationController::class, 'approve']);
+    Route::post('/id-verification/{id}/reject', [AdminIDVerificationController::class, 'reject']);
 
     //Overview page
     Route::get('/overview', [AdminController::class, 'overview']);
@@ -138,13 +142,17 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/listings', [AdminListingController::class, 'index']);
     Route::patch('/listings/{id}/toggle', [AdminListingController::class, 'toggleStatus']);
 
-    //Content
-    Route::get('/reports', [AdminReportController::class, 'index']);
-    Route::patch('/reports/{id}/remove', [AdminReportController::class, 'removeOffer']);
-    Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']);
-
     // Shipment
     Route::get('/shipments', [AdminShipmentController::class, 'index']);
     Route::patch('/shipments/{id}/status', [AdminShipmentController::class, 'updateStatus']);
     Route::post('/shipments/{id}/upload-photo', [AdminShipmentController::class, 'uploadPhoto']);
+
+    // Content
+    Route::get('/reports', [AdminReportController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/reports', [ReportController::class, 'store']); //abanoub
+    Route::get('/admin/reports', [AdminReportController::class, 'index']); //abanoub
+    Route::patch('/admin/reports/{id}/remove', [AdminReportController::class, 'removeOffer']); //abanoub
+    Route::patch('/admin/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']); //abanoub
+
+
 });

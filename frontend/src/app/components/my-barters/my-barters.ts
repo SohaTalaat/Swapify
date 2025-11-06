@@ -38,8 +38,8 @@ export class MyBarters implements OnInit {
   private formatBarter(barter: Barter): BarterViewModel {
     const currentUserId = this.getCurrentUserId();
     const partner = barter.participants.find((p) => p.id !== currentUserId);
-    const myListing = barter.listings.find((l) => l.owner_user_id === currentUserId);
-    const theirListing = barter.listings.find((l) => l.owner_user_id !== currentUserId);
+    const myListing = barter.listings.find((l) => l.pivot.owner_user_id === currentUserId);
+    const theirListing = barter.listings.find((l) => l.pivot.owner_user_id !== currentUserId);
 
     const title =
       myListing && theirListing ? `${myListing.title} to ${theirListing.title}` : 'Barter Exchange';

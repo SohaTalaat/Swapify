@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Barter\StoreBarterRequest;
 use App\Http\Requests\Barter\UpdateBarterRequest;
 use App\Models\Shipment;
+use Illuminate\Http\Request;
 
 class BarterController extends Controller
 {
@@ -18,13 +19,18 @@ class BarterController extends Controller
     {
         return Auth::user()
             ->bartersAsParticipant()
-            ->with(['participants:id,username', 'listings:id,title'])
+            ->with([
+                'participants:id,username',
+                'listings' => function ($query) {
+                    $query->select('listings.id', 'listings.title')
+                        ->withPivot('owner_user_id')
+                        ->with('images:id,listing_id,image_url');
+                },
+            ])
             ->latest()
             ->get();
     }
 
-    /**
-     */
     public function store(StoreBarterRequest $request)
     {
         $data = $request->validated();
@@ -47,7 +53,14 @@ class BarterController extends Controller
             'owner_user_id' => $data['receiver_id'],
         ]);
 
-        return $barter->load(['participants:id,username', 'listings:id,title']);
+        return $barter->load([
+            'participants:id,username',
+            'listings' => function ($query) {
+                $query->select('listings.id', 'listings.title')
+                    ->withPivot('owner_user_id')
+                    ->with('images:id,listing_id,image_url');
+            },
+        ]);
     }
 
     /**
@@ -56,12 +69,18 @@ class BarterController extends Controller
     {
         return $barter->load([
             'participants:id,username',
-            'listings:id,title',
+            'listings' => function ($query) {
+                $query->select('listings.id', 'listings.title')
+                    ->withPivot('owner_user_id') // ✅ نجيب بيانات pivot
+                    ->with('images:id,listing_id,image_url');
+            },
             'shippingAddress',
-            'chat',
+            'chat.messages.user:id,username',
             'reviews',
         ]);
     }
+
+
 
     /**
      */
@@ -84,5 +103,21 @@ class BarterController extends Controller
     {
         $barter->delete();
         return response('', 204);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:proposed,accepted,completed,cancelled',
+        ]);
+
+        $barter = Barter::findOrFail($id);
+        $barter->status = $request->status;
+        $barter->save();
+
+        return response()->json([
+            'message' => 'Barter status updated successfully',
+            'barter' => $barter,
+        ]);
     }
 }

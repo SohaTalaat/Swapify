@@ -4,7 +4,7 @@
 }
 
 .offer-img {
-  max-width: 100%;
+  width: 500px;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   transition: transform 0.4s ease;

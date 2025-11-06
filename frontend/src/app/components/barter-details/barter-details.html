@@ -1,49 +1,44 @@
-<!-- src/app/components/barter-details/barter-details.html -->
 <div class="barter-details py-5">
   <div class="container">
-    <h2 class="fw-bold mb-4 text-center">Barter Details</h2>
+    <h2 class="fw-bold mb-4 text-center text-gradient">🤝 Barter Details</h2>
 
-    <!-- Loading -->
+    <!-- 🌀 Loading -->
     <div *ngIf="isLoading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- Content -->
+    <!-- ✅ Content -->
     <div *ngIf="!isLoading && viewModel">
-      <div class="row">
-        <!-- Your Offer -->
+      <div class="row g-4">
+        <!-- 🟦 Your Offer -->
         <div class="col-md-6">
-          <div class="card p-3 mb-3 shadow-sm">
-            <h5 class="text-primary">Your Offer</h5>
-            <img
-              [src]="viewModel.yourOffer.image"
-              class="img-fluid rounded mb-2"
-              alt="Your offer"
-            />
-            <p class="fw-semibold">{{ viewModel.yourOffer.title }}</p>
+          <div class="card offer-card shadow-sm">
+            <h5 class="text-primary mb-3 border-bottom pb-2">Your Offer</h5>
+            <div class="image-container">
+              <img [src]="viewModel.yourOffer.image" class="offer-image" alt="Your offer" />
+            </div>
+            <p class="fw-semibold text-center mt-3">{{ viewModel.yourOffer.title }}</p>
           </div>
         </div>
 
-        <!-- Partner's Offer -->
+        <!-- 🟩 Partner's Offer -->
         <div class="col-md-6">
-          <div class="card p-3 mb-3 shadow-sm">
-            <h5 class="text-success">Offer from {{ viewModel.partner }}</h5>
-            <img
-              [src]="viewModel.partnerOffer.image"
-              class="img-fluid rounded mb-2"
-              alt="Partner offer"
-            />
-            <p class="fw-semibold">{{ viewModel.partnerOffer.title }}</p>
+          <div class="card offer-card shadow-sm">
+            <h5 class="text-success mb-3 border-bottom pb-2">Offer from {{ viewModel.partner }}</h5>
+            <div class="image-container">
+              <img [src]="viewModel.partnerOffer.image" class="offer-image" alt="Partner offer" />
+            </div>
+            <p class="fw-semibold text-center mt-3">{{ viewModel.partnerOffer.title }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Status -->
+      <!-- 🔵 Status -->
       <div class="status mt-4 text-center">
         <span
-          class="badge fs-5 px-4 py-2"
+          class="badge fs-5 px-4 py-2 status-badge"
           [ngClass]="{
             'bg-success': viewModel.status === 'Completed',
             'bg-warning text-dark':
@@ -54,40 +49,58 @@
         >
           {{ viewModel.status }}
         </span>
-      </div>
-
-      <!-- Chat Section -->
-      <div class="chat-section mt-5">
-        <h5 class="mb-3">Messages</h5>
-        <div class="chat-box p-3 mb-3 shadow-sm bg-light" style="height: 300px; overflow-y: auto">
-          <div
-            *ngFor="let msg of viewModel.messages"
-            class="mb-2 d-flex"
-            [ngClass]="msg.sender === 'You' ? 'justify-content-end' : 'justify-content-start'"
-          >
-            <div
-              class="p-2 rounded"
-              [ngClass]="msg.sender === 'You' ? 'bg-primary text-white' : 'bg-secondary text-white'"
-              style="max-width: 70%"
-            >
-              <small class="d-block fw-bold">{{ msg.sender }}</small>
-              <span>{{ msg.text }}</span>
-              <small class="d-block text-end opacity-75">{{ msg.time }}</small>
-            </div>
-          </div>
+        <!-- 🟢 الأزرار الديناميكية -->
+        <!-- 🔴 يظهر فقط للـ offering -->
+        <div
+          class="text-center mt-4"
+          *ngIf="viewModel.role === 'offering' && viewModel.status === 'Pending'"
+        >
+          <button class="btn btn-danger" (click)="deleteBarter()">Cancel</button>
         </div>
 
-        <div class="input-group">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Type a message..."
-            [(ngModel)]="newMessage"
-            (keydown.enter)="sendMessage()"
-          />
-          <button class="btn btn-gradient" (click)="sendMessage()" [disabled]="!newMessage.trim()">
-            Send
-          </button>
+        <!-- 🟢 يظهر فقط للـ requesting -->
+        <div
+          class="text-center mt-4"
+          *ngIf="viewModel.role === 'requesting' && viewModel.status === 'Pending'"
+        >
+          <button class="btn btn-gradient me-2" (click)="updateStatus('Ongoing')">Accept</button>
+          <button class="btn btn-danger" (click)="updateStatus('Cancelled')">Reject</button>
+        </div>
+
+        <!-- 💬 Chat Section -->
+        <div class="chat-section mt-5">
+          <h5 class="mb-3 fw-semibold text-gradient">💬 Messages</h5>
+          <div class="chat-box p-3 mb-3 shadow-sm">
+            <div
+              *ngFor="let msg of viewModel.messages"
+              class="mb-3 d-flex"
+              [ngClass]="msg.sender === 'You' ? 'justify-content-end' : 'justify-content-start'"
+            >
+              <div class="chat-bubble" [ngClass]="msg.sender === 'You' ? 'me' : 'partner'">
+                <small class="d-block fw-bold mb-1">{{ msg.sender }}</small>
+                <span>{{ msg.text }}</span>
+                <small class="d-block text-end opacity-75 mt-1">{{ msg.time }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✏️ Input -->
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control rounded-start-pill"
+              placeholder="Type a message..."
+              [(ngModel)]="newMessage"
+              (keydown.enter)="sendMessage()"
+            />
+            <button
+              class="btn btn-gradient rounded-end-pill px-4"
+              (click)="sendMessage()"
+              [disabled]="!newMessage.trim()"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
