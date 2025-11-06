@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Payment;
+use App\Models\Subscription;
+use App\Models\User;
 
 class PaymobController extends Controller
 {
@@ -108,84 +110,171 @@ class PaymobController extends Controller
      */
     public function callback(Request $request)
     {
-        Log::info('Paymob Callback', $request->all());
+        Log::info('📩 Paymob Callback Received', $request->all());
 
-        if ($request->has('obj') && isset($request->obj['success']) && $request->obj['success'] == true) {
-            Payment::create([
-                'user_id' => $request->obj['order']['merchant_order_id'] ?? null,
-                'method' => 'paymob',
-                'amount' => $request->obj['amount_cents'] / 100,
-                'currency' => $request->obj['currency'],
-                'status' => 'success',
-                'transaction_id' => $request->obj['id'],
-                'details' => json_encode($request->obj ?? $request->all())
+        // If GET, just show success page for frontend
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'message' => 'Thank you! Payment completed successfully.'
             ]);
-
-            return response()->json(['message' => 'Payment successful']);
         }
 
-        return response()->json(['error' => 'Payment failed']);
-    }
+        try {
+            if ($request->has('obj') && isset($request->obj['success']) && $request->obj['success'] == true) {
 
-    /**
-     * 🔹 Step 3: Webhook for server-to-server notification (secure)
-     */
-    public function webhook(Request $request)
-    {
-        Log::info('Paymob Webhook Triggered', $request->all());
+                // Extract user ID from merchant_order_id (e.g., "5_1730756700")
+                $merchantOrderId = $request->obj['order']['merchant_order_id'] ?? null;
+                $userId = $merchantOrderId ? explode('_', $merchantOrderId)[0] : null;
 
-        // Validate HMAC
-        $receivedHmac = $request->input('hmac');
-        $calculatedHmac = hash_hmac('sha512', $this->generateHmacString($request->obj), env('PAYMOB_HMAC'));
-
-        if ($receivedHmac !== $calculatedHmac) {
-            Log::warning('Invalid HMAC signature from Paymob');
-            return response()->json(['error' => 'Invalid signature'], 401);
-        }
-
-        // Save payment info
-        if ($request->obj['success'] === true) {
-            Payment::updateOrCreate(
-                ['transaction_id' => $request->obj['id']],
-                [
-                    'user_id' => $request->obj['order']['merchant_order_id'] ?? null,
+                Payment::create([
+                    'user_id' => $userId,
                     'method' => 'paymob',
                     'amount' => $request->obj['amount_cents'] / 100,
                     'currency' => $request->obj['currency'],
                     'status' => 'success',
-                    'details' => json_encode($request->obj ?? $request->all())
+                    'transaction_id' => $request->obj['id'],
+                    'details' => json_encode($request->all())
+                ]);
+
+                // Optionally activate subscription
+                $user = User::find($userId);
+                if ($user) {
+                    Subscription::updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'tier' => 'pro', // or detect based on amount
+                            'start_date' => now(),
+                            'end_date' => now()->addMonth(),
+                            'payment_method' => 'paymob',
+                            'is_active' => true,
+                        ]
+                    );
+                }
+
+                return response()->json(['message' => 'Payment successful']);
+            }
+
+            Log::warning('⚠️ Paymob Callback - Payment failed', $request->all());
+            return response()->json(['error' => 'Payment failed']);
+        } catch (\Exception $e) {
+            Log::error('❌ Paymob Callback Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Callback processing failed'], 500);
+        }
+    }
+
+    /**
+     *  Step 3: Webhook for server-to-server notification (secure)
+     */
+    public function webhook(Request $request)
+    {
+        Log::info('📡 Paymob Webhook Triggered', $request->all());
+
+        $receivedHmac = $request->input('hmac');
+        $obj = $request->input('obj', []);
+        $type = $request->input('type', 'unknown');
+
+        // ✅ Choose data to concatenate based on webhook type
+        $concatenatedString = '';
+
+        if ($type === 'TRANSACTION' && isset($obj['order'])) {
+            $concatenatedString =
+                $obj['amount_cents'] .
+                $obj['created_at'] .
+                $obj['currency'] .
+                ($obj['error_occured'] ? 'true' : 'false') .
+                ($obj['has_parent_transaction'] ? 'true' : 'false') .
+                $obj['id'] .
+                $obj['integration_id'] .
+                ($obj['is_3d_secure'] ? 'true' : 'false') .
+                ($obj['is_auth'] ? 'true' : 'false') .
+                ($obj['is_capture'] ? 'true' : 'false') .
+                ($obj['is_refunded'] ? 'true' : 'false') .
+                ($obj['is_standalone_payment'] ? 'true' : 'false') .
+                ($obj['is_voided'] ? 'true' : 'false') .
+                $obj['order']['id'] .
+                $obj['owner'] .
+                ($obj['pending'] ? 'true' : 'false') .
+                $obj['source_data_pan'] .
+                $obj['source_data_sub_type'] .
+                ($obj['success'] ? 'true' : 'false');
+        } elseif ($type === 'TOKEN') {
+            // Token webhooks use a different payload
+            $concatenatedString =
+                $obj['id'] .
+                $obj['created_at'] .
+                $obj['email'] .
+                $obj['merchant_id'] .
+                $obj['masked_pan'] .
+                $obj['token'];
+        }
+
+        $calculatedHmac = hash_hmac('sha512', $concatenatedString, env('PAYMOB_HMAC'));
+
+        if ($receivedHmac !== $calculatedHmac) {
+            Log::warning('🚫 Invalid HMAC signature received', [
+                'received' => $receivedHmac,
+                'calculated' => $calculatedHmac,
+            ]);
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+
+        // ✅ Log success
+        Log::info('✅ Valid HMAC verified for webhook type: ' . $type);
+
+        // If it’s a transaction success, record it in DB
+        if ($type === 'TRANSACTION' && ($obj['success'] ?? false)) {
+            Payment::updateOrCreate(
+                ['transaction_id' => $obj['id']],
+                [
+                    'user_id' => $obj['order']['merchant_order_id'] ?? null,
+                    'method' => 'paymob',
+                    'amount' => $obj['amount_cents'] / 100,
+                    'currency' => $obj['currency'],
+                    'status' => 'success',
+                    'details' => json_encode($obj)
                 ]
             );
-        } else {
-            Log::warning('Payment failed', $request->all());
         }
 
         return response()->json(['status' => 'received']);
     }
 
+
+
     /**
-     * 🔹 Helper: Generate HMAC validation string
+     *  Helper: Generate HMAC validation string
      */
     private function generateHmacString($obj)
     {
-        return $obj['amount_cents'] .
-            $obj['created_at'] .
-            $obj['currency'] .
-            $obj['error_occured'] .
-            $obj['has_parent_transaction'] .
-            $obj['id'] .
-            $obj['integration_id'] .
-            $obj['is_3d_secure'] .
-            $obj['is_auth'] .
-            $obj['is_capture'] .
-            $obj['is_refunded'] .
-            $obj['is_standalone_payment'] .
-            $obj['is_voided'] .
-            $obj['order']['id'] .
-            $obj['owner'] .
-            $obj['pending'] .
-            $obj['source_data_pan'] .
-            $obj['source_data_sub_type'] .
-            $obj['success'];
+        $keys = [
+            'amount_cents',
+            'created_at',
+            'currency',
+            'error_occured',
+            'has_parent_transaction',
+            'id',
+            'integration_id',
+            'is_3d_secure',
+            'is_auth',
+            'is_capture',
+            'is_refunded',
+            'is_standalone_payment',
+            'is_voided',
+            'order.id',
+            'owner',
+            'pending',
+            'source_data.pan',
+            'source_data.sub_type',
+            'success'
+        ];
+
+        $concatenated = '';
+
+        foreach ($keys as $key) {
+            $value = data_get($obj, $key, '');
+            $concatenated .= $value;
+        }
+
+        return $concatenated;
     }
 }

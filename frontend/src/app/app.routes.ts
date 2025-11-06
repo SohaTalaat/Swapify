@@ -27,6 +27,7 @@ import { UpdateProfile } from './components/update-profile/update-profile';
 import { Verification } from './components/verification/verification';
 import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Admindashboard } from './components/admindashboard/admindashboard';
+import { Subscription } from './components/subscription/subscription';
 
 export const routes: Routes = [
   // Public routes
@@ -60,6 +61,10 @@ export const routes: Routes = [
   { path: 'update-profile', component: UpdateProfile, canActivate: [authGuard] },
 
   { path: 'id-verification', component: Verification, canActivate: [authGuard] },
+
+  //Subscriptions
+  { path: 'subscription', component: Subscription },
+
 
   // Admin
   { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },

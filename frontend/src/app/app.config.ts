@@ -13,19 +13,15 @@
 
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http'; // ✅ لإضافة HttpClient
-
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // ✅ معالجة الأخطاء على مستوى التطبيق
     provideBrowserGlobalErrorListeners(),
 
-    // ✅ تفعيل نظام التوجيه (Routing)
     provideRouter(routes),
 
-    // ✅ تفعيل HttpClient بدون HttpClientModule (البديل الحديث)
     provideHttpClient(withFetch()),
   ],
 };

@@ -54,6 +54,10 @@ Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
 Route::get('/password/reset', [AuthController::class, 'showResetForm']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 
+// Payment callback
+Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
+Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
+
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -112,8 +116,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment
     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
-    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
-    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 
     //Report
     Route::post('/reports', [ReportController::class, 'store']);

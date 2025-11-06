@@ -1,0 +1,42 @@
+.subscription-container {
+  background-color: #fafafa;
+  min-height: 100vh;
+}
+
+.plan-card {
+  border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary-custom {
+  background-color: #ee6931;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-primary-custom:hover {
+  background-color: #d65c29;
+}
+
+.btn-outline-custom {
+  border: 2px solid #ee6931;
+  color: #ee6931;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-outline-custom:hover {
+  background-color: #ee6931;
+  color: white;
+}
+
+.text-primary {
+  color: #ee6931 !important;
+}

@@ -11,10 +11,9 @@ import { Auth } from './services/auth';
   styleUrl: './app.css',
 })
 export class App {
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth) { }
 
   ngOnInit() {
-    // ✅ تأكيد حالة تسجيل الدخول عند تشغيل التطبيق
     this.auth.checkAuthStatus();
   }
 }
