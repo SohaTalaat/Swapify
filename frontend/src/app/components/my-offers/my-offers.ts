@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Offer } from '../../services/offer';
+
 @Component({
   selector: 'app-my-offers',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './my-offers.html',
   styleUrl: './my-offers.css',
 })
