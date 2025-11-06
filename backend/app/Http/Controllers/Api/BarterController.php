@@ -71,7 +71,7 @@ class BarterController extends Controller
             'participants:id,username',
             'listings' => function ($query) {
                 $query->select('listings.id', 'listings.title')
-                    ->withPivot('owner_user_id') // ✅ نجيب بيانات pivot
+                    ->withPivot('owner_user_id')
                     ->with('images:id,listing_id,image_url');
             },
             'shippingAddress',
@@ -82,8 +82,7 @@ class BarterController extends Controller
 
 
 
-    /**
-     */
+
     public function update(UpdateBarterRequest $request, Barter $barter)
     {
         $barter->update($request->validated());
@@ -97,8 +96,6 @@ class BarterController extends Controller
         return $barter;
     }
 
-    /**
-     */
     public function destroy(Barter $barter)
     {
         $barter->delete();

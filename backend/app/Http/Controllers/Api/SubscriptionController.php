@@ -39,24 +39,35 @@ class SubscriptionController extends Controller
     {
         $data = $request->validated();
 
+        // Determine barter limit based on plan
+        $limits = [
+            'free' => 2,
+            'basic' => 5,
+            'pro' => 10
+        ];
+
+        $tier = strtolower($data['tier']);
+        $barterLimit = $limits[$tier] ?? 2;
+
         $subscription = Subscription::updateOrCreate(
             ['user_id' => Auth::id()],
             [
-                'tier' => $data['tier'],
-                'start_date' => Carbon::now(),
-                'end_date' => Carbon::now()->addMonth(),
+                'tier' => $tier,
+                'start_date' => now(),
+                'end_date' => now()->addMonth(),
                 'payment_method' => $data['payment_method'] ?? 'manual',
+                'barter_limit' => $barterLimit,
+                'barters_used' => 0,
                 'is_active' => true,
             ]
         );
 
-        // Update user’s tier in the users table as well
-        $user = Auth::user();
-        $user->update(['subscription_tier' => $subscription->tier]);
+        // Update user's tier
+        Auth::user()->update(['subscription_tier' => $tier]);
 
         return response()->json([
             'message' => 'Subscription updated successfully',
             'subscription' => $subscription
-        ], 201);
+        ]);
     }
 }

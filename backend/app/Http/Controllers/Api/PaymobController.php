@@ -21,7 +21,7 @@ class PaymobController extends Controller
     }
 
     /**
-     * 🔹 Step 1: Initialize payment (Card or Wallet)
+     * Step 1: Initialize payment (Card or Wallet)
      */
     public function initPayment(Request $request)
     {
@@ -63,7 +63,7 @@ class PaymobController extends Controller
                     "apartment" => "NA",
                     "email" => $request->user()->email,
                     "floor" => "NA",
-                    "first_name" => $request->user()->name ?? 'User',
+                    "first_name" => $request->user()->full_name ?? $request->user()->username ?? 'User',
                     "street" => "NA",
                     "building" => "NA",
                     "phone_number" => $request->user()->phone ?? "01000000000",
@@ -71,7 +71,7 @@ class PaymobController extends Controller
                     "postal_code" => "NA",
                     "city" => "Cairo",
                     "country" => "EG",
-                    "last_name" => $request->user()->name ?? 'User',
+                    "last_name" => $request->user()->full_name ?? $request->user()->username ?? 'User',
                     "state" => "NA"
                 ],
                 'currency' => env('PAYMOB_CURRENCY', 'EGP'),
@@ -104,7 +104,7 @@ class PaymobController extends Controller
     }
 
     /**
-     * 🔹 Step 2: Callback from Paymob (after payment)
+     *  Step 2: Callback from Paymob (after payment)
      */
     public function callback(Request $request)
     {
@@ -112,13 +112,13 @@ class PaymobController extends Controller
 
         if ($request->has('obj') && isset($request->obj['success']) && $request->obj['success'] == true) {
             Payment::create([
-                'user_id' => Auth::id(),
+                'user_id' => $request->obj['order']['merchant_order_id'] ?? null,
                 'method' => 'paymob',
                 'amount' => $request->obj['amount_cents'] / 100,
                 'currency' => $request->obj['currency'],
                 'status' => 'success',
                 'transaction_id' => $request->obj['id'],
-                'details' => json_encode($request->all())
+                'details' => json_encode($request->obj ?? $request->all())
             ]);
 
             return response()->json(['message' => 'Payment successful']);
@@ -135,7 +135,7 @@ class PaymobController extends Controller
         Log::info('Paymob Webhook Triggered', $request->all());
 
         // Validate HMAC
-        $receivedHmac = $request->query('hmac') ?? $request->header('hmac');
+        $receivedHmac = $request->input('hmac');
         $calculatedHmac = hash_hmac('sha512', $this->generateHmacString($request->obj), env('PAYMOB_HMAC'));
 
         if ($receivedHmac !== $calculatedHmac) {
@@ -153,7 +153,7 @@ class PaymobController extends Controller
                     'amount' => $request->obj['amount_cents'] / 100,
                     'currency' => $request->obj['currency'],
                     'status' => 'success',
-                    'details' => json_encode($request->all())
+                    'details' => json_encode($request->obj ?? $request->all())
                 ]
             );
         } else {

@@ -72,10 +72,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('listings', ListingController::class);
     Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
     Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
-    //Barters routes
-
-    Route::apiResource('barters', BarterController::class);
-    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 
     // Chats and Messages routes
     Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
@@ -149,10 +145,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     // Content
     Route::get('/reports', [AdminReportController::class, 'index']);
-    Route::middleware('auth:sanctum')->post('/reports', [ReportController::class, 'store']); //abanoub
-    Route::get('/admin/reports', [AdminReportController::class, 'index']); //abanoub
-    Route::patch('/admin/reports/{id}/remove', [AdminReportController::class, 'removeOffer']); //abanoub
-    Route::patch('/admin/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']); //abanoub
+    Route::patch('/reports/{id}/remove', [AdminReportController::class, 'removeOffer']); //abanoub
+    Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']); //abanoub
 
 
+});
+
+// Barter routes
+Route::middleware(['auth:sanctum', 'checkBarterLimit'])->group(function () {
+    Route::apiResource('barters', BarterController::class);
+    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 });
