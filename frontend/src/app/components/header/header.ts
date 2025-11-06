@@ -1,3 +1,4 @@
+// src/app/components/header/header.ts
 import { Component, OnInit, NgZone } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -11,6 +12,7 @@ import { Auth } from '../../services/auth';
 })
 export class Header implements OnInit {
   isLoggedIn = false;
+  isAdmin = false; // ✅ Add this line
   username: string | null = null;
   profileImg: string | null = null;
   showNotifications = false;
@@ -64,6 +66,9 @@ export class Header implements OnInit {
     const token = localStorage.getItem('swapify_token');
     this.isLoggedIn = !!token;
 
+    const userRole = localStorage.getItem('role'); // ✅ Get user role
+    this.isAdmin = userRole === 'admin'; // ✅ Check if admin
+
     const user = {
       username: localStorage.getItem('username'),
       profileImg: localStorage.getItem('profileImg'),
@@ -77,9 +82,11 @@ export class Header implements OnInit {
       if (userData) {
         this.username = userData.username;
         this.profileImg = userData.profile_picture_url || 'assets/avatar.png';
+        this.isAdmin = userData.role === 'admin'; // ✅ Live update if admin
       } else {
         this.username = null;
         this.profileImg = null;
+        this.isAdmin = false;
       }
     });
 
@@ -91,11 +98,13 @@ export class Header implements OnInit {
       next: () => {
         this.auth.clearToken();
         this.username = null;
+        this.isAdmin = false;
         this.router.navigate(['/login']);
       },
       error: () => {
         this.auth.clearToken();
         this.username = null;
+        this.isAdmin = false;
         this.router.navigate(['/login']);
       },
     });
