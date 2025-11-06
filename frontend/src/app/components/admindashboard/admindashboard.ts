@@ -1,22 +1,15 @@
-
-
-
 import { Component, OnInit } from '@angular/core';
 
 import { AdminService } from '../../services/admin';
 
 @Component({
-
   selector: 'app-admindashboard',
 
   templateUrl: './admindashboard.html',
 
-  styleUrls: ['./admindashboard.css']
-
+  styleUrls: ['./admindashboard.css'],
 })
-
 export class Admindashboard implements OnInit {
-
   activeSection = 'overview';
 
   users = [
@@ -47,165 +40,88 @@ export class Admindashboard implements OnInit {
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {
-
     this.loadOverview();
-
   }
 
   setSection(section: string) {
-
     this.activeSection = section;
 
     if (section === 'users') {
-
       this.loadUsers();
-
     } else if (section === 'offers') {
-
       this.loadOffers();
-
     } else if (section === 'content') {
-
       this.loadReports();
-
     } else if (section === 'verification') {
-
       this.loadVerifications();
-
     } else if (section === 'shipping') {
-
       this.loadShipments();
-
     }
-
   }
 
   loadOverview() {
-
-    this.adminService.getOverview().subscribe(data => {
-
+    this.adminService.getOverview().subscribe((data) => {
       // Handle overview data if needed
-
       // For now, your static data is used
-
     });
-
   }
 
   loadUsers() {
-
-    this.adminService.getUsers().subscribe(data => {
-
+    this.adminService.getUsers().subscribe((data) => {
       this.users = data;
-
     });
-
   }
 
   toggleUserStatus(user: any) {
-
     if (user.status === 'Active') {
-
       this.adminService.banUser(user.id).subscribe(() => {
-
         user.status = 'Banned';
-
       });
-
     } else {
-
       this.adminService.activateUser(user.id).subscribe(() => {
-
         user.status = 'Active';
-
       });
-
     }
-
   }
 
   loadOffers() {
-
-    this.adminService.getListings().subscribe(data => {
-
+    this.adminService.getListings().subscribe((data) => {
       this.offers = data;
-
     });
-
   }
 
   loadReports() {
-
-    this.adminService.getReports().subscribe(data => {
-
+    this.adminService.getReports().subscribe((data) => {
       this.reports = data;
-
     });
-
   }
 
   removeReport(report: any) {
-
     this.adminService.removeReport(report.id).subscribe(() => {
-
-      this.reports = this.reports.filter(r => r.id !== report.id);
-
+      this.reports = this.reports.filter((r) => r.id !== report.id);
     });
-
   }
 
   loadVerifications() {
-
     // Your existing data for verifications
-
     // Possibly fetch from API if needed
-
   }
 
   approveVerification(verification: any) {
-
     this.adminService.approveVerification(verification.id).subscribe(() => {
-
       verification.status = 'Approved';
-
     });
-
   }
 
   rejectVerification(verification: any) {
-
     this.adminService.rejectVerification(verification.id).subscribe(() => {
-
       verification.status = 'Rejected';
-
     });
-
   }
 
   loadShipments() {
-
-    this.adminService.getShipments().subscribe(data => {
-
+    this.adminService.getShipments().subscribe((data) => {
       this.shipments = data;
-
     });
-
   }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

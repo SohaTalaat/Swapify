@@ -26,6 +26,25 @@
           <button class="btn btn-outline-secondary">
             <i class="fa-solid fa-comment-dots me-2"></i>Message Owner
           </button>
+          <!-- زر الإبلاغ عن العرض -->
+          <div class="mt-3">
+            <button class="btn btn-outline-danger" (click)="showReportForm = true">
+              <i class="fa-solid fa-flag me-2"></i>Report Offer
+            </button>
+          </div>
+
+          <!-- نموذج كتابة سبب الإبلاغ -->
+          <div *ngIf="showReportForm" class="mt-3 p-3 border rounded bg-light">
+            <h5>Report this offer</h5>
+            <textarea
+              class="form-control mb-2"
+              rows="3"
+              placeholder="Enter reason..."
+              [(ngModel)]="reportReason"
+            ></textarea>
+            <button class="btn btn-danger me-2" (click)="submitReport()">Submit</button>
+            <button class="btn btn-secondary" (click)="showReportForm = false">Cancel</button>
+          </div>
         </div>
       </div>
     </div>

@@ -2,7 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IdVerification } from '../../services/id-verification';
+import { AdminReport } from '../../services/admin-report';
 declare var bootstrap: any;
+
+interface ReportItem {
+  id: number;
+  listing_title: string;
+  reported_by: string;
+  reason: string;
+  status: string;
+  created_at?: string;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -11,39 +21,23 @@ declare var bootstrap: any;
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css'],
 })
-export class AdminDashboard {
+export class AdminDashboard implements OnInit {
   activeSection = 'overview';
   verifications: any[] = [];
-  users = [
-    { id: 1, name: 'Ali Hassan', email: 'ali@example.com', status: 'Active' },
-    { id: 2, name: 'Sara Ahmed', email: 'sara@example.com', status: 'Banned' },
-  ];
-  reports = [
-    { id: 1, content: 'Offensive image in offer #2', reporter: 'User 12' },
-    { id: 2, content: 'Spam post in barter section', reporter: 'User 45' },
-  ];
-  offers = [
-    { id: 1, title: 'Logo Design', category: 'Service', status: 'Active', user: 'Ali Hassan' },
-    { id: 2, title: 'Used iPhone', category: 'Product', status: 'Pending', user: 'Sara Ahmed' },
-  ];
-
-  shipments = [
-    { id: 1, item: 'Bluetooth Speaker', user: 'Ali Hassan', status: 'Shipped' },
-    { id: 2, item: 'Laptop Bag', user: 'Sara Ahmed', status: 'Pending' },
-  ];
+  reports: ReportItem[] = [];
   loading = false;
 
-  constructor(private idService: IdVerification) {}
+  constructor(private idService: IdVerification, private reportService: AdminReport) {}
 
   ngOnInit() {
     this.loadVerifications();
+    this.loadReports();
   }
 
   setSection(section: string) {
     this.activeSection = section;
-    if (section === 'verification') {
-      this.loadVerifications();
-    }
+    if (section === 'verification') this.loadVerifications();
+    else if (section === 'content') this.loadReports();
   }
 
   loadVerifications() {
@@ -53,7 +47,7 @@ export class AdminDashboard {
         this.verifications = res;
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load verifications', err);
         this.loading = false;
       },
@@ -63,7 +57,7 @@ export class AdminDashboard {
   approve(v: any) {
     this.idService.approve(v.id).subscribe({
       next: () => (v.status = 'verified'),
-      error: (err) => console.error(err),
+      error: (err: any) => console.error(err),
     });
   }
 
@@ -76,17 +70,53 @@ export class AdminDashboard {
         v.status = 'rejected';
         v.rejection_reason = reason;
       },
-      error: (err) => console.error(err),
+      error: (err: any) => console.error(err),
     });
   }
+
+  loadReports() {
+    this.loading = true;
+    this.reportService.getReports().subscribe({
+      next: (res: any) => {
+        this.reports = res.data as ReportItem[];
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load reports', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  dismissReport(r: any) {
+    this.reportService.dismissReport(r.id).subscribe({
+      next: () => {
+        r.status = 'reviewed'; // تغيير الحالة محليًا
+        // بمجرد تغيير الحالة، الخلفية وظهور الأزرار يتحدث تلقائيًا
+      },
+      error: (err: any) => console.error(err),
+    });
+  }
+
+  removeReport(r: any) {
+    if (!confirm('Are you sure you want to remove this offer?')) return;
+
+    this.reportService.removeOffer(r.id).subscribe({
+      next: () => {
+        r.status = 'removed'; // يمكن أيضًا حذفه من المصفوفة إذا تريد اختفاء العنصر
+        this.reports = this.reports.filter((rep) => rep.id !== r.id); // إزالة العنصر من الصفحة
+      },
+      error: (err: any) => console.error(err),
+    });
+  }
+
   toggleUserStatus(u: any) {
     u.status = u.status === 'Active' ? 'Banned' : 'Active';
   }
-  fullscreenImg: string = '';
 
+  fullscreenImg: string = '';
   openFullscreen(url: string) {
     this.fullscreenImg = url;
-    // فتح المودال
     const modalElement = document.getElementById('fullscreenModal');
     const modal = new bootstrap.Modal(modalElement!);
     modal.show();

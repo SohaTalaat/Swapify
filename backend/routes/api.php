@@ -145,4 +145,11 @@ Route::middleware(['auth:sanctum','admin'])->prefix('admin')->group(function () 
     Route::get('/reports', [AdminReportController::class, 'index']);
     Route::patch('/reports/{id}/remove', [AdminReportController::class, 'removeOffer']);
     Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']);
+
+    Route::middleware('auth:sanctum')->post('/reports', [ReportController::class, 'store']); //abanoub
+    Route::get('/admin/reports', [AdminReportController::class, 'index']); //abanoub
+    Route::patch('/admin/reports/{id}/remove', [AdminReportController::class, 'removeOffer']); //abanoub
+    Route::patch('/admin/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']); //abanoub
+    
+
 });

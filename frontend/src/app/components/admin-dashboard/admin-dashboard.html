@@ -61,22 +61,7 @@
             <th>Action</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let u of users">
-            <td>{{ u.name }}</td>
-            <td>{{ u.email }}</td>
-            <td>
-              <span [class]="u.status === 'Active' ? 'badge bg-success' : 'badge bg-danger'">
-                {{ u.status }}
-              </span>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary" (click)="toggleUserStatus(u)">
-                {{ u.status === 'Active' ? 'Ban' : 'Activate' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
 
@@ -92,14 +77,7 @@
             <th>User</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let o of offers">
-            <td>{{ o.title }}</td>
-            <td>{{ o.category }}</td>
-            <td>{{ o.status }}</td>
-            <td>{{ o.user }}</td>
-          </tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
 
@@ -108,13 +86,31 @@
       <h3>Inappropriate Content</h3>
       <div
         *ngFor="let r of reports"
-        class="alert alert-warning d-flex justify-content-between align-items-center mt-3"
+        [ngClass]="{ 'bg-light': r.status === 'reviewed', 'bg-warning': r.status === 'pending' }"
+        class="alert d-flex justify-content-between align-items-center mt-3 p-3"
       >
         <div>
-          <strong>{{ r.content }}</strong> <br />
-          <small>Reported by: {{ r.reporter }}</small>
+          <strong>{{ r.listing_title }}</strong> <br />
+          <small>Reported by: {{ r.reported_by }}</small> <br />
+          <small>Reason: {{ r.reason }}</small> <br />
+          <small>Status: {{ r.status }}</small>
         </div>
-        <button class="btn btn-danger btn-sm">Remove</button>
+        <div>
+          <button
+            *ngIf="r.status !== 'removed'"
+            class="btn btn-danger btn-sm me-2"
+            (click)="removeReport(r)"
+          >
+            Remove
+          </button>
+          <button
+            *ngIf="r.status === 'pending'"
+            class="btn btn-secondary btn-sm"
+            (click)="dismissReport(r)"
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
     </section>
 
@@ -223,18 +219,7 @@
             <th>Status</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let s of shipments">
-            <td>{{ s.item }}</td>
-            <td>{{ s.user }}</td>
-            <td>
-              <span
-                [class]="s.status === 'Shipped' ? 'badge bg-success' : 'badge bg-warning text-dark'"
-                >{{ s.status }}</span
-              >
-            </td>
-          </tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
   </main>
