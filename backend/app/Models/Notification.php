@@ -29,4 +29,10 @@ class Notification extends Model
     {
         return $this->belongsTo(User::class, 'related_user_id');
     }
+    protected static function booted()
+    {
+        static::created(function ($notification) {
+            event(new \App\Events\UserNotificationCreated($notification));
+        });
+    }
 }
