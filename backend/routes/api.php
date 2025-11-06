@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\{
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\AdminListingController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
+use App\Http\Controllers\Api\Admin\AdminShipmentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 
 Route::get('/user', function (Request $request) {
@@ -141,4 +142,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/reports', [AdminReportController::class, 'index']);
     Route::patch('/reports/{id}/remove', [AdminReportController::class, 'removeOffer']);
     Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']);
+
+    // Shipment
+    Route::get('/shipments', [AdminShipmentController::class, 'index']);
+    Route::patch('/shipments/{id}/status', [AdminShipmentController::class, 'updateStatus']);
+    Route::post('/shipments/{id}/upload-photo', [AdminShipmentController::class, 'uploadPhoto']);
 });

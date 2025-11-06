@@ -8,6 +8,7 @@ use App\Models\Listing;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Barter\StoreBarterRequest;
 use App\Http\Requests\Barter\UpdateBarterRequest;
+use App\Models\Shipment;
 
 class BarterController extends Controller
 {
@@ -67,6 +68,13 @@ class BarterController extends Controller
     public function update(UpdateBarterRequest $request, Barter $barter)
     {
         $barter->update($request->validated());
+
+        Shipment::create([
+            'barter_id' => $barter->id,
+            'shipping_type' => 'outbound',
+            'status' => 'pending'
+        ]);
+
         return $barter;
     }
 
