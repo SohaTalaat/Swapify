@@ -14,9 +14,12 @@ use Illuminate\Support\Facades\Broadcast;
 */
 
 Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
-    
     return $user->barters()->whereHas('chat', function ($q) use ($chatId) {
         $q->where('id', $chatId);
     })->exists();
 });
 
+
+Broadcast::channel('user.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
