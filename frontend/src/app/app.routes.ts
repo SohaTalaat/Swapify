@@ -1,3 +1,5 @@
+import { PaymentFailed } from './components/payment-failed/payment-failed';
+import { PaymentSuccess } from './components/payment-success/payment-success';
 import { Routes } from '@angular/router';
 import { Home } from './components/home/home';
 import { Login } from './components/login/login';
@@ -64,6 +66,8 @@ export const routes: Routes = [
 
   //Subscriptions
   { path: 'subscription', component: Subscription },
+  { path: 'payment-success', component: PaymentSuccess },
+  { path: 'payment-failed', component: PaymentFailed },
 
 
   // Admin

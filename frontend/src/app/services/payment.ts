@@ -1,3 +1,4 @@
+// src/app/services/payment.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -5,8 +6,8 @@ import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
-export class Payment {
-  private apiUrl = 'https://speak-choosing-academy-reports.trycloudflare.com/api';
+export class PaymentService {
+  private apiUrl = 'https://city-ashley-fda-knitting.trycloudflare.com/api';
 
   constructor(private http: HttpClient) {}
 
@@ -44,6 +45,8 @@ export class Payment {
   }
 
   getSubscription(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/subscriptions`);
+    const token = localStorage.getItem('swapify_token');
+    const headers = { Authorization: `Bearer ${token}` };
+    return this.http.get(`${this.apiUrl}/subscriptions`, { headers });
   }
 }

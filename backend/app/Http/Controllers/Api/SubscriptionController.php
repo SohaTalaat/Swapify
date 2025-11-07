@@ -3,71 +3,62 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Subscription\StoreSubscriptionRequest;
-use App\Models\Subscription;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Carbon;
+use App\Models\Subscription;
 
 class SubscriptionController extends Controller
 {
-    /**
-     * Display the current user's subscription.
-     */
     public function index()
     {
-        $subscription = Subscription::where('user_id', Auth::id())->first();
-
-        if (!$subscription) {
-            return response()->json([
-                'message' => 'No active subscription found',
-                'tier' => 'free'
-            ]);
-        }
-
-        return response()->json([
-            'tier' => $subscription->tier,
-            'start_date' => $subscription->start_date,
-            'end_date' => $subscription->end_date,
-            'is_active' => $subscription->is_active,
-        ]);
-    }
-
-    /**
-     * Store or renew a subscription for the user.
-     */
-    public function store(StoreSubscriptionRequest $request)
-    {
-        $data = $request->validated();
-
-        // Determine barter limit based on plan
-        $limits = [
-            'free' => 2,
-            'basic' => 5,
-            'pro' => 10
+        $user = Auth::user();
+        $subscription = $user->subscription ?? (object)[
+            'tier' => 'free',
+            'is_active' => false,
+            'barter_limit' => 2,
+            'barters_used' => 0,
+            'end_date' => null
         ];
 
-        $tier = strtolower($data['tier']);
-        $barterLimit = $limits[$tier] ?? 2;
+        return response()->json($subscription);
+    }
 
-        $subscription = Subscription::updateOrCreate(
-            ['user_id' => Auth::id()],
+    public function store(Request $request)
+    {
+        $request->validate([
+            'tier' => 'required|in:free,basic,pro',
+            'payment_method' => 'nullable|string'
+        ]);
+
+        $user = Auth::user();
+        $tier = $request->tier;
+
+        // الخطة المجانية
+        if ($tier === 'free') {
+            $this->activateFreePlan($user);
+            return response()->json(['message' => 'تم تفعيل الخطة المجانية'], 201);
+        }
+
+        // الخطط المدفوعة → إعادة توجيه إلى Paymob
+        $paymob = app(\App\Http\Controllers\Api\PaymobController::class);
+        return $paymob->initPayment($request);
+    }
+
+    private function activateFreePlan($user)
+    {
+        Subscription::updateOrCreate(
+            ['user_id' => $user->id],
             [
-                'tier' => $tier,
+                'tier' => 'free',
                 'start_date' => now(),
                 'end_date' => now()->addMonth(),
-                'payment_method' => $data['payment_method'] ?? 'manual',
-                'barter_limit' => $barterLimit,
-                'barters_used' => 0,
+                'payment_method' => 'manual',
                 'is_active' => true,
+                'barter_limit' => 2,
+                'barters_used' => 0,
             ]
         );
 
-        // Update user's tier
-        Auth::user()->update(['subscription_tier' => $tier]);
-
-        return response()->json([
-            'message' => 'Subscription updated successfully',
-            'subscription' => $subscription
-        ]);
+        $user->update(['subscription_tier' => 'free']);
     }
 }

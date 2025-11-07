@@ -36,7 +36,7 @@ Route::get('/user', function (Request $request) {
 
 // Normal auth
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');;
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 // Google Auth
@@ -115,9 +115,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/id-verification', [IDVerificationController::class, 'index']); // Status
 
     // Payment
-    Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
-    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
-    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
+//     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+// Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
+//     Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 
     //Report
     Route::post('/reports', [ReportController::class, 'store']);
@@ -156,3 +156,15 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 
 });
+
+// ======================
+// 💳 Payment Routes (Public)
+// ======================
+Route::post('/paymob/init', [PaymobController::class, 'initPayment'])
+    ->middleware('auth:sanctum'); // دي فقط محتاجة توثيق لأن المستخدم هو اللي بيبدأ الدفع
+
+// Paymob بيرسل الرد هنا بعد الدفع (User Redirect)
+Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
+
+// Paymob Webhook (Server to Server)
+Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
