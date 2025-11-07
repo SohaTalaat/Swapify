@@ -1,48 +1,70 @@
-<div class="container py-5">
-  <h2 class="text-center mb-4 fw-bold text-primary">Choose Your Subscription</h2>
+<div class="subscription-page py-5">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-3 gradient-text">Choose Your Subscription Plan</h2>
+    <p class="text-muted mb-5">
+      Unlock more swaps, features, and visibility by upgrading your plan.
+    </p>
 
-  <div class="row justify-content-center g-4">
-    <div class="col-md-4" *ngFor="let plan of plans">
+    <div class="row justify-content-center g-4">
       <div
-        class="card shadow-lg border-0 rounded-4 p-4 text-center h-100"
-        [ngClass]="{ 'border-primary': selectedPlan === plan.name }"
+        class="col-md-4"
+        *ngFor="let plan of plans"
+        (mouseenter)="selectedPlan = plan.name"
+        (mouseleave)="selectedPlan = null"
       >
-        <h4 class="fw-bold text-dark mb-2">{{ plan.name }}</h4>
-        <h3 class="fw-bold text-primary">${{ plan.price }}</h3>
-        <p class="text-muted mb-4">Up to {{ plan.barters }} barters / month</p>
-
-        <button
-          *ngIf="plan.price === 0"
-          class="btn btn-success w-100 fw-semibold"
-          (click)="subscribe(plan, 'manual')"
-          [disabled]="loading"
+        <div
+          class="plan-card shadow-lg border-0 p-4 rounded-4 h-100 position-relative"
+          [ngClass]="{ active: selectedPlan === plan.name }"
         >
-          Activate Free Plan
-        </button>
+          <div class="icon-wrapper mx-auto mb-3">
+            <i [class]="plan.icon"></i>
+          </div>
+          <h4 class="fw-bold mb-2">{{ plan.name }}</h4>
+          <p class="text-muted small">{{ plan.description }}</p>
+          <h2 class="fw-bold my-3 text-accent">${{ plan.price }}</h2>
+          <p class="text-muted mb-4">
+            <i class="fa-solid fa-repeat me-2"></i>{{ plan.barters }} barters per month
+          </p>
 
-        <div *ngIf="plan.price > 0" class="d-flex flex-column gap-2">
-          <button
-            class="btn btn-outline-primary fw-semibold"
-            (click)="subscribe(plan, 'card')"
-            [disabled]="loading"
-          >
-            💳 Pay with Card
-          </button>
+          <div class="mt-auto">
+            <!-- Free Plan -->
+            <button
+              *ngIf="plan.price === 0"
+              class="btn btn-success w-100 fw-semibold"
+              (click)="subscribe(plan, 'manual')"
+              [disabled]="loading"
+            >
+              Activate Free Plan
+            </button>
 
-          <button
-            class="btn btn-primary fw-semibold"
-            (click)="openWalletModal(plan)"
-            [disabled]="loading"
-          >
-            📱 Pay with Wallet
-          </button>
+            <!-- Paid Plans -->
+            <div *ngIf="plan.price > 0" class="d-flex flex-column gap-2">
+              <button
+                class="btn btn-outline-primary fw-semibold"
+                (click)="subscribe(plan, 'card')"
+                [disabled]="loading"
+              >
+                💳 Pay with Card
+              </button>
+
+              <button
+                class="btn btn-primary fw-semibold"
+                (click)="openWalletModal(plan)"
+                [disabled]="loading"
+              >
+                📱 Pay with Wallet
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="plan.popular" class="badge-popular">Most Popular</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 🌟 Wallet Modal -->
+<!-- Wallet Modal -->
 <div
   class="modal fade"
   id="walletModal"
@@ -53,7 +75,9 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-3 border-0 shadow-lg rounded-4">
       <div class="modal-header border-0">
-        <h5 class="modal-title fw-bold text-primary" id="walletModalLabel">Enter Wallet Number</h5>
+        <h5 class="modal-title fw-bold" style="color: #ee6931" id="walletModalLabel">
+          Enter Wallet Number
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 

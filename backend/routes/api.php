@@ -54,10 +54,6 @@ Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
 Route::get('/password/reset', [AuthController::class, 'showResetForm']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);
 
-// Payment callback
-Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
-Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
-
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -76,6 +72,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('listings', ListingController::class);
     Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
     Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+    //Barters routes
+
+    Route::apiResource('barters', BarterController::class);
+    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 
     // Chats and Messages routes
     Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
@@ -116,6 +116,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment
     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+    Route::post('/paymob/callback', [PaymobController::class, 'callback']);
+    Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 
     //Report
     Route::post('/reports', [ReportController::class, 'store']);
@@ -153,10 +155,4 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::patch('/reports/{id}/dismiss', [AdminReportController::class, 'dismiss']); //abanoub
 
 
-});
-
-// Barter routes
-Route::middleware(['auth:sanctum', 'checkBarterLimit'])->group(function () {
-    Route::apiResource('barters', BarterController::class);
-    Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 });

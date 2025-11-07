@@ -13,17 +13,39 @@ import { Modal } from 'bootstrap';
 })
 export class Subscription {
   plans = [
-    { name: 'Free', price: 0, barters: 2, tier: 'free' },
-    { name: 'Basic', price: 10, barters: 5, tier: 'basic' },
-    { name: 'Pro', price: 20, barters: 10, tier: 'pro' },
+    {
+      name: 'Free',
+      price: 0,
+      barters: 2,
+      tier: 'free',
+      icon: 'fa-solid fa-gift',
+      description: 'Perfect for beginners to try out Swapify and explore basic barters.',
+    },
+    {
+      name: 'Basic',
+      price: 10,
+      barters: 5,
+      tier: 'basic',
+      icon: 'fa-solid fa-star',
+      description: 'Ideal for regular users looking to unlock more barters and visibility.',
+      popular: true,
+    },
+    {
+      name: 'Pro',
+      price: 20,
+      barters: 10,
+      tier: 'pro',
+      icon: 'fa-solid fa-gem',
+      description: 'Best for professionals who want unlimited exposure and flexibility.',
+    },
   ];
 
   selectedPlan: any = null;
   loading = false;
   walletNumber = '';
-  apiUrl = 'https://graduated-startup-pensions-cork.trycloudflare.com/api';
+  apiUrl = 'https://speak-choosing-academy-reports.trycloudflare.com/api';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   openWalletModal(plan: any) {
     this.selectedPlan = plan;
@@ -61,18 +83,16 @@ export class Subscription {
     });
 
     if (plan.price === 0) {
-      this.http
-        .post(`${this.apiUrl}/subscriptions`, { tier: plan.tier }, { headers })
-        .subscribe({
-          next: () => {
-            alert('Free plan activated successfully!');
-            this.loading = false;
-          },
-          error: (err) => {
-            console.error(err);
-            this.loading = false;
-          },
-        });
+      this.http.post(`${this.apiUrl}/subscriptions`, { tier: plan.tier }, { headers }).subscribe({
+        next: () => {
+          alert('Free plan activated successfully!');
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.loading = false;
+        },
+      });
       return;
     }
 
