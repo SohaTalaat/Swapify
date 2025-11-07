@@ -21,7 +21,7 @@ export class Subscription {
   selectedPlan: any = null;
   loading = false;
   walletNumber = '';
-  apiUrl = 'https://graduated-startup-pensions-cork.trycloudflare.com/api';
+  apiUrl = 'https://chemicals-showcase-violation-front.trycloudflare.com/api';
 
   constructor(private http: HttpClient) { }
 

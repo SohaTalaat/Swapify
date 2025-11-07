@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class Payment {
-  private apiUrl = 'https://graduated-startup-pensions-cork.trycloudflare.com/api';
+  private apiUrl = 'https://chemicals-showcase-violation-front.trycloudflare.com/api';
 
   constructor(private http: HttpClient) { }
 

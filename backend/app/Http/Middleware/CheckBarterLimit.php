@@ -16,7 +16,7 @@ class CheckBarterLimit
      */
     public function handle(Request $request, Closure $next): Response
     {
-
+        // ✅ Use the relationship defined in the User model
         $subscription = Auth::user()->subscription;
 
         if (!$subscription) {

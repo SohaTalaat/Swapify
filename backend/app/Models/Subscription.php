@@ -12,12 +12,17 @@ class Subscription extends Model
         'start_date',
         'end_date',
         'payment_method',
-        'is_active'
+        'is_active',
+        'barter_limit',
+        'barters_used'
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_active' => 'boolean',
+        'barter_limit' => 'integer',
+        'barters_used' => 'integer',
     ];
 
     public function user()
