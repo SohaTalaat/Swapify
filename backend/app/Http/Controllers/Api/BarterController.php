@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BarterStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Barter;
 use App\Models\Listing;
@@ -52,6 +53,8 @@ class BarterController extends Controller
         $barter->listings()->attach($data['requested_listing_id'], [
             'owner_user_id' => $data['receiver_id'],
         ]);
+
+        event(new BarterStatusUpdated($barter->load('participants')));
 
         return $barter->load([
             'participants:id,username',
@@ -111,6 +114,8 @@ class BarterController extends Controller
         $barter = Barter::findOrFail($id);
         $barter->status = $request->status;
         $barter->save();
+
+        event(new BarterStatusUpdated($barter->load('participants')));
 
         return response()->json([
             'message' => 'Barter status updated successfully',

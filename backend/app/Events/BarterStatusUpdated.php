@@ -8,7 +8,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class BarterStatusUpdated implements ShouldBroadcast
+class BarterStatusUpdated
 {
     use Dispatchable, SerializesModels;
 

@@ -74,7 +74,6 @@ class PaymobController extends Controller
             $orderData = $orderResponse->json();
             $orderId = $orderData['id'];
 
-            // حفظ الطلب مؤقتًا في جدول pending_payments
             PendingPayment::create([
                 'user_id' => Auth::id(),
                 'order_id' => $orderId,
@@ -85,7 +84,6 @@ class PaymobController extends Controller
 
             Log::info('PendingPayment saved', ['order_id' => $orderId, 'user_id' => Auth::id()]);
 
-            // 3. إنشاء Payment Key
             $integrationId = $request->payment_type === 'card'
                 ? $this->integrationIdCard
                 : $this->integrationIdWallet;
@@ -127,11 +125,26 @@ class PaymobController extends Controller
                 ],
                 'payment_token' => $paymentToken
             ]);
+            Log::error('Wallet Payment Response', [
+                'status' => $walletResponse->status(),
+                'body' => $walletResponse->json()
+            ]);
 
             $walletData = $walletResponse->json();
-            $success = $walletData['success'] ?? false;
+            Log::error('Wallet Payment Response', ['status' => $walletResponse->status(), 'body' => $walletData]);
 
-            if ($success) {
+            // ✅ If Paymob returns redirect_url, send it to frontend
+            if (isset($walletData['redirect_url'])) {
+                return response()->json([
+                    'wallet_response' => [
+                        'redirect_url' => $walletData['redirect_url'],
+                        'pending' => true
+                    ]
+                ]);
+            }
+
+            // If already succeeded (rare case)
+            if (($walletData['success'] ?? false) === true) {
                 $this->handleSuccessfulPayment($walletData, Auth::id());
                 return response()->json([
                     'message' => 'تم الدفع بنجاح عبر المحفظة',
@@ -139,8 +152,8 @@ class PaymobController extends Controller
                 ]);
             }
 
+            // Otherwise, return error details
             return response()->json(['error' => 'فشل الدفع عبر المحفظة', 'details' => $walletData], 400);
-
         } catch (\Exception $e) {
             Log::error('Paymob initPayment Exception: ' . $e->getMessage());
             return response()->json(['error' => 'خطأ في معالجة الدفع'], 500);
@@ -152,9 +165,10 @@ class PaymobController extends Controller
     {
         Log::info('Paymob Callback', $request->all());
         $success = $request->query('success') === 'true';
-        return redirect($success
-            ? 'http://localhost:4200/payment-success'
-            : 'http://localhost:4200/payment-failed'
+        return redirect(
+            $success
+                ? 'http://localhost:4200/payment-success'
+                : 'http://localhost:4200/payment-failed'
         );
     }
 
@@ -233,8 +247,7 @@ class PaymobController extends Controller
     // بناء سلسلة HMAC بدقة
     private function buildHmacString($obj)
     {
-        return
-            ($obj['amount_cents'] ?? '') .
+        return ($obj['amount_cents'] ?? '') .
             ($obj['created_at'] ?? '') .
             ($obj['currency'] ?? '') .
             ($obj['error_occured'] ? 'true' : 'false') .

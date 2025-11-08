@@ -75,14 +75,14 @@
                 <i
                   class="fa-solid me-2 mt-1"
                   [ngClass]="{
-                    'fa-handshake text-success': n.type === 'barter',
+                    'fa-handshake text-success': n.type === 'barter_status',
                     'fa-tag text-primary': n.type === 'offer',
                     'fa-message text-warning': n.type === 'message'
                   }"
                 ></i>
                 <div>
-                  <p class="mb-0 fw-semibold">{{ n.title }}</p>
-                  <small class="text-muted">{{ n.time }}</small>
+                  <p class="mb-0 fw-semibold">{{ n.message }}</p>
+                  <small class="text-muted">{{ n.created_at }}</small>
                 </div>
               </div>
 

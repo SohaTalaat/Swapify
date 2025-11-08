@@ -3,11 +3,11 @@
 namespace App\Events;
 
 use App\Models\Notification;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Broadcasting\InteractsWithSockets;
 
 class UserNotificationCreated implements ShouldBroadcast
 {
@@ -22,10 +22,13 @@ class UserNotificationCreated implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        // every user has their own channel for notifications 
-        return [
-            new PrivateChannel('user.' . $this->notification->user_id),
-        ];
+        // Each user listens on their own private channel
+        return [new PrivateChannel('user.' . $this->notification->user_id)];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'notification.created';
     }
 
     public function broadcastWith(): array
@@ -35,13 +38,8 @@ class UserNotificationCreated implements ShouldBroadcast
             'type' => $this->notification->type,
             'message' => $this->notification->message,
             'related_barter_id' => $this->notification->related_barter_id,
-            'related_user_id' => $this->notification->related_user_id,
-            'created_at' => $this->notification->created_at->toDateTimeString(),
+            'is_read' => $this->notification->is_read,
+            'created_at' => $this->notification->created_at->diffForHumans(),
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'notification.created';
     }
 }

@@ -45,15 +45,14 @@ export class Subscription {
   loading = false;
   walletNumber = '';
   private pollInterval: any;
-  apiUrl = 'https://city-ashley-fda-knitting.trycloudflare.com/api';
+  apiUrl = 'https://talks-president-fires-author.trycloudflare.com/api';
 
-  constructor(private http: HttpClient, private paymentService: PaymentService) {}
+  constructor(private http: HttpClient, private paymentService: PaymentService) { }
 
   ngOnInit() {
     this.loadCurrentSubscription();
     this.checkPendingPlan();
 
-    // تحديث كل 3 ثوانٍ بعد الرجوع من Paymob
     this.pollInterval = setInterval(() => {
       if (this.isPaymentReturn()) {
         this.loadCurrentSubscription();
@@ -64,7 +63,6 @@ export class Subscription {
     if (this.pollInterval) clearInterval(this.pollInterval);
   }
 
-  // تحميل الاشتراك الحالي
   loadCurrentSubscription() {
     this.paymentService.getSubscription().subscribe({
       next: (sub: any) => {
@@ -89,7 +87,6 @@ export class Subscription {
       setTimeout(() => this.loadCurrentSubscription(), 2000);
     }
   }
-  // فتح نافذة الدفع بالـ Wallet
   openWalletModal(plan: any) {
     this.selectedPlan = plan;
     const modal = new Modal(document.getElementById('walletModal')!);
@@ -120,7 +117,6 @@ export class Subscription {
       return;
     }
 
-    // الخطة المجانية
     if (plan.price === 0) {
       this.paymentService.createSubscription(plan.tier, 'manual').subscribe({
         next: () => {
@@ -133,23 +129,26 @@ export class Subscription {
       return;
     }
 
-    // الدفع عبر Paymob
     const data: any = { amount: plan.price, payment_type: paymentType };
     if (paymentType === 'wallet') data.wallet_number = this.walletNumber;
 
     this.paymentService.initPayment(data.amount, data.payment_type, data.wallet_number).subscribe({
       next: (res: any) => {
         if (res.url) {
-          // حفظ الخطة المختارة مؤقتًا قبل التوجيه
           localStorage.setItem('pending_plan', JSON.stringify(plan));
           window.location.href = res.url;
-        } else {
+        }
+        else if (res.wallet_response?.redirect_url) {
+          localStorage.setItem('pending_plan', JSON.stringify(plan));
+          window.location.href = res.wallet_response.redirect_url; // Redirect user to Paymob wallet page
+        }
+        else {
           console.error('Unexpected Paymob response:', res);
-          alert('خطأ: الرد من الخادم غير متوقع');
+          alert('Unexpected response from server.');
         }
       },
       error: (err) => {
-        const msg = err.error?.error || 'فشل بدء الدفع';
+        const msg = err.error?.error || 'Payment initialization failed';
         alert(msg);
       },
       complete: () => (this.loading = false),
