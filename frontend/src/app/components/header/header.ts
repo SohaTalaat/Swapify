@@ -3,6 +3,7 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
+import { Notification } from '../../services/notification';
 
 @Component({
   selector: 'app-header',
@@ -12,37 +13,21 @@ import { Auth } from '../../services/auth';
 })
 export class Header implements OnInit {
   isLoggedIn = false;
-  isAdmin = false; // ✅ Add this line
+  isAdmin = false;
   username: string | null = null;
   profileImg: string | null = null;
   showNotifications = false;
-  unreadCount = 3;
+  unreadCount = 0;
 
-  notifications = [
-    {
-      id: 1,
-      title: 'New barter request from Sara Ahmed',
-      type: 'barter',
-      time: '2 minutes ago',
-      read: false,
-    },
-    {
-      id: 2,
-      title: 'Your offer “Logo Design” got a comment',
-      type: 'offer',
-      time: '1 hour ago',
-      read: true,
-    },
-    {
-      id: 3,
-      title: 'New message from Omar',
-      type: 'message',
-      time: '3 hours ago',
-      read: false,
-    },
-  ];
+  notifications: any[] = [];
 
-  constructor(private auth: Auth, private router: Router, private zone: NgZone) {
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    private zone: NgZone,
+    private notifService: Notification
+  ) {
+    // Close dropdown when clicking outside
     document.addEventListener('click', (event: any) => {
       const target = event.target;
       if (!target.closest('.notification-wrapper')) {
@@ -54,8 +39,13 @@ export class Header implements OnInit {
   toggleNotifications() {
     this.zone.run(() => {
       this.showNotifications = !this.showNotifications;
+      if (this.showNotifications) {
+        const token = localStorage.getItem('swapify_token');
+        if (token) this.notifService.loadNotifications(token);
+      }
     });
   }
+
 
   goToNotifications() {
     this.showNotifications = false;
@@ -66,12 +56,33 @@ export class Header implements OnInit {
     const token = localStorage.getItem('swapify_token');
     this.isLoggedIn = !!token;
 
-    const userRole = localStorage.getItem('role'); // ✅ Get user role
-    this.isAdmin = userRole === 'admin'; // ✅ Check if admin
+    const userRole = localStorage.getItem('role');
+    this.isAdmin = userRole === 'admin';
+    const userId = Number(localStorage.getItem('user_id'));
+
+    if (token && userId) {
+      this.notifService.init(userId, token);
+
+      // ✅ Force change detection
+      this.notifService.notifications.subscribe((list) => {
+        this.zone.run(() => {
+          this.notifications = list.map((n) => ({
+            ...n,
+            message: n.message || n.title,
+            created_at: n.created_at || 'Just now',
+          }));
+        });
+        console.log('🔔 Header notifications updated:', this.notifications);
+      });
+
+      this.notifService.unreadCount.subscribe((count) => {
+        this.zone.run(() => (this.unreadCount = count));
+      });
+    }
 
     const user = {
       username: localStorage.getItem('username'),
-      profileImg: localStorage.getItem('profileImg'),
+      profileImg: localStorage.getItem('profileImg') || 'assets/avatar.png',
     };
     if (user.username) {
       this.username = user.username;
@@ -82,7 +93,7 @@ export class Header implements OnInit {
       if (userData) {
         this.username = userData.username;
         this.profileImg = userData.profile_picture_url || 'assets/avatar.png';
-        this.isAdmin = userData.role === 'admin'; // ✅ Live update if admin
+        this.isAdmin = userData.role === 'admin';
       } else {
         this.username = null;
         this.profileImg = null;
@@ -92,6 +103,8 @@ export class Header implements OnInit {
 
     this.auth.isLoggedIn.subscribe((status) => (this.isLoggedIn = status));
   }
+
+
 
   logout() {
     this.auth.logout().subscribe({

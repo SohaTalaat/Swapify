@@ -117,9 +117,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/id-verification', [IDVerificationController::class, 'index']); // Status
 
     // Payment
-//     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
-// Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
-//     Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
+    //     Route::post('/paymob/init', [PaymobController::class, 'initPayment']);
+    // Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'callback']);
+    //     Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 
     //Report
     Route::post('/reports', [ReportController::class, 'store']);
@@ -195,3 +195,4 @@ Route::get('/chat/{chatId}/messages/latest', function ($chatId, Illuminate\Http\
 
     return response()->json($messages);
 });
+Route::get('/notifications/test', [NotificationController::class, 'test'])->middleware('auth:sanctum');

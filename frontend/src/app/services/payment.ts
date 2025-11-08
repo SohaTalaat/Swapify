@@ -7,9 +7,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class PaymentService {
-  private apiUrl = 'https://city-ashley-fda-knitting.trycloudflare.com/api';
+  private apiUrl = 'https://talks-president-fires-author.trycloudflare.com/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   initPayment(
     amount: number,

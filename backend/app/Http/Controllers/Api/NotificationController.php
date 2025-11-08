@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\UserNotificationCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
@@ -37,5 +38,26 @@ class NotificationController extends Controller
         $notification->update(['is_read' => true]);
 
         return response()->json(['message' => 'Notification marked as read successfully.']);
+    }
+
+    public function test()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'test',
+            'message' => 'This is your first live notification ',
+            'is_read' => false,
+        ]);
+
+        // manually trigger event for now
+        event(new UserNotificationCreated($notification));
+
+        return response()->json(['message' => 'Notification sent!', 'notification' => $notification]);
     }
 }
