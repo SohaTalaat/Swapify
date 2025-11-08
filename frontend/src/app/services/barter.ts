@@ -46,9 +46,9 @@ export interface BarterParticipant {
 export interface BarterMessage {
   id: number;
   sender_id: number;
-  message: string;
+  content: string; // ✅ بدل message
   created_at: string;
-  user?: { username: string };
+  sender?: { username: string }; // ✅ بدل user
 }
 
 export interface BarterChat {
@@ -93,7 +93,7 @@ export interface CreateBarterData {
 }
 
 export interface SendMessageData {
-  message: string;
+  content: string;
 }
 
 export interface BarterViewModel {
@@ -163,9 +163,15 @@ export class BarterService {
   }
 
   // 🟩 Chat
-  sendMessage(barterId: number, data: SendMessageData): Observable<any> {
+  // في دالة sendMessage
+  sendMessage(barterId: number, data: SendMessageData) {
+    const payload = {
+      ...data,
+      barter_id: barterId, // أضف barter_id هنا
+    };
+
     return this.http
-      .post(`${this.apiUrl}/chats/${barterId}/messages`, data, {
+      .post<{ message: BarterMessage }>(`${this.apiUrl}/barters/${barterId}/messages`, payload, {
         headers: this.getHeaders(),
       })
       .pipe(catchError(this.handleError));

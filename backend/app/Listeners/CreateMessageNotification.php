@@ -12,13 +12,11 @@ class CreateMessageNotification
         $message = $event->message;
         $chat = $message->chat;
 
-        // Identify the receiver (the user who didn't send the message)
-        $receiver = $chat->participants
-            ->where('id', '!=', $message->sender_id)
-            ->first();
+        if (!$chat || !$chat->participants) return;
+
+        $receiver = $chat->participants()->where('users.id', '!=', $message->sender_id)->first();
 
         if ($receiver) {
-            // Save notification in DB
             Notification::create([
                 'user_id' => $receiver->id,
                 'type' => 'message',
@@ -28,7 +26,6 @@ class CreateMessageNotification
                 'related_user_id' => $message->sender_id,
             ]);
 
-            // Optional: send broadcast via a private channel for the receiver
             broadcast(new \App\Events\UserNotificationCreated($receiver->id, [
                 'type' => 'message',
                 'message' => 'You received a new message from user #' . $message->sender_id,

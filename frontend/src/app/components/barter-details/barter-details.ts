@@ -1,10 +1,11 @@
 // src/app/components/barter-details/barter-details.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { BarterService, Barter, BarterMessage } from '../../services/barter';
-import { Router } from '@angular/router'; // 👈 استورد Router
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { BarterService, Barter } from '../../services/barter';
+import { interval, Subscription } from 'rxjs';
 
 interface BarterViewModel {
   id: number;
@@ -13,7 +14,7 @@ interface BarterViewModel {
   yourOffer: { title: string; image: string };
   partnerOffer: { title: string; image: string };
   messages: { sender: string; text: string; time: string }[];
-  role: 'offering' | 'requesting'; // ✅ أضف هذا السطر
+  role: 'offering' | 'requesting';
 }
 
 @Component({
@@ -23,17 +24,21 @@ interface BarterViewModel {
   templateUrl: './barter-details.html',
   styleUrls: ['./barter-details.css'],
 })
-export class BarterDetails implements OnInit {
+export class BarterDetails implements OnInit, OnDestroy {
   barterId!: number;
   barter!: Barter;
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
 
+  private pollingSub!: Subscription;
+  private lastMessageId = 0;
+
   constructor(
     private route: ActivatedRoute,
     private barterService: BarterService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -41,14 +46,26 @@ export class BarterDetails implements OnInit {
     this.loadBarter();
   }
 
-  /** 🔵 تحميل البيانات من السيرفر */
-  loadBarter() {
+  ngOnDestroy() {
+    if (this.pollingSub) this.pollingSub.unsubscribe();
+  }
+
+  /** تحميل بيانات المقايضة */
+  private loadBarter() {
     this.isLoading = true;
     this.barterService.getBarter(this.barterId).subscribe({
       next: (barter) => {
         this.barter = barter;
         this.viewModel = this.formatBarter(barter);
         this.isLoading = false;
+
+        // نحدد آخر رسالة موجودة
+        if (barter.chat?.messages?.length) {
+          this.lastMessageId = Math.max(...barter.chat.messages.map((m) => m.id));
+        }
+
+        // بدء polling للرسائل الجديدة
+        this.startPolling();
       },
       error: (err) => {
         alert('Failed to load barter: ' + err.message);
@@ -57,66 +74,140 @@ export class BarterDetails implements OnInit {
     });
   }
 
-  /** 🧩 تجهيز البيانات للعرض في الواجهة */
+  /** بدء polling */
+  private startPolling() {
+    this.pollingSub = interval(1000).subscribe(() => this.checkNewMessages());
+  }
+
+  /** تحقق من وجود رسائل جديدة */
+  private checkNewMessages() {
+    if (!this.barter?.chat?.id) return;
+
+    this.http
+      .get<any[]>(
+        `http://127.0.0.1:8000/api/chat/${this.barter.chat.id}/messages/latest?last_message_id=${this.lastMessageId}`
+      )
+      .subscribe({
+        next: (messages) => {
+          messages.forEach((msg) => {
+            this.viewModel.messages.push({
+              sender: msg.sender_id === this.getCurrentUserId() ? 'You' : msg.sender.username,
+              text: msg.content,
+              time: new Date(msg.created_at).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              }),
+            });
+            this.lastMessageId = Math.max(this.lastMessageId, msg.id);
+          });
+        },
+        error: (err) => console.error('Polling failed:', err),
+      });
+  }
+
+  /** إرسال رسالة */
+  sendMessage() {
+    if (!this.newMessage.trim()) return;
+
+    const payload = { content: this.newMessage };
+    const tempMessage = this.newMessage;
+    this.newMessage = '';
+
+    this.barterService.sendMessage(this.barterId, payload).subscribe({
+      next: (res) => {
+        // res.message.id هو ID الرسالة من السيرفر
+        const newMsg = {
+          sender: 'You',
+          text: tempMessage,
+          time: new Date(res.message.created_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+        };
+
+        this.viewModel.messages.push(newMsg);
+        this.lastMessageId = Math.max(this.lastMessageId, res.message.id);
+      },
+      error: (err) => {
+        alert('Failed to send message: ' + err.message);
+        this.newMessage = tempMessage; // إعادة النص إذا فشل الإرسال
+      },
+    });
+  }
+
+  /** تحديث الحالة */
+  updateStatus(newStatus: string) {
+    if (!this.viewModel) return;
+
+    const statusMap: Record<string, string> = {
+      Pending: 'proposed',
+      Ongoing: 'accepted',
+      Completed: 'completed',
+      Cancelled: 'cancelled',
+    };
+
+    const backendStatus = statusMap[newStatus] || newStatus;
+
+    this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
+      next: (res) => (this.viewModel.status = this.formatStatus(res.barter.status)),
+      error: (err) => alert(err.error?.message || 'Failed to update status'),
+    });
+  }
+
+  /** حذف المقايضة */
+  deleteBarter() {
+    if (!confirm('Are you sure you want to cancel this barter?')) return;
+
+    this.barterService.deleteBarter(this.viewModel.id).subscribe({
+      next: () => {
+        alert('Barter cancelled successfully.');
+        this.router.navigate(['/my-barters']);
+      },
+      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
+    });
+  }
+
+  /** تنسيق البيانات للعرض */
   private formatBarter(barter: Barter): BarterViewModel {
     const currentUserId = this.getCurrentUserId();
-    console.log('🧩 Current user ID:', currentUserId);
-    console.log('📦 Barter listings:', barter.listings);
-
     const partner = barter.participants.find((p) => p.id !== currentUserId);
 
-    // تأكد أن كل listing فيها pivot
-    barter.listings.forEach((l) => {
-      if (!l.pivot) {
-        console.warn('⚠️ Missing pivot for listing:', l);
-      }
-    });
-
-    const myListing = barter.listings.find(
-      (l) => l.pivot && l.pivot.owner_user_id === currentUserId
-    );
-    const theirListing = barter.listings.find(
-      (l) => l.pivot && l.pivot.owner_user_id !== currentUserId
-    );
-
-    console.log('✅ My listing:', myListing);
-    console.log('🤝 Their listing:', theirListing);
-
-    const yourOffer = {
-      title: myListing?.title || 'Your Offer',
-      image: myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
-    };
-
-    const partnerOffer = {
-      title: theirListing?.title || 'Their Offer',
-      image: theirListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
-    };
+    const myListing = barter.listings.find((l) => l.pivot?.owner_user_id === currentUserId);
+    const theirListing = barter.listings.find((l) => l.pivot?.owner_user_id !== currentUserId);
 
     const messages = (barter.chat?.messages || []).map((msg) => ({
       sender:
-        msg.user?.username ||
-        (msg.sender_id === currentUserId ? 'You' : partner?.username || 'Partner'),
-      text: msg.message,
+        msg.sender_id === currentUserId
+          ? 'You'
+          : msg.sender?.username || partner?.username || 'Partner',
+      text: msg.content,
       time: new Date(msg.created_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
       }),
     }));
+
     const myParticipant = barter.participants.find((p) => p.id === currentUserId);
-    const myRole = myParticipant?.pivot?.role || 'offering'; // ممكن يكون 'offering' أو 'requesting'
+    const myRole = myParticipant?.pivot?.role || 'offering';
 
     return {
-      id: barter.id, // ✅ أضف هذا السطر
+      id: barter.id,
       partner: partner?.username || 'Unknown',
       status: this.formatStatus(barter.status),
-      yourOffer,
-      partnerOffer,
+      yourOffer: {
+        title: myListing?.title || 'Your Offer',
+        image: myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+      },
+      partnerOffer: {
+        title: theirListing?.title || 'Their Offer',
+        image: theirListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+      },
       messages,
-      role: myRole, // ✅ أضفناها هنا
+      role: myRole,
     };
   }
 
-  /** 🟡 استخراج ID المستخدم الحالي من localStorage */
+  /** استخراج ID المستخدم من localStorage */
   private getCurrentUserId(): number {
     try {
       const user = JSON.parse(localStorage.getItem('swapify_user') || '{}');
@@ -126,7 +217,7 @@ export class BarterDetails implements OnInit {
     }
   }
 
-  /** 🟢 تنسيق حالة المقايضة */
+  /** تنسيق الحالة */
   private formatStatus(status: string): string {
     const map: Record<string, string> = {
       proposed: 'Pending',
@@ -138,60 +229,5 @@ export class BarterDetails implements OnInit {
       disputed: 'Disputed',
     };
     return map[status] || status;
-  }
-
-  /** 💬 إرسال رسالة في الدردشة */
-  sendMessage() {
-    if (!this.newMessage.trim()) return;
-
-    const payload = { message: this.newMessage };
-    this.barterService.sendMessage(this.barterId, payload).subscribe({
-      next: () => {
-        this.loadBarter(); // إعادة التحميل بعد الإرسال
-        this.newMessage = '';
-      },
-      error: (err) => {
-        alert('Failed to send message: ' + err.message);
-      },
-    });
-  }
-
-  updateStatus(newStatus: string) {
-    if (!this.viewModel) return;
-
-    // 🧭 خريطة تحويل القيم من الواجهة إلى ENUM في Laravel
-    const statusMap: Record<string, string> = {
-      Pending: 'proposed',
-      Ongoing: 'accepted',
-      Completed: 'completed',
-      Cancelled: 'cancelled',
-    };
-
-    const backendStatus = statusMap[newStatus] || newStatus;
-
-    this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
-      next: (res) => {
-        this.viewModel.status = this.formatStatus(res.barter.status); // 🔄 نحدّث الواجهة
-        console.log('✅ Status updated to:', res.barter.status);
-      },
-      error: (err) => {
-        console.error('❌ Failed to update status:', err);
-        alert(err.error?.message || 'Failed to update status');
-      },
-    });
-  }
-  deleteBarter() {
-    if (!confirm('Are you sure you want to cancel this barter?')) return;
-
-    this.barterService.deleteBarter(this.viewModel.id).subscribe({
-      next: () => {
-        alert('Barter cancelled and removed successfully.');
-        this.router.navigate(['/my-barters']); // ✅ رجّع المستخدم لصفحة البارترز
-      },
-      error: (err) => {
-        console.error('❌ Failed to delete barter:', err);
-        alert(err.error?.message || 'Failed to delete barter');
-      },
-    });
   }
 }

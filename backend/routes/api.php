@@ -78,8 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 
     // Chats and Messages routes
-    Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
-    Route::apiResource('chats.messages', MessageController::class)->shallow();
+    // Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
+    // Route::apiResource('chats.messages', MessageController::class)->shallow();
+    // Route::post('barters/{barter}/messages', [MessageController::class, 'store'])
+    //  ->name('barters.messages.store');
 
     // Notifications routes
 
@@ -168,3 +170,28 @@ Route::match(['get', 'post'], '/paymob/callback', [PaymobController::class, 'cal
 
 // Paymob Webhook (Server to Server)
 Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
+
+
+
+
+// routes/api.php
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/chats', [ChatController::class, 'index']);
+    Route::get('/chats/{chat}', [ChatController::class, 'show']);
+    
+    // رسائل البارتر
+    Route::post('barters/{barter}/messages', [MessageController::class, 'store']);
+    Route::get('barters/{barter}/messages', [MessageController::class, 'index']); // optional
+});
+
+// routes/api.php
+Route::get('/chat/{chatId}/messages/latest', function ($chatId, Illuminate\Http\Request $request) {
+    $lastMessageId = $request->query('last_message_id') ?? 0;
+
+    $messages = \App\Models\Message::where('chat_id', $chatId)
+        ->where('id', '>', $lastMessageId)
+        ->with('sender:id,username')
+        ->get();
+
+    return response()->json($messages);
+});

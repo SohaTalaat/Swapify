@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Chat extends Model
 {
+    protected $fillable = ['barter_id'];
     public function barter()
     {
         return $this->belongsTo(Barter::class);

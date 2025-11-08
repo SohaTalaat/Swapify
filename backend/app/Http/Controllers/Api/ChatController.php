@@ -21,7 +21,7 @@ class ChatController extends Controller
             ->with([
                 'barter:id,status',
                 'barter.listings:id,title',
-                'messages' => fn($q) => $q->latest()->take(1)
+                'messages' => fn($q) => $q->latest()->take(1)->with('sender:id,username,profile_picture_url'),
             ])
             ->latest()
             ->get();

@@ -19,10 +19,13 @@ class StoreMessageRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
-    {
-        return [
-            'content' => 'required|string|max:1000',
-        ];
-    }
+   // App/Http/Requests/Message/StoreMessageRequest.php
+public function rules(): array
+{
+    return [
+        'content' => 'required|string|max:1000',
+        'barter_id' => 'required_without:chat_id|exists:barters,id',
+        'chat_id' => 'required_without:barter_id|exists:chats,id',
+    ];
+}
 }
