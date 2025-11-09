@@ -70,4 +70,11 @@
   .feature-card {
     margin-bottom: 20px;
   }
+  .cont {
+    display: flex;
+    flex-direction: column;
+  }
+  .cont img {
+    width: 250px;
+  }
 }

@@ -1,19 +1,33 @@
 import { Component } from '@angular/core';
 import { About } from '../about/about';
+import { BrowseOffers } from '../browse-offers/browse-offers';
+import { Contact } from '../contact/contact';
+import { Subscription } from '../subscription/subscription';
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-home',
-  imports: [About],
+  standalone: true,
+  imports: [RouterLink, About, BrowseOffers, Contact, Subscription],
   templateUrl: './home.html',
-  styleUrl: './home.css',
+  styleUrls: ['./home.css'],
 })
 export class Home {
   features = [
     {
       icon: '💬',
       title: 'Easy Communication',
-      desc: 'Chat directly with other users to negotiate exchanges.',
+      desc: 'Chat directly with users to negotiate and swap seamlessly.',
     },
-    { icon: '🔄', title: 'Smart Matching', desc: 'Our system matches offers automatically.' },
-    { icon: '⭐', title: 'Trusted Community', desc: 'Rate users and build your credibility.' },
+    {
+      icon: '🔄',
+      title: 'Smart Matching',
+      desc: 'Our system automatically finds offers that fit your needs.',
+    },
+    {
+      icon: '⭐',
+      title: 'Trusted Community',
+      desc: 'Build your credibility and rate other swappers easily.',
+    },
   ];
 }
