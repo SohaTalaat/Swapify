@@ -27,30 +27,36 @@
 
   <!-- Main -->
   <main class="main-content">
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
     <!-- Overview -->
-    <section *ngIf="activeSection === 'overview'">
+    <section *ngIf="activeSection === 'overview' && !loading">
       <h3>Overview</h3>
       <div class="stats-grid">
         <div class="stat-card">
           <i class="fa-solid fa-user-check icon"></i>
           <h5>Active Users</h5>
-          <p>1,243</p>
+          <p>{{ overviewStats.active_users }}</p>
         </div>
         <div class="stat-card">
           <i class="fa-solid fa-handshake icon"></i>
           <h5>Completed Barters</h5>
-          <p>563</p>
+          <p>{{ overviewStats.completed_barters }}</p>
         </div>
         <div class="stat-card">
           <i class="fa-solid fa-box icon"></i>
           <h5>Active Items</h5>
-          <p>342</p>
+          <p>{{ overviewStats.active_items }}</p>
         </div>
       </div>
     </section>
 
     <!-- Users -->
-    <section *ngIf="activeSection === 'users'">
+    <section *ngIf="activeSection === 'users' && !loading">
       <h3>Manage Users</h3>
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
@@ -58,31 +64,88 @@
             <th>Name</th>
             <th>Email</th>
             <th>Status</th>
+            <th>Created</th>
             <th>Action</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>{{ user.full_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="badge" [ngClass]="user.status === 'active' ? 'bg-success' : 'bg-danger'">
+                {{ user.status }}
+              </span>
+            </td>
+            <td>{{ user.created_at | date : 'short' }}</td>
+            <td>
+              <button
+                *ngIf="user.status === 'active'"
+                class="btn btn-sm btn-danger me-2"
+                (click)="banUser(user)"
+              >
+                Ban
+              </button>
+              <button
+                *ngIf="user.status === 'banned'"
+                class="btn btn-sm btn-success"
+                (click)="activateUser(user)"
+              >
+                Activate
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="users.length === 0">
+            <td colspan="5" class="text-center text-muted">No users found</td>
+          </tr>
+        </tbody>
       </table>
     </section>
 
     <!-- Offers -->
-    <section *ngIf="activeSection === 'offers'">
+    <section *ngIf="activeSection === 'offers' && !loading">
       <h3>Monitor Offers</h3>
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
           <tr>
             <th>Title</th>
             <th>Category</th>
-            <th>Status</th>
             <th>User</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr *ngFor="let listing of listings">
+            <td>{{ listing.title }}</td>
+            <td>{{ listing.category }}</td>
+            <td>{{ listing.user_name }}</td>
+            <td>
+              <span class="badge" [ngClass]="listing.is_active ? 'bg-success' : 'bg-secondary'">
+                {{ listing.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>{{ listing.created_at | date : 'short' }}</td>
+            <td>
+              <button
+                class="btn btn-sm"
+                [ngClass]="listing.is_active ? 'btn-warning' : 'btn-success'"
+                (click)="toggleListingStatus(listing)"
+              >
+                {{ listing.is_active ? 'Deactivate' : 'Activate' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="listings.length === 0">
+            <td colspan="6" class="text-center text-muted">No listings found</td>
+          </tr>
+        </tbody>
       </table>
     </section>
 
-    <!-- Content -->
-    <section *ngIf="activeSection === 'content'">
+    <!-- Content Reports -->
+    <section *ngIf="activeSection === 'content' && !loading">
       <h3>Inappropriate Content</h3>
       <div
         *ngFor="let r of reports"
@@ -112,14 +175,14 @@
           </button>
         </div>
       </div>
+      <div *ngIf="reports.length === 0" class="text-center text-muted py-5">No reports found</div>
     </section>
 
     <!-- Verification -->
-    <!-- Verification Section -->
-    <section *ngIf="activeSection === 'verification'">
+    <section *ngIf="activeSection === 'verification' && !loading">
       <h3 class="mb-4">Identity Verification Requests</h3>
 
-      <div *ngIf="!loading; else loadingTpl" class="row g-4">
+      <div class="row g-4">
         <div *ngFor="let v of verifications" class="col-md-6 col-lg-4">
           <div class="card shadow-sm border-0 h-100">
             <div class="card-body d-flex flex-column">
@@ -172,7 +235,6 @@
               </p>
 
               <!-- Action Buttons -->
-              <!-- Action Buttons -->
               <div class="mt-auto d-flex gap-2" *ngIf="v.status === 'pending'">
                 <button class="btn btn-success flex-fill" (click)="approve(v)">Approve</button>
                 <button class="btn btn-danger flex-fill" (click)="reject(v)">Reject</button>
@@ -181,15 +243,17 @@
           </div>
         </div>
       </div>
-
-      <ng-template #loadingTpl>
+      <div *ngIf="verifications.length === 0" class="text-center text-muted py-5">
+        No verification requests
+      </div>
+      <!-- <ng-template #loadingTpl>
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
           <p class="mt-2">Loading verifications...</p>
         </div>
-      </ng-template>
+      </ng-template> -->
     </section>
 
     <!-- Fullscreen Modal -->
@@ -209,17 +273,55 @@
     </div>
 
     <!-- Shipping -->
-    <section *ngIf="activeSection === 'shipping'">
+    <section *ngIf="activeSection === 'shipping' && !loading">
       <h3>Shipping System</h3>
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
           <tr>
-            <th>Item</th>
-            <th>User</th>
+            <th>Barter ID</th>
+            <th>Type</th>
             <th>Status</th>
+            <th>Tracking</th>
+            <th>Action</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr *ngFor="let shipment of shipments">
+            <td>#{{ shipment.barter_id }}</td>
+            <td>{{ shipment.shipping_type }}</td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-secondary': shipment.status === 'pending',
+                  'bg-info': shipment.status === 'picked_up',
+                  'bg-primary': shipment.status === 'in_transit',
+                  'bg-success': shipment.status === 'delivered',
+                  'bg-danger': shipment.status === 'failed'
+                }"
+              >
+                {{ shipment.status }}
+              </span>
+            </td>
+            <td>{{ shipment.tracking_number || 'N/A' }}</td>
+            <td>
+              <select
+                class="form-select form-select-sm"
+                [value]="shipment.status"
+                (change)="updateShipmentStatus(shipment, $event)"
+              >
+                <option value="pending">Pending</option>
+                <option value="picked_up">Picked Up</option>
+                <option value="in_transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+                <option value="failed">Failed</option>
+              </select>
+            </td>
+          </tr>
+          <tr *ngIf="shipments.length === 0">
+            <td colspan="5" class="text-center text-muted">No shipments found</td>
+          </tr>
+        </tbody>
       </table>
     </section>
   </main>

@@ -18,7 +18,7 @@ class AdminController extends Controller
         return response()->json([
             'active_users' => User::where('role', 'user')->count(),
             'completed_barters' => Barter::where('status', 'completed')->count(),
-            'active_items' => Listing::where('is_active', 'true')->count(),
+            'active_items' => Listing::where('is_active', 1)->count(),
         ]);
     }
 }

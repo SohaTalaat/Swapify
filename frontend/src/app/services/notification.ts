@@ -8,9 +8,9 @@ import Pusher from 'pusher-js';
   providedIn: 'root'
 })
 export class Notification {
-  private apiUrl = 'https://peoples-pickup-baskets-frequent.trycloudflare.com/api';
+  private apiUrl = 'http://127.0.0.1:8000/api';
   private echo!: Echo<any>;
-  private initialized = false; // ✅ NEW FLAG
+  private initialized = false;
 
   notifications = new BehaviorSubject<any[]>([]);
   unreadCount = new BehaviorSubject<number>(0);
@@ -28,13 +28,13 @@ export class Notification {
       key: '3ad51a0a95a1b73945f5',
       cluster: 'eu',
       forceTLS: true,
-      authEndpoint: `${this.apiUrl}/broadcasting/auth`,
+      authEndpoint: `http://127.0.0.1:8000/broadcasting/auth`,
       auth: { headers: { Authorization: `Bearer ${token}` } },
     });
 
     // ✅ Listen for real-time notifications
     this.echo.private(`user.${userId}`).listen('.notification.created', (data: any) => {
-      console.log('📩 New notification (Pusher):', data);
+      console.log('New notification (Pusher):', data);
 
       this.zone.run(() => {
         // Prevent duplicates if same ID already exists

@@ -28,7 +28,6 @@ import { Notifications } from './components/notifications/notifications';
 import { UpdateProfile } from './components/update-profile/update-profile';
 import { Verification } from './components/verification/verification';
 import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
-import { Admindashboard } from './components/admindashboard/admindashboard';
 import { Subscription } from './components/subscription/subscription';
 
 export const routes: Routes = [
@@ -72,7 +71,6 @@ export const routes: Routes = [
 
   // Admin
   { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },
-  { path: 'dashboard2', component: Admindashboard, canActivate: [adminGuard] },
 
   // Fallback
   { path: '**', component: Notfound },
