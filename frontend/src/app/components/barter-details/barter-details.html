@@ -2,17 +2,17 @@
   <div class="container">
     <h2 class="fw-bold mb-4 text-center text-gradient">🤝 Barter Details</h2>
 
-    <!-- 🌀 Loading -->
+    <!-- Loading -->
     <div *ngIf="isLoading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- ✅ Content -->
+    <!-- Content -->
     <div *ngIf="!isLoading && viewModel">
       <div class="row g-4">
-        <!-- 🟦 Your Offer -->
+        <!--  Your Offer -->
         <div class="col-md-6">
           <div class="card offer-card shadow-sm">
             <h5 class="text-primary mb-3 border-bottom pb-2">Your Offer</h5>
@@ -23,7 +23,7 @@
           </div>
         </div>
 
-        <!-- 🟩 Partner's Offer -->
+        <!-- Partner's Offer -->
         <div class="col-md-6">
           <div class="card offer-card shadow-sm">
             <h5 class="text-success mb-3 border-bottom pb-2">Offer from {{ viewModel.partner }}</h5>
@@ -35,7 +35,7 @@
         </div>
       </div>
 
-      <!-- 🔵 Status -->
+      <!-- Status -->
       <div class="status mt-4 text-center">
         <span
           class="badge fs-5 px-4 py-2 status-badge"
@@ -49,8 +49,9 @@
         >
           {{ viewModel.status }}
         </span>
-        <!-- 🟢 الأزرار الديناميكية -->
-        <!-- 🔴 يظهر فقط للـ offering -->
+
+        <!-- Dynamic Action Buttons -->
+        <!-- For offering role -->
         <div
           class="text-center mt-4"
           *ngIf="viewModel.role === 'offering' && viewModel.status === 'Pending'"
@@ -58,7 +59,7 @@
           <button class="btn btn-danger" (click)="deleteBarter()">Cancel</button>
         </div>
 
-        <!-- 🟢 يظهر فقط للـ requesting -->
+        <!-- For requesting role -->
         <div
           class="text-center mt-4"
           *ngIf="viewModel.role === 'requesting' && viewModel.status === 'Pending'"
@@ -67,7 +68,7 @@
           <button class="btn btn-danger" (click)="updateStatus('Cancelled')">Reject</button>
         </div>
 
-        <!-- 💬 Chat Section -->
+        <!-- Chat Section -->
         <div class="chat-section mt-5">
           <h5 class="mb-3 fw-semibold text-gradient">💬 Messages</h5>
           <div class="chat-box p-3 mb-3 shadow-sm">
@@ -82,15 +83,24 @@
                 <small class="d-block text-end opacity-75 mt-1">{{ msg.time }}</small>
               </div>
             </div>
+
+            <!-- Typing Indicator -->
+            <div *ngIf="isPartnerTyping" class="mb-3 d-flex justify-content-start">
+              <div class="chat-bubble partner">
+                <small class="d-block fw-bold mb-1">{{ viewModel.partner }}</small>
+                <span class="typing-indicator"> <span></span><span></span><span></span> </span>
+              </div>
+            </div>
           </div>
 
-          <!-- ✏️ Input -->
+          <!-- Input -->
           <div class="input-group">
             <input
               type="text"
               class="form-control rounded-start-pill"
               placeholder="Type a message..."
               [(ngModel)]="newMessage"
+              (input)="onTyping()"
               (keydown.enter)="sendMessage()"
             />
             <button

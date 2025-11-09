@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
 Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
     return $user->barters()->whereHas('chat', function ($q) use ($chatId) {
         $q->where('id', $chatId);

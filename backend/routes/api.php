@@ -178,7 +178,7 @@ Route::post('/paymob/webhook', [PaymobController::class, 'webhook']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chats', [ChatController::class, 'index']);
     Route::get('/chats/{chat}', [ChatController::class, 'show']);
-    
+
     // رسائل البارتر
     Route::post('barters/{barter}/messages', [MessageController::class, 'store']);
     Route::get('barters/{barter}/messages', [MessageController::class, 'index']); // optional

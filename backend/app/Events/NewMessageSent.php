@@ -4,12 +4,13 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class NewMessageSent implements ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, SerializesModels, InteractsWithSockets;
 
     public $message;
 
@@ -18,9 +19,14 @@ class NewMessageSent implements ShouldBroadcast
         $this->message = $message;
     }
 
-    public function broadcastOn()
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('chat.' . $this->message->chat_id);
+        return [new PrivateChannel('chat.' . $this->message->chat_id)];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'message.sent';
     }
 
     public function broadcastWith()
@@ -37,5 +43,17 @@ class NewMessageSent implements ShouldBroadcast
                 ],
             ],
         ];
+    }
+    /**
+     * Get the connection name for which the event should not be broadcast.
+     * This ensures the user who sent the message (optimistic update) does not
+     * receive the real-time event (duplicate message).
+     *
+     * @return string
+     */
+
+    public function dontBroadcastToCurrentUser()
+    {
+        return true;
     }
 }

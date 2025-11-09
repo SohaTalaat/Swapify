@@ -8,6 +8,7 @@ use App\Models\Barter;
 use App\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -30,7 +31,6 @@ class MessageController extends Controller
 
         $request->validate(['content' => 'required|string|max:1000']);
 
-        // إنشاء الشات إذا غير موجود
         if (!$barter->chat) {
             $chat = Chat::create(['barter_id' => $barter->id]);
             $barter->chat()->save($chat);
@@ -42,9 +42,13 @@ class MessageController extends Controller
             'content' => $request->content,
         ]);
 
+        Log::info('About to broadcast MessageSent event for message ID: ' . $message->id);
+
         $message->load('sender');
 
         broadcast(new NewMessageSent($message))->toOthers();
+
+        Log::info('Successfully broadcast MessageSent event for message ID: ' . $message->id);
 
         return response()->json(['message' => $message]);
     }

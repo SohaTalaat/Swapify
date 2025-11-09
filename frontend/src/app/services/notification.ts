@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
-import Echo from 'laravel-echo';
+// import Echo from 'laravel-echo';
 import { BehaviorSubject } from 'rxjs';
 import Pusher from 'pusher-js';
 
@@ -9,7 +9,7 @@ import Pusher from 'pusher-js';
 })
 export class Notification {
   private apiUrl = 'http://127.0.0.1:8000/api';
-  private echo!: Echo<any>;
+  // private echo!: Echo<any>;
   private initialized = false;
 
   notifications = new BehaviorSubject<any[]>([]);
@@ -18,34 +18,40 @@ export class Notification {
   constructor(private http: HttpClient, private zone: NgZone) { }
 
   init(userId: number, token: string) {
-    // ✅ Prevent double initialization
+
+    // Prevent double initialization
     if (this.initialized) return;
     this.initialized = true;
 
-    (window as any).Pusher = Pusher;
-    this.echo = new Echo({
-      broadcaster: 'pusher',
-      key: '3ad51a0a95a1b73945f5',
-      cluster: 'eu',
-      forceTLS: true,
-      authEndpoint: `http://127.0.0.1:8000/broadcasting/auth`,
-      auth: { headers: { Authorization: `Bearer ${token}` } },
-    });
+    // Use global Echo instance from main.ts
+    if (!window.Echo) {
+      console.error(' Echo not initialized. Check main.ts');
+      return;
+    }
 
+    // Set auth token for private channels
+    if (window.Echo && window.Echo.connector?.options?.auth) {
+      window.Echo.connector.options.auth.headers = {
+        ...window.Echo.connector.options.auth.headers,
+        Authorization: `Bearer ${token}`,
+      };
+    }
     // ✅ Listen for real-time notifications
-    this.echo.private(`user.${userId}`).listen('.notification.created', (data: any) => {
-      console.log('New notification (Pusher):', data);
+    window.Echo.private(`user.${userId}`)
+      .listen('.notification.created', (data: any) => {
+        console.log('📩 New notification (Pusher):', data);
 
-      this.zone.run(() => {
-        // Prevent duplicates if same ID already exists
-        const current = this.notifications.value;
-        if (!current.find((n) => n.id === data.id)) {
-          this.notifications.next([data, ...current]);
-          this.unreadCount.next(this.unreadCount.value + 1);
-        }
+        this.zone.run(() => {
+          // Prevent duplicates
+          const current = this.notifications.value;
+          if (!current.find((n) => n.id === data.id)) {
+            this.notifications.next([data, ...current]);
+            this.unreadCount.next(this.unreadCount.value + 1);
+          }
+        });
       });
-    });
 
+    console.log(' Notifications initialized for user:', userId);
     this.loadNotifications(token);
   }
 
@@ -53,6 +59,7 @@ export class Notification {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http.get(`${this.apiUrl}/notifications`, { headers }).subscribe((res: any) => {
       this.zone.run(() => {
+        // Remove duplicates by ID
         const unique = [
           ...new Map(res.notifications.map((n: any) => [n.id, n])).values(),
         ];
