@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BarterCreated;
 use App\Events\BarterStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Barter;
@@ -14,9 +15,6 @@ use Illuminate\Http\Request;
 
 class BarterController extends Controller
 {
-    /**
-     * عرض جميع المقايضات الخاصة بالمستخدم
-     */
     public function index()
     {
         return Auth::user()
@@ -33,9 +31,6 @@ class BarterController extends Controller
             ->get();
     }
 
-    /**
-     * إنشاء مقايضة جديدة
-     */
     public function store(StoreBarterRequest $request)
     {
         $data = $request->validated();
@@ -48,11 +43,9 @@ class BarterController extends Controller
             'shipping_address_id' => $data['shipping_address_id'] ?? null,
         ]);
 
-        // ربط الأطراف بالمقايضة
         $barter->participants()->attach(Auth::id(), ['role' => 'offering']);
         $barter->participants()->attach($data['receiver_id'], ['role' => 'requesting']);
 
-        // ربط القوائم (العروض والطلبات)
         $barter->listings()->attach($data['offered_listing_id'], [
             'owner_user_id' => Auth::id(),
         ]);
@@ -60,7 +53,7 @@ class BarterController extends Controller
             'owner_user_id' => $data['receiver_id'],
         ]);
 
-        event(new BarterStatusUpdated($barter->load('participants')));
+        event(new BarterCreated($barter));
 
         return $barter->load([
             'participants:id,username',
@@ -72,9 +65,6 @@ class BarterController extends Controller
         ]);
     }
 
-    /**
-     * عرض تفاصيل مقايضة معينة
-     */
     public function show(Barter $barter)
     {
         return $barter->load([
@@ -85,15 +75,12 @@ class BarterController extends Controller
                     ->with('images:id,listing_id,image_url');
             },
             'shippingAddress',
-            // ✅ هنا التعديل الأساسي
             'chat.messages.sender:id,username,profile_picture_url',
             'reviews',
         ]);
     }
 
-    /**
-     * تحديث بيانات المقايضة
-     */
+
     public function update(UpdateBarterRequest $request, Barter $barter)
     {
         $barter->update($request->validated());
@@ -107,18 +94,12 @@ class BarterController extends Controller
         return $barter;
     }
 
-    /**
-     * حذف مقايضة
-     */
     public function destroy(Barter $barter)
     {
         $barter->delete();
         return response('', 204);
     }
 
-    /**
-     * تحديث حالة المقايضة (proposed / accepted / completed / cancelled)
-     */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -126,10 +107,13 @@ class BarterController extends Controller
         ]);
 
         $barter = Barter::findOrFail($id);
+        if (!$barter->participants->contains('id', Auth::id())) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
         $barter->status = $request->status;
         $barter->save();
 
-        event(new BarterStatusUpdated($barter->load('participants')));
+        event(new BarterStatusUpdated($barter, Auth::id()));
 
         return response()->json([
             'message' => 'Barter status updated successfully',
