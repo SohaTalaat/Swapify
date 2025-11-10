@@ -12,6 +12,7 @@ class Barter extends Model
         'meeting_location',
         'meeting_time',
         'shipping_address_id',
+        'shipping_address_text', 
         'agreed_at',
         'completed_at',
         'transaction_fee_amount'

@@ -87,17 +87,19 @@
       <!-- Delivery Address -->
       <div *ngIf="exchangeType === 'delivery'" class="mb-3">
         <label class="form-label fw-semibold">Shipping Address</label>
-        <select
-          class="form-select modern-input"
-          [(ngModel)]="shippingAddressId"
-          name="shippingAddress"
+        <input
+          type="text"
+          class="form-control modern-input"
+          [(ngModel)]="shippingAddressText"
+          name="shippingAddressText"
+          placeholder="Enter your shipping address"
           required
-        >
-          <option [ngValue]="null">Select address</option>
-          <!-- يمكن جلب العناوين من API لاحقًا -->
-          <option value="1">123 Main St, Cairo</option>
-          <option value="2">456 Nile Ave, Giza</option>
-        </select>
+        />
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Transaction Fee (EGP)</label>
+        <input type="number" class="form-control" [value]="transactionFee" readonly />
+        <small class="text-muted">Fixed fees per swap transaction</small>
       </div>
 
       <button type="submit" class="btn btn-gradient w-100" [disabled]="isLoading || !form.valid">
