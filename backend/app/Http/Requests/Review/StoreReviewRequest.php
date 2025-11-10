@@ -11,7 +11,7 @@ class StoreReviewRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,13 @@ class StoreReviewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'barter_id' => 'required|exists:barters,id',
+            'reviewee_id' => 'required|exists:users,id|different:reviewer_id',
+            'rating' => 'required|integer|min:1|max:5',
+            'communication_rating' => 'nullable|integer|min:1|max:5',
+            'item_condition_rating' => 'nullable|integer|min:1|max:5',
+            'timeliness_rating' => 'nullable|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
         ];
     }
 }

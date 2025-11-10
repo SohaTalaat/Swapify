@@ -62,12 +62,10 @@
               <h6 class="text-muted mb-2">Recent Notifications</h6>
               <hr class="my-2" />
 
-              <!-- لو مفيش إشعارات -->
               <div *ngIf="notifications.length === 0" class="text-center text-muted py-2">
                 No new notifications
               </div>
 
-              <!-- عرض أول 3 إشعارات -->
               <div
                 *ngFor="let n of notifications.slice(0, 3)"
                 class="dropdown-item d-flex align-items-start mb-2"
