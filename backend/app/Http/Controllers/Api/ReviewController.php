@@ -82,4 +82,17 @@ class ReviewController extends Controller
             'total_reviews' => $count,
         ]);
     }
+    public function hasReviewed($barterId)
+{
+    $userId = Auth::id();
+
+    $review = Review::where('barter_id', $barterId)
+                    ->where('reviewer_id', $userId)
+                    ->first();
+
+    return response()->json([
+        'hasReviewed' => $review ? true : false
+    ]);
+}
+
 }

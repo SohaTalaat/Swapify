@@ -91,6 +91,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews routes
 
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'store']);
+        Route::get('/reviews/has-reviewed/{barter}', [ReviewController::class, 'hasReviewed']);
+
 
     // Disputes routes
 

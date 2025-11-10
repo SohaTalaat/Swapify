@@ -1,0 +1,55 @@
+<div class="reviews-container p-4 shadow-lg rounded-4 bg-light">
+  <h4 class="fw-bold mb-3">🌟 Reviews & Ratings</h4>
+
+  <!-- Average Rating -->
+  <div class="mb-4 d-flex align-items-center" *ngIf="reviews.length">
+    <div class="average-rating d-flex align-items-center me-3">
+      <span class="fw-bold fs-4 me-2">{{ averageRating.toFixed(1) }}</span>
+      <ng-container *ngFor="let star of [1, 2, 3, 4, 5]; let i = index">
+        <i
+          class="bi fs-5"
+          [ngClass]="{
+            'bi-star-fill text-warning': i < Math.round(averageRating),
+            'bi-star text-secondary': i >= Math.round(averageRating)
+          }"
+        ></i>
+      </ng-container>
+    </div>
+    <small class="text-muted">{{ reviews.length }} reviews</small>
+  </div>
+
+  <div *ngIf="reviews.length === 0" class="text-center text-muted py-5">
+    No reviews yet. Be the first to get reviewed! ✨
+  </div>
+
+  <div
+    class="review-item mb-3 p-4 border rounded-4 shadow-sm bg-white hover-shadow"
+    *ngFor="let review of reviews; trackBy: trackByIndex"
+  >
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="d-flex align-items-center">
+        <img
+          [src]="review.avatar"
+          alt="Avatar"
+          class="rounded-circle me-2"
+          width="40"
+          height="40"
+        />
+        <strong class="">{{ review.reviewer }}</strong>
+      </div>
+      <div>
+        <ng-container *ngFor="let star of [1, 2, 3, 4, 5]; let i = index">
+          <i
+            class="bi"
+            [ngClass]="{
+              'bi-star-fill text-warning': i < review.rating,
+              'bi-star text-secondary': i >= review.rating
+            }"
+          ></i>
+        </ng-container>
+      </div>
+    </div>
+    <p class="mb-2 text-muted">{{ review.comment }}</p>
+    <small class="text-secondary">{{ review.created_at | date : 'medium' }}</small>
+  </div>
+</div>

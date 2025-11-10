@@ -1,0 +1,55 @@
+<div
+  *ngIf="!isSubmitted"
+  class="review-card p-4 rounded-4 shadow-lg mx-auto"
+  style="max-width: 500px; background: #ffffff; border: 1px solid #e0e0e0"
+>
+  <h5 class="fw-bold mb-4 text-center" style="color: #f76527">Leave a Review</h5>
+
+  <!-- ⭐ Rating -->
+  <div class="mb-4 text-center">
+    <label class="form-label d-block mb-2">Rating:</label>
+    <div>
+      <i
+        *ngFor="let star of stars; let i = index"
+        class="bi"
+        [ngClass]="{
+          'bi-star-fill text-warning': i < rating,
+          'bi-star text-secondary': i >= rating
+        }"
+        (click)="setRating(i + 1)"
+        style="font-size: 2rem; cursor: pointer; transition: transform 0.2s"
+        (mouseenter)="ratingHover = i + 1"
+        (mouseleave)="ratingHover = 0"
+        [style.transform]="i < ratingHover ? 'scale(1.3)' : 'scale(1)'"
+      ></i>
+    </div>
+  </div>
+
+  <!-- 💬 Comment -->
+  <div class="mb-4">
+    <label class="form-label">Comment:</label>
+    <textarea
+      class="form-control shadow-sm"
+      rows="4"
+      [(ngModel)]="comment"
+      placeholder="Write your feedback..."
+      style="resize: none; border-radius: 0.75rem"
+    ></textarea>
+  </div>
+
+  <!-- Submit Button -->
+  <button
+    class="btn btn-gradient w-100 fw-bold"
+    (click)="submitReview()"
+    [disabled]="rating === 0"
+    style="
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 0.75rem;
+      background-color: #f76527;
+      color: white;
+    "
+  >
+    Submit
+  </button>
+</div>
