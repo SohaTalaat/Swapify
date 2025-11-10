@@ -15,11 +15,18 @@ class ReviewController extends Controller
      */
     public function index()
     {
-        return Review::where('reviewee_id', Auth::id())
-            ->with(['reviewer:id,username,profile_picture_url', 'barter:id,status'])
-            ->latest()
-            ->get();
+        $userId = Auth::id();
+
+        return response()->json([
+            'received' => Review::where('reviewee_id', $userId)
+                ->with(['reviewer:id,username,profile_picture_url', 'barter:id,status'])
+                ->latest()->get(),
+            'given' => Review::where('reviewer_id', $userId)
+                ->with(['reviewee:id,username,profile_picture_url', 'barter:id,status'])
+                ->latest()->get(),
+        ]);
     }
+
 
     /**
      * Store a new review for a completed barter.
