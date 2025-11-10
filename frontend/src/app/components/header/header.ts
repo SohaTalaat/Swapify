@@ -3,7 +3,7 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
-import { Notification } from '../../services/notification';
+import { NotificationService } from '../../services/notification';
 
 @Component({
   selector: 'app-header',
@@ -25,7 +25,7 @@ export class Header implements OnInit {
     private auth: Auth,
     private router: Router,
     private zone: NgZone,
-    private notifService: Notification
+    private notifService: NotificationService
   ) {
     // Close dropdown when clicking outside
     document.addEventListener('click', (event: any) => {

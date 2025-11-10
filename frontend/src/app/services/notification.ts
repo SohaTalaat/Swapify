@@ -5,15 +5,23 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class Notification {
+export class NotificationService {
   private apiUrl = 'http://127.0.0.1:8000/api';
   private initialized = false;
-  private audioNotification = new Audio('/assets/notification.mp3'); // Add sound file
+  private audioNotification = new Audio('/assets/notification.mp3');
 
   notifications = new BehaviorSubject<any[]>([]);
   unreadCount = new BehaviorSubject<number>(0);
 
-  constructor(private http: HttpClient, private zone: NgZone) { }
+  // Notification settings
+  private settings = {
+    soundEnabled: true,
+    desktopEnabled: true,
+  };
+
+  constructor(private http: HttpClient, private zone: NgZone) {
+    this.requestDesktopPermission();
+  }
 
   init(userId: number, token: string) {
 
@@ -23,7 +31,7 @@ export class Notification {
 
     // Use global Echo instance from main.ts
     if (!window.Echo) {
-      console.error(' Echo not initialized. Check main.ts');
+      console.error(' Echo not initialized.');
       return;
     }
 
@@ -34,7 +42,7 @@ export class Notification {
         Authorization: `Bearer ${token}`,
       };
     }
-    // ✅ Listen for real-time notifications
+    // Listen for real-time notifications
     window.Echo.private(`user.${userId}`)
       .listen('.notification.created', (data: any) => {
         console.log('📩 New notification (Pusher):', data);
@@ -42,9 +50,24 @@ export class Notification {
         this.zone.run(() => {
           // Prevent duplicates
           const current = this.notifications.value;
-          if (!current.find((n) => n.id === data.id)) {
+          const isDuplicate = current.some(n =>
+            n.id === data.id ||
+            (n.message === data.message &&
+              n.type === data.type &&
+              n.related_barter_id === data.related_barter_id)
+          );
+
+          if (!isDuplicate) {
             this.notifications.next([data, ...current]);
             this.unreadCount.next(this.unreadCount.value + 1);
+
+            //  Play sound
+            this.playSound();
+
+            // ✅ Show desktop notification
+            this.showDesktopNotification(data);
+          } else {
+            console.log('⚠️ Duplicate notification prevented:', data);
           }
         });
       });
@@ -78,5 +101,77 @@ export class Notification {
         this.unreadCount.next(updated.filter((n) => !n.is_read).length);
       });
     });
+  }
+
+  markAllAsRead(token: string) {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    const unreadIds = this.notifications.value.filter(n => !n.is_read).map(n => n.id);
+
+    unreadIds.forEach(id => {
+      this.http.patch(`${this.apiUrl}/notifications/${id}/read`, {}, { headers }).subscribe();
+    });
+    this.zone.run(() => {
+      const updated = this.notifications.value.map(n => ({ ...n, is_read: true }));
+      this.notifications.next(updated);
+      this.unreadCount.next(0);
+    });
+  }
+
+  // Desktop notification
+  private requestDesktopPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  private showDesktopNotification(data: any) {
+    if (!this.settings.desktopEnabled) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const notification = new Notification('Swapify', {
+      body: data.message || data.title,
+      icon: '/assets/logo.png',
+      badge: '/assets/logo.png',
+      tag: `notification-${data.id}`,
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    setTimeout(() => notification.close(), 5000);
+  }
+
+  // Sound notification
+  private playSound() {
+    if (!this.settings.soundEnabled) return;
+
+    this.audioNotification.volume = 0.5;
+    this.audioNotification.play().catch(err => {
+      console.log('Sound play failed:', err);
+    });
+  }
+
+  //  Settings management
+  toggleSound(enabled: boolean) {
+    this.settings.soundEnabled = enabled;
+    localStorage.setItem('notification_sound', enabled.toString());
+  }
+
+  toggleDesktop(enabled: boolean) {
+    this.settings.desktopEnabled = enabled;
+    localStorage.setItem('notification_desktop', enabled.toString());
+
+    if (enabled && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  getSettings() {
+    return {
+      soundEnabled: localStorage.getItem('notification_sound') !== 'false',
+      desktopEnabled: localStorage.getItem('notification_desktop') !== 'false',
+    };
   }
 }

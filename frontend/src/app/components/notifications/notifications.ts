@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Notification } from '../../services/notification';
+import { NotificationService } from '../../services/notification';
 
 @Component({
   selector: 'app-notifications',
@@ -13,7 +13,7 @@ export class Notifications implements OnInit {
   notifications: any[] = [];
   loading = true;
 
-  constructor(private notifService: Notification) { }
+  constructor(private notifService: NotificationService) { }
 
   ngOnInit() {
     const token = localStorage.getItem('swapify_token');
