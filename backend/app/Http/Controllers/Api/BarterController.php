@@ -41,6 +41,10 @@ class BarterController extends Controller
             'meeting_location' => $data['meeting_location'] ?? null,
             'meeting_time' => $data['meeting_time'] ?? null,
             'shipping_address_id' => $data['shipping_address_id'] ?? null,
+            'shipping_address_text' => $data['shipping_address_text'] ?? null, 
+            'transaction_fee_amount' =>  50.00, 
+
+
         ]);
 
         $barter->participants()->attach(Auth::id(), ['role' => 'offering']);

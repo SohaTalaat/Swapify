@@ -29,7 +29,7 @@ import { UpdateProfile } from './components/update-profile/update-profile';
 import { Verification } from './components/verification/verification';
 import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Subscription } from './components/subscription/subscription';
-
+import { ReviewList } from './components/review-list/review-list';
 export const routes: Routes = [
   // Public routes
   { path: '', component: Home },
@@ -68,6 +68,8 @@ export const routes: Routes = [
   { path: 'payment-success', component: PaymentSuccess },
   { path: 'payment-failed', component: PaymentFailed },
 
+  //reviews
+  { path: 'my-reviews', component: ReviewList, canActivate: [authGuard] },
 
   // Admin
   { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },

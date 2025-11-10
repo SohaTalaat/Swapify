@@ -161,3 +161,25 @@
     </div>
   </div>
 </div>
+<!-- Review Modal -->
+<!-- Review Modal -->
+<div
+  *ngIf="
+    barter &&
+    barter.status === 'completed' &&
+    !hasReviewed &&
+    otherUserId !== null &&
+    showReviewModal
+  "
+  class="review-modal-overlay d-flex justify-content-center align-items-center"
+>
+  <div class="review-modal-card p-4 rounded-4 shadow-lg">
+    <button class="btn-close float-end" (click)="closeReviewModal()"></button>
+
+    <app-review-form
+      [barterId]="barter.id"
+      [revieweeId]="otherUserId!"
+      (reviewSubmitted)="onReviewSubmitted()"
+    ></app-review-form>
+  </div>
+</div>

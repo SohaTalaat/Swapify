@@ -118,3 +118,43 @@
   border-radius: 10px;
   display: block;
 }
+
+/* الخلفية الشفافة */
+.review-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* شفاف معظمه */
+  z-index: 1050;
+}
+
+/* الكارد في منتصف الشاشة */
+.review-modal-card {
+  background: #fff;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+  animation: pop-in 0.3s ease;
+  position: relative;
+}
+
+/* حركة ظهور لطيفة */
+@keyframes pop-in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* زر الإغلاق */
+.review-modal-card .btn-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}

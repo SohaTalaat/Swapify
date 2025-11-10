@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BarterService, Barter } from '../../services/barter';
 import { EchoService } from '../../services/echo';
+import { ReviewForm } from '../review-form/review-form';
+import { Review } from '../../services/review';
 
 interface ChatMessage {
   sender: string;
@@ -26,7 +28,7 @@ interface BarterViewModel {
 @Component({
   selector: 'app-barter-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReviewForm],
   templateUrl: './barter-details.html',
   styleUrls: ['./barter-details.css'],
 })
@@ -36,6 +38,8 @@ export class BarterDetails implements OnInit, OnDestroy {
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
+  hasReviewed = false; // أو تحددها بعد جلب البيانات من السيرفر
+  showReviewModal = true;
 
   private echoChannel: any;
   private typingTimeout: any;
@@ -51,7 +55,8 @@ export class BarterDetails implements OnInit, OnDestroy {
     private barterService: BarterService,
     private router: Router,
     private zone: NgZone,
-    private echoService: EchoService
+    private echoService: EchoService,
+    private reviewService: Review
   ) {
     // Clean up Echo channel on route changes
     this.router.events.subscribe(() => {
@@ -87,6 +92,20 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isLoading = false;
 
         if (barter.chat?.id) this.subscribeToChat();
+
+        // Show review modal only if barter completed and not reviewed yet
+        if (barter.status === 'completed') {
+          this.reviewService.hasReviewed(this.barterId).subscribe({
+            next: (res) => {
+              this.hasReviewed = res.hasReviewed;
+              this.showReviewModal = !res.hasReviewed;
+            },
+            error: () => {
+              this.hasReviewed = false;
+              this.showReviewModal = false;
+            },
+          });
+        }
       },
       error: (err) => {
         alert('Failed to load barter: ' + err.message);
@@ -140,14 +159,10 @@ export class BarterDetails implements OnInit, OnDestroy {
         if (!exists) {
           const attachmentUrl = message.attachment_url || null;
           const isImage =
-            attachmentUrl &&
-            /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+            attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
           this.viewModel.messages.push({
-            sender:
-              message.sender_id === currentUserId
-                ? 'You'
-                : message.sender.username,
+            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
             text: message.content,
             time: new Date(message.created_at).toLocaleTimeString('en-US', {
               hour: 'numeric',
@@ -229,9 +244,7 @@ export class BarterDetails implements OnInit, OnDestroy {
 
         const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
         const attachmentUrl = res.message.attachment_url || null;
-        const isImage =
-          attachmentUrl &&
-          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
         lastMsg.text = tempMessage || '📎 Attachment';
         lastMsg.attachment_url = attachmentUrl;
@@ -250,21 +263,34 @@ export class BarterDetails implements OnInit, OnDestroy {
   /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
+
+    // 👇 نحدد الحالة الجديدة بناءً على نوع التبادل
+    let finalStatus = newStatus;
+
+    if (newStatus === 'Ongoing') {
+      if (this.barter.exchange_type === 'in_person') {
+        finalStatus = 'Completed'; // تم التسليم شخصيًا
+      } else if (this.barter.exchange_type === 'delivery') {
+        finalStatus = 'Ongoing'; // جاري التنفيذ عبر التوصيل
+      }
+    }
+
+    // تحويل الحالة لأسم السيرفر
     const map: Record<string, string> = {
       Pending: 'proposed',
       Ongoing: 'accepted',
       Completed: 'completed',
       Cancelled: 'cancelled',
     };
-    const backendStatus = map[newStatus] || newStatus;
+    const backendStatus = map[finalStatus] || finalStatus;
 
+    // إرسال التحديث للسيرفر
     this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
       next: (res) => {
         this.viewModel.status = this.formatStatus(res.barter.status);
-        alert('Status updated successfully');
+        alert(`Status updated to ${this.viewModel.status}`);
       },
-      error: (err) =>
-        alert(err.error?.message || 'Failed to update status'),
+      error: (err) => alert(err.error?.message || 'Failed to update status'),
     });
   }
 
@@ -276,8 +302,7 @@ export class BarterDetails implements OnInit, OnDestroy {
         alert('Barter cancelled successfully.');
         this.router.navigate(['/my-barters']);
       },
-      error: (err) =>
-        alert(err.error?.message || 'Failed to delete barter'),
+      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
     });
   }
 
@@ -289,9 +314,7 @@ export class BarterDetails implements OnInit, OnDestroy {
     const messages =
       barter.chat?.messages.map((msg) => {
         const attachmentUrl = msg.attachment_url || null;
-        const isImage =
-          attachmentUrl &&
-          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
         return {
           sender:
@@ -308,16 +331,10 @@ export class BarterDetails implements OnInit, OnDestroy {
         };
       }) || [];
 
-    const myListing = barter.listings.find(
-      (l) => l.pivot?.owner_user_id === currentUserId
-    );
-    const theirListing = barter.listings.find(
-      (l) => l.pivot?.owner_user_id !== currentUserId
-    );
+    const myListing = barter.listings.find((l) => l.pivot?.owner_user_id === currentUserId);
+    const theirListing = barter.listings.find((l) => l.pivot?.owner_user_id !== currentUserId);
 
-    const myParticipant = barter.participants.find(
-      (p) => p.id === currentUserId
-    );
+    const myParticipant = barter.participants.find((p) => p.id === currentUserId);
     const myRole = myParticipant?.pivot?.role || 'offering';
 
     return {
@@ -326,14 +343,11 @@ export class BarterDetails implements OnInit, OnDestroy {
       status: this.formatStatus(barter.status),
       yourOffer: {
         title: myListing?.title || 'Your Offer',
-        image:
-          myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+        image: myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
       },
       partnerOffer: {
         title: theirListing?.title || 'Their Offer',
-        image:
-          theirListing?.images?.[0]?.image_url ||
-          'assets/placeholder.jpg',
+        image: theirListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
       },
       messages,
       role: myRole,
@@ -368,5 +382,21 @@ export class BarterDetails implements OnInit, OnDestroy {
       const chatBox = document.querySelector('.chat-box');
       if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
+  }
+
+  getOtherUserId(): number | null {
+    const currentUserId = this.getCurrentUserId();
+    const otherParticipant = this.barter.participants.find((p) => p.id !== currentUserId);
+    return otherParticipant ? otherParticipant.id : null;
+  }
+  get otherUserId(): number | null {
+    return this.getOtherUserId();
+  }
+  closeReviewModal() {
+    this.showReviewModal = false;
+  }
+  onReviewSubmitted() {
+    this.showReviewModal = false; // ✅ إخفاء الـ div الأب بالكامل
+    this.hasReviewed = true; // لتجنب إعادة ظهور الفورم لاحقًا
   }
 }

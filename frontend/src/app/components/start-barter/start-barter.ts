@@ -14,6 +14,8 @@ import { BarterService, Listing } from '../../services/barter';
 export class StartBarter implements OnInit {
   userOffers: Listing[] = []; // عروضي
   othersOffers: Listing[] = []; // عروض الآخرين
+  shippingAddressText: string | null = null;
+  transactionFee: number = 50.0; // 💰 ثابت دائمًا
 
   selectedOfferId: number | null = null;
   selectedRequestedId: number | null = null;
@@ -97,7 +99,7 @@ export class StartBarter implements OnInit {
       payload.meeting_location = this.meetingLocation || null;
       payload.meeting_time = this.meetingTime || null;
     } else {
-      payload.shipping_address_id = this.shippingAddressId;
+      payload.shipping_address_text = this.shippingAddressText || null;
     }
 
     this.isLoading = true;
