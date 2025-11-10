@@ -25,6 +25,7 @@
         <li class="nav-item"><a class="nav-link" routerLink="/about">About</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/offers">Offers</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/contact">Contact</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/subscription">Plans</a></li>
       </ul>
     </div>
 
@@ -74,14 +75,14 @@
                 <i
                   class="fa-solid me-2 mt-1"
                   [ngClass]="{
-                    'fa-handshake text-success': n.type === 'barter',
+                    'fa-handshake text-success': n.type === 'barter_status',
                     'fa-tag text-primary': n.type === 'offer',
                     'fa-message text-warning': n.type === 'message'
                   }"
                 ></i>
                 <div>
-                  <p class="mb-0 fw-semibold">{{ n.title }}</p>
-                  <small class="text-muted">{{ n.time }}</small>
+                  <p class="mb-0 fw-semibold">{{ n.message }}</p>
+                  <small class="text-muted">{{ n.created_at }}</small>
                 </div>
               </div>
 
@@ -106,6 +107,11 @@
               />
             </a>
             <button class="btn btn-danger btn-sm" (click)="logout()">Logout</button>
+          </li>
+          <li *ngIf="isAdmin" class="nav-item">
+            <a class="nav-link fw-semibold text-warning" routerLink="/dashboard">
+              <i class="fa-solid fa-gauge me-1"></i> Dashboard
+            </a>
           </li>
         </ng-container>
       </ul>

@@ -59,6 +59,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         CloudinaryLabs\CloudinaryLaravel\CloudinaryServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
 
 
 

@@ -8,6 +8,15 @@
 <div class="notifications-container py-5">
   <div class="container">
     <div class="card shadow-sm p-4 notification-card">
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center text-muted py-3">Loading notifications...</div>
+
+      <!-- No notifications -->
+      <div *ngIf="!loading && notifications.length === 0" class="text-center text-muted py-3">
+        No notifications yet.
+      </div>
+
+      <!-- Notifications -->
       <div
         *ngFor="let n of notifications"
         class="notification-item d-flex justify-content-between align-items-center mb-3 p-3"
@@ -17,9 +26,10 @@
           <i
             class="fa-solid"
             [ngClass]="{
-              'fa-handshake text-success': n.type === 'barter',
+              'fa-handshake text-success': n.type === 'barter_status',
               'fa-tag text-primary': n.type === 'offer',
-              'fa-message text-warning': n.type === 'message'
+              'fa-message text-warning': n.type === 'message',
+              'fa-exclamation-circle text-danger': n.type === 'dispute'
             }"
           ></i>
           <div class="ms-3">

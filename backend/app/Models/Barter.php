@@ -45,7 +45,10 @@ class Barter extends Model
     {
         return $this->hasOne(Chat::class);
     }
-
+// public function chat()
+// {
+//     return $this->belongsTo(Chat::class);
+// }
     public function shippments()
     {
         return $this->hasMany(Shipment::class);

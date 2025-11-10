@@ -1,9 +1,10 @@
+import { PaymentFailed } from './components/payment-failed/payment-failed';
+import { PaymentSuccess } from './components/payment-success/payment-success';
 import { Routes } from '@angular/router';
 import { Home } from './components/home/home';
 import { Login } from './components/login/login';
 import { Register } from './components/register/register';
 import { CompleteProfile } from './components/complete-profile/complete-profile';
-import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Notfound } from './components/notfound/notfound';
 import { ForgotPassword } from './components/forgot-password/forgot-password';
 import { ResetPassword } from './components/reset-password/reset-password';
@@ -25,6 +26,9 @@ import { BarterDetails } from './components/barter-details/barter-details';
 import { StartBarter } from './components/start-barter/start-barter';
 import { Notifications } from './components/notifications/notifications';
 import { UpdateProfile } from './components/update-profile/update-profile';
+import { Verification } from './components/verification/verification';
+import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
+import { Subscription } from './components/subscription/subscription';
 
 export const routes: Routes = [
   // Public routes
@@ -56,6 +60,14 @@ export const routes: Routes = [
   { path: 'complete-profile', component: CompleteProfile, canActivate: [authGuard] },
   { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
   { path: 'update-profile', component: UpdateProfile, canActivate: [authGuard] },
+
+  { path: 'id-verification', component: Verification, canActivate: [authGuard] },
+
+  //Subscriptions
+  { path: 'subscription', component: Subscription },
+  { path: 'payment-success', component: PaymentSuccess },
+  { path: 'payment-failed', component: PaymentFailed },
+
 
   // Admin
   { path: 'dashboard', component: AdminDashboard, canActivate: [adminGuard] },

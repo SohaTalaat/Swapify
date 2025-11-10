@@ -3,6 +3,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
+
 @Component({
   selector: 'app-login',
   imports: [RouterLink, ReactiveFormsModule, CommonModule],
@@ -38,17 +39,28 @@ export class Login {
     this.auth.login(this.loginForm.value).subscribe({
       next: (res) => {
         if (res.token) {
-          this.auth.setToken(res.token); // ✅ update login state globally
+          this.auth.setToken(res.token);
         }
 
-        localStorage.setItem('email', res.user.email);
-        localStorage.setItem('role', res.user.role); // ✅ خزّن الدور
-        this.auth.setToken(res.token);
-        this.auth.setUserData(res.user); // 👈 يحدث الـ header فورًا
+        if (res.user) {
+          this.auth.setUserData(res.user);
 
+          // 🔹 حفظ بيانات المستخدم محليًا
+          localStorage.setItem('swapify_user', JSON.stringify(res.user));
+          localStorage.setItem('email', res.user.email);
+          localStorage.setItem('role', res.user.role || '');
+        }
+
+        // ✅ التوجيه بناءً على الدور
+        const userRole = res.user?.role;
         this.successMessage.set('✅ Logged in successfully!');
         this.loginForm.reset();
-        this.router.navigate(['/']);
+
+        if (userRole === 'admin') {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/']);
+        }
       },
       error: (err) => {
         console.error(err);
@@ -61,6 +73,7 @@ export class Login {
     this.successMessage.set(null);
     this.errorMessage.set(null);
   }
+
   loginWithGoogle() {
     window.location.href = 'http://127.0.0.1:8000/api/auth/google/redirect';
   }

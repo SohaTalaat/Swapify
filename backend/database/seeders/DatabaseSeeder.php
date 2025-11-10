@@ -25,8 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CreateAdminSeeder::class,
             CategorySeeder::class,
-            ListingSeeder::class,
-            ListingImageSeeder::class,
         ]);
     }
 }

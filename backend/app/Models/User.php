@@ -89,9 +89,18 @@ class User extends Authenticatable implements MustVerifyEmail
             ->withTimestamps();
     }
 
+    public function barters()
+    {
+        return $this->belongsToMany(Barter::class, 'barter_participants', 'user_id', 'barter_id');
+    }
+
     public function idverification()
     {
         return $this->hasOne(IDVerification::class);
+    }
+    public function verificationsReviewed()
+    {
+        return $this->hasMany(IDVerification::class, 'verified_by_admin_id');
     }
 
     public function subscription()

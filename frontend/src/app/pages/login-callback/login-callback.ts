@@ -35,24 +35,41 @@ export class LoginCallback implements OnInit {
         setTimeout(() => this.router.navigate(['/login']), 2500);
         return;
       }
-
       if (token) {
-        this.status = 'success';
-        this.message = 'Login successful! Redirecting...';
+        this.status = 'loading';
+        this.message = 'Fetching your profile...';
 
-        // ✅ خزّن البيانات
+        // ✅ خزّن التوكن مؤقتًا
         localStorage.setItem('swapify_token', token);
-        if (email) localStorage.setItem('email', email);
-        if (profileImg) localStorage.setItem('profileImg', profileImg);
 
-        // ✅ حدّث Auth service علشان الـ Header يعرف
-        this.auth.userData.next({
-          username: email?.split('@')[0] || 'User',
-          profile_picture_url: profileImg,
-        });
-        this.auth.loggedIn.next(true);
+        // ✅ نطلب بيانات المستخدم الكاملة من الـ API
+        this.http
+          .get(`${this.apiUrl}/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .subscribe({
+            next: (user: any) => {
+              // ✅ خزّن كل البيانات زي تسجيل الدخول العادي
+              localStorage.setItem('swapify_user', JSON.stringify(user));
+              localStorage.setItem('email', user.email);
+              localStorage.setItem('role', user.role);
+              localStorage.setItem('profileImg', user.profile_picture_url || 'assets/avatar.png');
 
-        setTimeout(() => this.router.navigate(['/profile']), 1500);
+              // ✅ حدّث Auth service
+              this.auth.setUserData(user);
+              this.auth.setToken(token);
+
+              this.status = 'success';
+              this.message = '✅ Logged in successfully!';
+              setTimeout(() => this.router.navigate(['/profile']), 1500);
+            },
+            error: (err) => {
+              console.error('Error fetching user data', err);
+              this.status = 'error';
+              this.message = 'Could not load your profile data.';
+              setTimeout(() => this.router.navigate(['/login']), 2000);
+            },
+          });
       } else {
         this.status = 'error';
         this.message = 'Invalid login attempt.';

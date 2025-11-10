@@ -1,45 +1,47 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Notification } from '../../services/notification';
 
 @Component({
   selector: 'app-notifications',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './notifications.html',
-  styleUrl: './notifications.css',
+  styleUrls: ['./notifications.css'],
 })
-export class Notifications {
-  notifications = [
-    {
-      id: 1,
-      title: 'New barter request from Sara Ahmed',
-      type: 'barter',
-      time: '2 minutes ago',
-      read: false,
-    },
-    {
-      id: 2,
-      title: 'Your offer “Logo Design” got a new comment',
-      type: 'offer',
-      time: '1 hour ago',
-      read: true,
-    },
-    {
-      id: 3,
-      title: 'New message from Omar Youssef',
-      type: 'message',
-      time: '3 hours ago',
-      read: false,
-    },
-    {
-      id: 4,
-      title: 'Your barter with Ali Hassan is now completed',
-      type: 'barter',
-      time: 'Yesterday',
-      read: true,
-    },
-  ];
+export class Notifications implements OnInit {
+  notifications: any[] = [];
+  loading = true;
+
+  constructor(private notifService: Notification) { }
+
+  ngOnInit() {
+    const token = localStorage.getItem('swapify_token');
+    if (!token) {
+      alert('Please login to view notifications.');
+      this.loading = false;
+      return;
+    }
+
+    // Load existing notifications
+    this.notifService.loadNotifications(token);
+
+    // Subscribe to the BehaviorSubject so it updates live
+    this.notifService.notifications.subscribe((list) => {
+      this.notifications = list.map((n) => ({
+        ...n,
+        read: n.is_read, // backend sends is_read
+        title: n.message, // backend sends message instead of title
+        time: n.created_at, // backend sends created_at
+      }));
+      this.loading = false;
+    });
+  }
 
   markAsRead(n: any) {
-    n.read = true;
+    const token = localStorage.getItem('swapify_token');
+    if (!n.read && token) {
+      this.notifService.markAsRead(n.id, token);
+    }
   }
 }

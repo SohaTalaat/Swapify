@@ -1,0 +1,144 @@
+/* ===== Hero Section ===== */
+.contact-hero {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  min-height: 30vh;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating animation background (optional glow) */
+.contact-hero::after {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 6s ease-in-out infinite alternate;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-fade {
+  animation: fadeInUp 1s ease forwards;
+}
+.animate-slide {
+  animation: slideInLeft 1.2s ease forwards;
+}
+
+.highlight {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 3px 12px;
+  border-radius: 12px;
+  color: white;
+}
+.subscription-page {
+  background: linear-gradient(120deg, #fefefe, #f8f8ff);
+  min-height: 100vh;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #ee6931, #fc8552);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.plan-card {
+  background: white;
+  transition: all 0.35s ease;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.plan-card:hover {
+  transform: translateY(-8px);
+  border-color: #ee6931;
+  box-shadow: 0 10px 25px rgba(238, 105, 49, 0.2);
+}
+
+.plan-card.active {
+  border-color: #fc8552;
+}
+
+.icon-wrapper {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  color: white;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.text-accent {
+  color: #ee6931;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ee6931, #fc8552);
+  border: none;
+}
+
+.btn-outline-primary {
+  border: 2px solid #ee6931;
+  color: #ee6931;
+}
+
+.btn-outline-primary:hover {
+  background: #ee6931;
+  color: white;
+}
+
+.badge-popular {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ffae00;
+  color: #fff;
+  font-weight: bold;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

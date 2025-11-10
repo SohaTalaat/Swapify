@@ -1,0 +1,22 @@
+.payment-success-container {
+  background-color: #fafafa;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  border-radius: 16px;
+  max-width: 500px;
+  background-color: white;
+}
+
+.btn-primary {
+  background-color: #ee6931;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #d95c28;
+}

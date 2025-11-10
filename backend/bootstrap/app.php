@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 // use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use \App\Http\Middleware\CheckBarterLimit;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -24,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         ]);
         $middleware->alias([
-            'admin' => IsAdmin::class
+            'admin' => IsAdmin::class,
+            'checkBarterLimit' => CheckBarterLimit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

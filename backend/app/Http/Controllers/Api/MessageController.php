@@ -4,46 +4,71 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\NewMessageSent;
 use App\Http\Controllers\Controller;
-use App\Models\Message;
+use App\Models\Barter;
 use App\Models\Chat;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\Message\StoreMessageRequest;
+use Illuminate\Support\Facades\Log;
+use \Cloudinary\Api\Upload\UploadApi;
 
 class MessageController extends Controller
 {
-    /**
-     * Display all messages within a specific chat.
-     */
     public function index(Chat $chat)
     {
-        // Ensure the user is part of the barter linked to this chat
         if (!$chat->barter->participants->contains(Auth::id())) {
             abort(403, 'Access denied');
         }
 
-        return $chat->messages()
-            ->with('sender:id,username,profile_picture_url')
-            ->get();
+        return $chat->messages()->with('sender:id,username')->get();
     }
 
-    /**
-     * Send a new message in a chat.
-     */
-    public function store(StoreMessageRequest $request, Chat $chat)
+    public function store(Request $request, $barterId)
     {
-        if (!$chat->barter->participants->contains(Auth::id())) {
-            abort(403, 'You are not part of this chat');
+        $barter = Barter::findOrFail($barterId);
+
+        if (!$barter->participants->contains('id', Auth::id())) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $message = $chat->messages()->create([
-            'sender_id' => Auth::id(),
-            'content' => $request->content,
-            'is_read' => false,
+        $request->validate([
+            'content' => 'required|string|max:1000',
+            'attachment' => 'nullable|image|max:5120' // 5MB Max
         ]);
 
-        // Fire event so listeners create notifications (and possibly other side effects)
-        event(new NewMessageSent($message));
+        if (!$barter->chat) {
+            $chat = Chat::create(['barter_id' => $barter->id]);
+            $barter->chat()->save($chat);
+            $barter->load('chat');
+        }
 
-        return $message->load('sender:id,username,profile_picture_url');
+        $attachmentUrl = null;
+        if ($request->hasFile('attachment')) {
+            $upload = (new UploadApi())->upload(
+                $request->file('attachment')->getRealPath(),
+                ['folder' => 'swapify/chat-attachments']
+            );
+            Log::info('Attachment received:', [
+                'hasFile' => $request->hasFile('attachment'),
+                'file' => $request->file('attachment')?->getClientOriginalName()
+            ]);
+
+            $attachmentUrl = $upload['secure_url'];
+        }
+
+        $message = $barter->chat->messages()->create([
+            'sender_id' => Auth::id(),
+            'content' => $request->content,
+            'attachment_url' => $attachmentUrl,
+        ]);
+
+        Log::info('About to broadcast MessageSent event for message ID: ' . $message->id);
+
+        $message->load('sender');
+
+        broadcast(new NewMessageSent($message))->toOthers();
+
+        Log::info('Successfully broadcast MessageSent event for message ID: ' . $message->id);
+
+        return response()->json(['message' => $message]);
     }
 }

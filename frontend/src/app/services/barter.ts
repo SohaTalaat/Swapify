@@ -4,30 +4,58 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+// ---------- Listing Models ----------
+export interface ListingImage {
+  id: number;
+  listing_id: number;
+  image_url: string;
+}
+
+export interface ListingPivot {
+  barter_id: number;
+  listing_id: number;
+  owner_user_id: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Listing {
   id: number;
   title: string;
-  user_id: number;
+  user_id?: number;
+  owner_user_id?: number; // sometimes backend may include it directly
+  pivot?: ListingPivot;
   user?: { username: string; profile_picture_url?: string };
   category?: { id: number; name: string };
-  images?: { image_url: string }[];
+  images?: ListingImage[];
 }
 
-export interface CreateBarterData {
-  receiver_id: number;
-  offered_listing_id: number;
-  requested_listing_id: number;
-  exchange_type: 'delivery' | 'in_person';
-  meeting_location?: string | null;
-  meeting_time?: string | null;
-  shipping_address_id?: number | null;
+// ---------- Barter Models ----------
+export interface BarterParticipant {
+  id: number;
+  username: string;
+  pivot: {
+    barter_id: number;
+    user_id: number;
+    role: 'requesting' | 'offering';
+    created_at?: string;
+    updated_at?: string;
+  };
 }
+
 export interface BarterMessage {
   id: number;
   sender_id: number;
-  message: string;
+  content: string;
   created_at: string;
-  user?: { username: string };
+  sender?: { username: string };
+  attachment_url?: string;
+  attachment_type?: 'image' | 'file';
+}
+
+export interface BarterChat {
+  id: number;
+  messages: BarterMessage[];
 }
 
 export interface Barter {
@@ -38,12 +66,16 @@ export interface Barter {
   meeting_time?: string;
   shipping_address_id?: number;
   created_at: string;
-  participants: { id: number; username: string; role: string }[];
+  participants: BarterParticipant[];
   listings: {
     id: number;
     title: string;
-    owner_user_id: number;
     images?: { image_url: string }[];
+    pivot: {
+      barter_id: number;
+      listing_id: number;
+      owner_user_id: number;
+    };
   }[];
   chat?: {
     id: number;
@@ -51,9 +83,22 @@ export interface Barter {
   };
 }
 
-export interface SendMessageData {
-  message: string;
+// ---------- Request Payloads ----------
+export interface CreateBarterData {
+  receiver_id: number;
+  offered_listing_id: number;
+  requested_listing_id: number;
+  exchange_type: 'delivery' | 'in_person';
+  meeting_location?: string | null;
+  meeting_time?: string | null;
+  shipping_address_id?: number | null;
 }
+
+export interface SendMessageData {
+  content: string;
+  attachment?: File;
+}
+
 export interface BarterViewModel {
   id: number;
   title: string;
@@ -63,13 +108,14 @@ export interface BarterViewModel {
   raw: Barter;
 }
 
+// ---------- Service ----------
 @Injectable({
   providedIn: 'root',
 })
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -81,37 +127,30 @@ export class BarterService {
     });
   }
 
-  // جلب عروض المستخدم الحالي
+  // Listings
   getMyListings(): Observable<Listing[]> {
     return this.http
       .get<Listing[]>(`${this.apiUrl}/listings/my`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
-  // جلب عروض الآخرين (باستثناء عروضي)
   getOthersListings(): Observable<Listing[]> {
     return this.http
       .get<Listing[]>(`${this.apiUrl}/listings`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
-  // جلب عرض واحد
   getListing(id: number): Observable<Listing> {
     return this.http
       .get<Listing>(`${this.apiUrl}/listings/${id}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
-  // إنشاء Barter
+  //  Barters
   createBarter(data: CreateBarterData): Observable<any> {
     return this.http
       .post(`${this.apiUrl}/barters`, data, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
-  }
-
-  private handleError(error: HttpErrorResponse) {
-    const msg = error.error?.message || 'An unknown error occurred!';
-    return throwError(() => new Error(msg));
   }
 
   getMyBarters(): Observable<Barter[]> {
@@ -120,22 +159,53 @@ export class BarterService {
       .pipe(catchError(this.handleError));
   }
 
-  /** جلب تفاصيل Barter معين */
-
   getBarter(id: number): Observable<Barter> {
     return this.http
-      .get<Barter>(`${this.apiUrl}/barters/${id}`, {
-        headers: this.getHeaders(),
-      })
+      .get<Barter>(`${this.apiUrl}/barters/${id}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 
-  /** إرسال رسالة */
-  sendMessage(barterId: number, data: SendMessageData): Observable<any> {
+  // Chat
+  sendMessage(barterId: number, data: SendMessageData) {
+    const formData = new FormData();
+    formData.append('content', data.content);
+    formData.append('barter_id', barterId.toString());
+
+    if (data.attachment) {
+      formData.append('attachment', data.attachment);
+    }
+
+    const token = localStorage.getItem('swapify_token');
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    });
+
     return this.http
-      .post(`${this.apiUrl}/chats/${barterId}/messages`, data, {
-        headers: this.getHeaders(),
-      })
+      .post<{ message: BarterMessage }>(
+        `${this.apiUrl}/barters/${barterId}/messages`,
+        formData,
+        { headers }
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+
+  // Error handler
+  private handleError(error: HttpErrorResponse) {
+    const msg = error.error?.message || 'An unknown error occurred!';
+    return throwError(() => new Error(msg));
+  }
+
+  updateStatus(barterId: number, status: string): Observable<any> {
+    return this.http
+      .put(`${this.apiUrl}/barters/${barterId}/status`, { status }, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));;
+  }
+  deleteBarter(barterId: number): Observable<any> {
+    return this.http
+      .delete(`${this.apiUrl}/barters/${barterId}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
   }
 }

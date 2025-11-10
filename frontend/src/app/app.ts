@@ -1,3 +1,4 @@
+import { EchoService } from './services/echo';
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Header } from './components/header/header';
@@ -11,10 +12,14 @@ import { Auth } from './services/auth';
   styleUrl: './app.css',
 })
 export class App {
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth, private echoService: EchoService) { }
 
   ngOnInit() {
-    // ✅ تأكيد حالة تسجيل الدخول عند تشغيل التطبيق
     this.auth.checkAuthStatus();
+
+    const token = localStorage.getItem('swapify_token');
+    if (token) {
+      this.echoService.initEcho(token);
+    }
   }
 }

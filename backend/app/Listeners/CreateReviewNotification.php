@@ -11,12 +11,12 @@ class CreateReviewNotification
     {
         $review = $event->review;
 
+        // Notify the user being reviewed
         Notification::create([
-            'user_id' => $review->reviewee_id,
-            'type' => 'new_review',
+            'user_id' => $review->reviewed_user_id,
+            'type' => 'review',
             'message' => 'You received a new review from ' . ($review->reviewer->username ?? 'someone'),
             'is_read' => false,
-            'related_barter_id' => $review->barter_id,
             'related_user_id' => $review->reviewer_id,
         ]);
     }
