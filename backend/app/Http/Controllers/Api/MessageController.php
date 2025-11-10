@@ -9,6 +9,7 @@ use App\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use \Cloudinary\Api\Upload\UploadApi;
 
 class MessageController extends Controller
 {
@@ -29,7 +30,10 @@ class MessageController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate(['content' => 'required|string|max:1000']);
+        $request->validate([
+            'content' => 'required|string|max:1000',
+            'attachment' => 'nullable|image|max:5120' // 5MB Max
+        ]);
 
         if (!$barter->chat) {
             $chat = Chat::create(['barter_id' => $barter->id]);
@@ -37,9 +41,24 @@ class MessageController extends Controller
             $barter->load('chat');
         }
 
+        $attachmentUrl = null;
+        if ($request->hasFile('attachment')) {
+            $upload = (new UploadApi())->upload(
+                $request->file('attachment')->getRealPath(),
+                ['folder' => 'swapify/chat-attachments']
+            );
+            Log::info('Attachment received:', [
+                'hasFile' => $request->hasFile('attachment'),
+                'file' => $request->file('attachment')?->getClientOriginalName()
+            ]);
+
+            $attachmentUrl = $upload['secure_url'];
+        }
+
         $message = $barter->chat->messages()->create([
             'sender_id' => Auth::id(),
             'content' => $request->content,
+            'attachment_url' => $attachmentUrl,
         ]);
 
         Log::info('About to broadcast MessageSent event for message ID: ' . $message->id);

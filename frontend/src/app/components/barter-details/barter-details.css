@@ -112,3 +112,9 @@
     transform: translateY(-10px);
   }
 }
+
+.chat-image {
+  max-width: 200px;
+  border-radius: 10px;
+  display: block;
+}

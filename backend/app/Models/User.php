@@ -82,17 +82,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Review::class, 'reviewee_id');
     }
 
-    public function barters()
+    public function bartersAsParticipant()
     {
         return $this->belongsToMany(Barter::class, 'barter_participants')
             ->withPivot('role')
             ->withTimestamps();
     }
 
-    // public function barters()
-    // {
-    //     return $this->belongsToMany(Barter::class, 'barter_participants', 'user_id', 'barter_id');
-    // }
+    public function barters()
+    {
+        return $this->belongsToMany(Barter::class, 'barter_participants', 'user_id', 'barter_id');
+    }
 
     public function idverification()
     {

@@ -12,7 +12,7 @@
     <!-- Content -->
     <div *ngIf="!isLoading && viewModel">
       <div class="row g-4">
-        <!--  Your Offer -->
+        <!-- Your Offer -->
         <div class="col-md-6">
           <div class="card offer-card shadow-sm">
             <h5 class="text-primary mb-3 border-bottom pb-2">Your Offer</h5>
@@ -71,7 +71,9 @@
         <!-- Chat Section -->
         <div class="chat-section mt-5">
           <h5 class="mb-3 fw-semibold text-gradient">💬 Messages</h5>
+
           <div class="chat-box p-3 mb-3 shadow-sm">
+            <!-- Messages -->
             <div
               *ngFor="let msg of viewModel.messages"
               class="mb-3 d-flex"
@@ -79,7 +81,28 @@
             >
               <div class="chat-bubble" [ngClass]="msg.sender === 'You' ? 'me' : 'partner'">
                 <small class="d-block fw-bold mb-1">{{ msg.sender }}</small>
-                <span>{{ msg.text }}</span>
+
+                <!-- Text message -->
+                <ng-container *ngIf="!msg.attachment_url">
+                  <span>{{ msg.text }}</span>
+                </ng-container>
+
+                <!-- Image attachment -->
+                <ng-container *ngIf="msg.attachment_url && msg.isImage">
+                  <img [src]="msg.attachment_url" alt="Attachment" class="chat-image mt-2" />
+                </ng-container>
+
+                <!-- File attachment -->
+                <ng-container *ngIf="msg.attachment_url && !msg.isImage">
+                  <a
+                    [href]="msg.attachment_url"
+                    target="_blank"
+                    class="d-block mt-2 text-decoration-underline"
+                  >
+                    📎 View Attachment
+                  </a>
+                </ng-container>
+
                 <small class="d-block text-end opacity-75 mt-1">{{ msg.time }}</small>
               </div>
             </div>
@@ -95,9 +118,30 @@
 
           <!-- Input -->
           <div class="input-group">
+            <!-- File Upload Button -->
+            <label class="btn btn-outline-secondary rounded-start-pill" style="cursor: pointer">
+              <i class="fa-solid fa-paperclip"></i>
+              <input
+                type="file"
+                accept="image/*"
+                (change)="onFileSelected($event)"
+                style="display: none"
+              />
+            </label>
+
+            <!-- Preview Selected File -->
+            <span *ngIf="selectedFile" class="input-group-text bg-light">
+              <small>📎 {{ selectedFile.name }}</small>
+              <button
+                type="button"
+                class="btn-close btn-sm ms-2"
+                (click)="selectedFile = null"
+              ></button>
+            </span>
+
             <input
               type="text"
-              class="form-control rounded-start-pill"
+              class="form-control"
               placeholder="Type a message..."
               [(ngModel)]="newMessage"
               (input)="onTyping()"
@@ -106,9 +150,10 @@
             <button
               class="btn btn-gradient rounded-end-pill px-4"
               (click)="sendMessage()"
-              [disabled]="!newMessage.trim()"
+              [disabled]="(!newMessage.trim() && !selectedFile) || isUploading"
             >
-              Send
+              <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isUploading ? 'Sending...' : 'Send' }}
             </button>
           </div>
         </div>

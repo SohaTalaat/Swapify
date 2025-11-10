@@ -46,9 +46,11 @@ export interface BarterParticipant {
 export interface BarterMessage {
   id: number;
   sender_id: number;
-  content: string; // ✅ بدل message
+  content: string;
   created_at: string;
-  sender?: { username: string }; // ✅ بدل user
+  sender?: { username: string };
+  attachment_url?: string;
+  attachment_type?: 'image' | 'file';
 }
 
 export interface BarterChat {
@@ -94,6 +96,7 @@ export interface CreateBarterData {
 
 export interface SendMessageData {
   content: string;
+  attachment?: File;
 }
 
 export interface BarterViewModel {
@@ -112,7 +115,7 @@ export interface BarterViewModel {
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -124,7 +127,7 @@ export class BarterService {
     });
   }
 
-  // 🟦 Listings
+  // Listings
   getMyListings(): Observable<Listing[]> {
     return this.http
       .get<Listing[]>(`${this.apiUrl}/listings/my`, { headers: this.getHeaders() })
@@ -143,7 +146,7 @@ export class BarterService {
       .pipe(catchError(this.handleError));
   }
 
-  // 🟧 Barters
+  //  Barters
   createBarter(data: CreateBarterData): Observable<any> {
     return this.http
       .post(`${this.apiUrl}/barters`, data, { headers: this.getHeaders() })
@@ -162,31 +165,43 @@ export class BarterService {
       .pipe(catchError(this.handleError));
   }
 
-  // 🟩 Chat
-  // في دالة sendMessage
+  // Chat
   sendMessage(barterId: number, data: SendMessageData) {
-    const payload = {
-      ...data,
-      barter_id: barterId, // أضف barter_id هنا
-    };
+    const formData = new FormData();
+    formData.append('content', data.content);
+    formData.append('barter_id', barterId.toString());
+
+    if (data.attachment) {
+      formData.append('attachment', data.attachment);
+    }
+
+    const token = localStorage.getItem('swapify_token');
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    });
 
     return this.http
-      .post<{ message: BarterMessage }>(`${this.apiUrl}/barters/${barterId}/messages`, payload, {
-        headers: this.getHeaders(),
-      })
+      .post<{ message: BarterMessage }>(
+        `${this.apiUrl}/barters/${barterId}/messages`,
+        formData,
+        { headers }
+      )
       .pipe(catchError(this.handleError));
   }
 
-  // 🔴 Error handler
+
+  // Error handler
   private handleError(error: HttpErrorResponse) {
     const msg = error.error?.message || 'An unknown error occurred!';
     return throwError(() => new Error(msg));
   }
 
   updateStatus(barterId: number, status: string): Observable<any> {
-    const token = localStorage.getItem('swapify_token');
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.put(`${this.apiUrl}/barters/${barterId}/status`, { status }, { headers });
+    return this.http
+      .put(`${this.apiUrl}/barters/${barterId}/status`, { status }, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));;
   }
   deleteBarter(barterId: number): Observable<any> {
     return this.http

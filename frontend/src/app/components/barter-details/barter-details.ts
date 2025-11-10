@@ -4,7 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BarterService, Barter } from '../../services/barter';
 import { EchoService } from '../../services/echo';
-import { Subscription } from 'rxjs';
+
+interface ChatMessage {
+  sender: string;
+  text: string;
+  time: string;
+  attachment_url?: string | null;
+  isImage?: boolean;
+}
 
 interface BarterViewModel {
   id: number;
@@ -12,7 +19,7 @@ interface BarterViewModel {
   status: string;
   yourOffer: { title: string; image: string };
   partnerOffer: { title: string; image: string };
-  messages: { sender: string; text: string; time: string }[];
+  messages: ChatMessage[];
   role: 'offering' | 'requesting';
 }
 
@@ -29,21 +36,24 @@ export class BarterDetails implements OnInit, OnDestroy {
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
-  private hasListener = false;
-  private initialized = false;
 
   private echoChannel: any;
   private typingTimeout: any;
-  private userSub?: Subscription;
   isPartnerTyping = false;
+
+  // File upload
+  selectedFile: File | null = null;
+  uploadProgress = 0;
+  isUploading = false;
 
   constructor(
     private route: ActivatedRoute,
     private barterService: BarterService,
     private router: Router,
     private zone: NgZone,
-    private echoService: EchoService //  shared Echo instance
+    private echoService: EchoService
   ) {
+    // Clean up Echo channel on route changes
     this.router.events.subscribe(() => {
       if (this.echoChannel && this.barter?.chat?.id) {
         window.Echo.leave(`private-chat.${this.barter.chat.id}`);
@@ -54,14 +64,18 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    console.log('🧠 Initializing BarterDetails for chat:', this.route.snapshot.paramMap.get('id'));
     this.barterId = +this.route.snapshot.paramMap.get('id')!;
     this.loadBarter();
   }
 
+  ngOnDestroy() {
+    if (this.echoChannel) {
+      console.log('🔌 Left chat channel:', this.barter?.chat?.id);
+      window.Echo.leave(`chat.${this.barter?.chat?.id}`);
+      this.echoChannel = null;
+    }
+    if (this.typingTimeout) clearTimeout(this.typingTimeout);
+  }
 
   /** Load barter data from backend */
   private loadBarter() {
@@ -72,10 +86,7 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.viewModel = this.formatBarter(barter);
         this.isLoading = false;
 
-        // Subscribe to real-time chat if available
-        if (barter.chat?.id) {
-          this.subscribeToChat();
-        }
+        if (barter.chat?.id) this.subscribeToChat();
       },
       error: (err) => {
         alert('Failed to load barter: ' + err.message);
@@ -88,18 +99,12 @@ export class BarterDetails implements OnInit, OnDestroy {
   private subscribeToChat() {
     if (!this.barter?.chat?.id) return;
 
+    const token = localStorage.getItem('swapify_token');
     const chatId = this.barter.chat.id;
     const currentUserId = this.getCurrentUserId();
 
-    // ✅ Prevent duplicate listeners
-    if (this.hasListener) {
-      console.warn('⚠️ Listener already exists for chat:', chatId);
-      return;
-    }
-
-    // ✅ Set auth token (safe refresh)
+    // Set auth header dynamically
     if (!this.echoChannel) {
-      const token = localStorage.getItem('swapify_token');
       if (window.Echo && window.Echo.connector?.options?.auth) {
         window.Echo.connector.options.auth.headers = {
           ...window.Echo.connector.options.auth.headers,
@@ -108,46 +113,89 @@ export class BarterDetails implements OnInit, OnDestroy {
       }
     }
 
-    // ✅ Subscribe to channel if not already
+    // Subscribe
     this.echoChannel = window.Echo.private(`chat.${chatId}`);
 
-    this.echoChannel.subscribed(() => {
-      console.log('✅ Subscribed to chat channel:', `chat.${chatId}`);
+    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
+
+    window.Echo.connector.pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher reconnected');
+    });
+    window.Echo.connector.pusher.connection.bind('disconnected', () => {
+      console.warn('⚠️ Pusher disconnected');
     });
 
-    this.echoChannel.error((err: any) => {
-      console.error('❌ Echo channel error:', err);
-    });
-
-    // ✅ Listen once only
-    this.echoChannel.stopListening('.message.sent');
+    // Listen for new messages
     this.echoChannel.listen('.message.sent', (data: any) => {
       console.log('📩 Real-time message received:', data);
       this.zone.run(() => {
         const message = data.message;
         const exists = this.viewModel.messages.some(
-          (m) => m.text === message.content && m.sender === message.sender.username
+          (m) =>
+            m.text === message.content &&
+            m.sender === message.sender.username &&
+            m.attachment_url === message.attachment_url
         );
+
         if (!exists) {
+          const attachmentUrl = message.attachment_url || null;
+          const isImage =
+            attachmentUrl &&
+            /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
           this.viewModel.messages.push({
-            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
+            sender:
+              message.sender_id === currentUserId
+                ? 'You'
+                : message.sender.username,
             text: message.content,
             time: new Date(message.created_at).toLocaleTimeString('en-US', {
               hour: 'numeric',
               minute: '2-digit',
             }),
+            attachment_url: attachmentUrl,
+            isImage: !!isImage,
           });
+
           setTimeout(() => this.scrollToBottom(), 100);
         }
       });
     });
 
-    // ✅ Mark listener as active
-    this.hasListener = true;
-
-    console.log('👀 Active channels:', Object.keys(window.Echo.connector.channels));
+    // Typing whisper
+    this.echoChannel.listenForWhisper('typing', (data: any) => {
+      if (data.userId !== currentUserId) {
+        this.zone.run(() => {
+          this.isPartnerTyping = true;
+          if (this.typingTimeout) clearTimeout(this.typingTimeout);
+          this.typingTimeout = setTimeout(() => {
+            this.isPartnerTyping = false;
+          }, 2000);
+        });
+      }
+    });
   }
 
+  /** Handle file selection */
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      alert('❌ Only images (JPEG, PNG, GIF, WebP) are allowed');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      alert('❌ File size must be less than 5MB');
+      return;
+    }
+
+    this.selectedFile = file;
+  }
 
   /** Send typing whisper */
   onTyping() {
@@ -160,37 +208,48 @@ export class BarterDetails implements OnInit, OnDestroy {
 
   /** Send message */
   sendMessage() {
-    if (!this.newMessage.trim()) return;
+    if (!this.newMessage.trim() && !this.selectedFile) return;
 
-    const payload = { content: this.newMessage };
+    const payload: any = { content: this.newMessage || '📎 Attachment' };
+    if (this.selectedFile) {
+      payload.attachment = this.selectedFile;
+      this.isUploading = true;
+    }
+
     const tempMessage = this.newMessage;
+    const tempFile = this.selectedFile;
     this.newMessage = '';
-
-    // Optimistic UI update
-    const optimisticMsg = {
-      sender: 'You',
-      text: tempMessage,
-      time: new Date().toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-    };
-
-    this.viewModel.messages.push(optimisticMsg);
+    this.selectedFile = null;
     this.scrollToBottom();
 
     this.barterService.sendMessage(this.barterId, payload).subscribe({
-      next: (res) => console.log('✅ Message sent:', res),
+      next: (res) => {
+        this.isUploading = false;
+        console.log('✅ Message sent:', res);
+
+        const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
+        const attachmentUrl = res.message.attachment_url || null;
+        const isImage =
+          attachmentUrl &&
+          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
+        lastMsg.text = tempMessage || '📎 Attachment';
+        lastMsg.attachment_url = attachmentUrl;
+        lastMsg.isImage = !!isImage;
+      },
       error: (err) => {
-        this.viewModel.messages.pop(); // rollback
+        this.isUploading = false;
+        this.viewModel.messages.pop();
         alert('Failed to send message: ' + err.message);
         this.newMessage = tempMessage;
+        this.selectedFile = tempFile;
       },
     });
   }
 
   /** Update barter status */
   updateStatus(newStatus: string) {
+    if (!this.viewModel) return;
     const map: Record<string, string> = {
       Pending: 'proposed',
       Ongoing: 'accepted',
@@ -204,20 +263,21 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.viewModel.status = this.formatStatus(res.barter.status);
         alert('Status updated successfully');
       },
-      error: (err) => alert(err.error?.message || 'Failed to update status'),
+      error: (err) =>
+        alert(err.error?.message || 'Failed to update status'),
     });
   }
 
   /** Delete barter */
   deleteBarter() {
     if (!confirm('Are you sure you want to cancel this barter?')) return;
-
     this.barterService.deleteBarter(this.viewModel.id).subscribe({
       next: () => {
         alert('Barter cancelled successfully.');
         this.router.navigate(['/my-barters']);
       },
-      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
+      error: (err) =>
+        alert(err.error?.message || 'Failed to delete barter'),
     });
   }
 
@@ -225,22 +285,40 @@ export class BarterDetails implements OnInit, OnDestroy {
   private formatBarter(barter: Barter): BarterViewModel {
     const currentUserId = this.getCurrentUserId();
     const partner = barter.participants.find((p) => p.id !== currentUserId);
-    const myListing = barter.listings.find((l) => l.pivot?.owner_user_id === currentUserId);
-    const theirListing = barter.listings.find((l) => l.pivot?.owner_user_id !== currentUserId);
 
-    const messages = (barter.chat?.messages || []).map((msg) => ({
-      sender:
-        msg.sender_id === currentUserId
-          ? 'You'
-          : msg.sender?.username || partner?.username || 'Partner',
-      text: msg.content,
-      time: new Date(msg.created_at).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-    }));
+    const messages =
+      barter.chat?.messages.map((msg) => {
+        const attachmentUrl = msg.attachment_url || null;
+        const isImage =
+          attachmentUrl &&
+          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
-    const myRole = barter.participants.find((p) => p.id === currentUserId)?.pivot?.role || 'offering';
+        return {
+          sender:
+            msg.sender_id === currentUserId
+              ? 'You'
+              : msg.sender?.username || partner?.username || 'Partner',
+          text: msg.content,
+          time: new Date(msg.created_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+          attachment_url: attachmentUrl,
+          isImage: !!isImage,
+        };
+      }) || [];
+
+    const myListing = barter.listings.find(
+      (l) => l.pivot?.owner_user_id === currentUserId
+    );
+    const theirListing = barter.listings.find(
+      (l) => l.pivot?.owner_user_id !== currentUserId
+    );
+
+    const myParticipant = barter.participants.find(
+      (p) => p.id === currentUserId
+    );
+    const myRole = myParticipant?.pivot?.role || 'offering';
 
     return {
       id: barter.id,
@@ -248,18 +326,21 @@ export class BarterDetails implements OnInit, OnDestroy {
       status: this.formatStatus(barter.status),
       yourOffer: {
         title: myListing?.title || 'Your Offer',
-        image: myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+        image:
+          myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
       },
       partnerOffer: {
         title: theirListing?.title || 'Their Offer',
-        image: theirListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+        image:
+          theirListing?.images?.[0]?.image_url ||
+          'assets/placeholder.jpg',
       },
       messages,
       role: myRole,
     };
   }
 
-  /** Get current user ID */
+  /** Helpers */
   private getCurrentUserId(): number {
     try {
       const user = JSON.parse(localStorage.getItem('swapify_user') || '{}');
@@ -269,7 +350,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     }
   }
 
-  /** Format status for UI */
   private formatStatus(status: string): string {
     const map: Record<string, string> = {
       proposed: 'Pending',
@@ -283,26 +363,10 @@ export class BarterDetails implements OnInit, OnDestroy {
     return map[status] || status;
   }
 
-  ngOnDestroy() {
-    if (this.echoChannel && this.barter?.chat?.id) {
-      const chatId = this.barter.chat.id;
-      window.Echo.leave(`chat.${chatId}`);
-      console.log('🔌 Left chat channel:', chatId);
-      this.echoChannel = null;
-    }
-    this.hasListener = false; // 🧹 reset listener flag
-    if (this.typingTimeout) clearTimeout(this.typingTimeout);
-    this.userSub?.unsubscribe();
-  }
-
-
-  /** Scroll chat to bottom */
   private scrollToBottom() {
     setTimeout(() => {
       const chatBox = document.querySelector('.chat-box');
-      if (chatBox) {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
+      if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
   }
 }

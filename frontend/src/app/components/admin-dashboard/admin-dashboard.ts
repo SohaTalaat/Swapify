@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IdVerification } from '../../services/id-verification';
 import { AdminReport } from '../../services/admin-report';
 import { AdminService } from '../../services/admin';
+import { Router } from '@angular/router';
 declare var bootstrap: any;
 
 interface ReportItem {
@@ -59,13 +60,12 @@ export class AdminDashboard implements OnInit {
   constructor(
     private idService: IdVerification,
     private reportService: AdminReport,
-    private adminService: AdminService
+    private adminService: AdminService,
+    private router: Router
   ) { }
 
   ngOnInit() {
     this.loadOverview();
-    // this.loadVerifications();
-    // this.loadReports();
   }
 
   setSection(section: string) {

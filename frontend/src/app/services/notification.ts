@@ -1,16 +1,14 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
-// import Echo from 'laravel-echo';
 import { BehaviorSubject } from 'rxjs';
-import Pusher from 'pusher-js';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Notification {
   private apiUrl = 'http://127.0.0.1:8000/api';
-  // private echo!: Echo<any>;
   private initialized = false;
+  private audioNotification = new Audio('/assets/notification.mp3'); // Add sound file
 
   notifications = new BehaviorSubject<any[]>([]);
   unreadCount = new BehaviorSubject<number>(0);
