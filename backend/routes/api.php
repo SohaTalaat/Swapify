@@ -198,3 +198,4 @@ Route::get('/chat/{chatId}/messages/latest', function ($chatId, Illuminate\Http\
     return response()->json($messages);
 });
 Route::get('/notifications/test', [NotificationController::class, 'test'])->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->get('/recommendations', [\App\Http\Controllers\Api\RecommendationController::class, 'recommend']);
