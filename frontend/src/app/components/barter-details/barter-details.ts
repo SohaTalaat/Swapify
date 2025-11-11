@@ -222,6 +222,44 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   /** Send message */
+  // sendMessage() {
+  //   if (!this.newMessage.trim() && !this.selectedFile) return;
+
+  //   const payload: any = { content: this.newMessage || '📎 Attachment' };
+  //   if (this.selectedFile) {
+  //     payload.attachment = this.selectedFile;
+  //     this.isUploading = true;
+  //   }
+
+  //   const tempMessage = this.newMessage;
+  //   const tempFile = this.selectedFile;
+  //   this.newMessage = '';
+  //   this.selectedFile = null;
+  //   this.scrollToBottom();
+
+  //   this.barterService.sendMessage(this.barterId, payload).subscribe({
+  //     next: (res) => {
+  //       this.isUploading = false;
+  //       console.log('✅ Message sent:', res);
+
+  //       const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
+  //       const attachmentUrl = res.message.attachment_url || null;
+  //       const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
+  //       lastMsg.text = tempMessage || '📎 Attachment';
+  //       lastMsg.attachment_url = attachmentUrl;
+  //       lastMsg.isImage = !!isImage;
+  //     },
+  //     error: (err) => {
+  //       this.isUploading = false;
+  //       this.viewModel.messages.pop();
+  //       alert('Failed to send message: ' + err.message);
+  //       this.newMessage = tempMessage;
+  //       this.selectedFile = tempFile;
+  //     },
+  //   });
+  // }
+
   sendMessage() {
     if (!this.newMessage.trim() && !this.selectedFile) return;
 
@@ -233,6 +271,21 @@ export class BarterDetails implements OnInit, OnDestroy {
 
     const tempMessage = this.newMessage;
     const tempFile = this.selectedFile;
+
+    // Add optimistic message immediately
+    const tempTime = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    this.viewModel.messages.push({
+      sender: 'You',
+      text: tempMessage || '📎 Attachment',
+      time: tempTime,
+      attachment_url: null,
+      isImage: false,
+    });
+
     this.newMessage = '';
     this.selectedFile = null;
     this.scrollToBottom();
@@ -242,16 +295,22 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isUploading = false;
         console.log('✅ Message sent:', res);
 
+        // Update the last message with actual data
         const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
         const attachmentUrl = res.message.attachment_url || null;
         const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
-        lastMsg.text = tempMessage || '📎 Attachment';
+        lastMsg.text = res.message.content;
         lastMsg.attachment_url = attachmentUrl;
         lastMsg.isImage = !!isImage;
+        lastMsg.time = new Date(res.message.created_at).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
       },
       error: (err) => {
         this.isUploading = false;
+        // Remove failed message
         this.viewModel.messages.pop();
         alert('Failed to send message: ' + err.message);
         this.newMessage = tempMessage;
@@ -259,7 +318,6 @@ export class BarterDetails implements OnInit, OnDestroy {
       },
     });
   }
-
   /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
