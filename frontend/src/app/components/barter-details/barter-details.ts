@@ -162,8 +162,7 @@ export class BarterDetails implements OnInit, OnDestroy {
             attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
           this.viewModel.messages.push({
-            sender:
-              message.sender_id === currentUserId ? 'You' : message.sender?.username || 'Partner',
+            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
             text: message.content,
             time: new Date(message.created_at).toLocaleTimeString('en-US', {
               hour: 'numeric',
@@ -273,19 +272,19 @@ export class BarterDetails implements OnInit, OnDestroy {
     const tempMessage = this.newMessage;
     const tempFile = this.selectedFile;
 
-    // Add optimistic message immediately
-    // const tempTime = new Date().toLocaleTimeString('en-US', {
-    //   hour: 'numeric',
-    //   minute: '2-digit',
-    // });
+    //  Add optimistic message immediately
+    const tempTime = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
 
-    // this.viewModel.messages.push({
-    //   sender: 'You',
-    //   text: tempMessage || '📎 Attachment',
-    //   time: tempTime,
-    //   attachment_url: null,
-    //   isImage: false,
-    // });
+    this.viewModel.messages.push({
+      sender: 'You',
+      text: tempMessage || '📎 Attachment',
+      time: tempTime,
+      attachment_url: null,
+      isImage: false,
+    });
 
     this.newMessage = '';
     this.selectedFile = null;
@@ -354,39 +353,14 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   /** Delete barter */
-  // deleteBarter() {
-  //   if (!confirm('Are you sure you want to cancel this barter?')) return;
-  //   this.barterService.deleteBarter(this.viewModel.id).subscribe({
-  //     next: () => {
-  //       alert('Barter cancelled successfully.');
-  //       this.router.navigate(['/my-barters']);
-  //     },
-  //     error: (err) => alert(err.error?.message || 'Failed to delete barter'),
-  //   });
-  // }
-
-  /** Cancel barter with reason */
-  cancelBarter() {
-    const reason = prompt('Please enter a reason for cancellation:');
-    if (!reason || !reason.trim()) {
-      alert('Cancellation reason is required.');
-      return;
-    }
-
-    const token = localStorage.getItem('swapify_token');
-    if (!token) {
-      alert('Not authenticated');
-      return;
-    }
-
-    this.barterService.cancelBarter(this.viewModel.id, reason).subscribe({
+  deleteBarter() {
+    if (!confirm('Are you sure you want to cancel this barter?')) return;
+    this.barterService.deleteBarter(this.viewModel.id).subscribe({
       next: () => {
         alert('Barter cancelled successfully.');
         this.router.navigate(['/my-barters']);
       },
-      error: (err) => {
-        alert(err.error?.message || 'Failed to cancel barter');
-      },
+      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
     });
   }
 
@@ -485,7 +459,6 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
   cancelReason: string = '';
   showCancelBox: boolean = false;
-
   openCancelBox() {
     this.showCancelBox = true;
   }
