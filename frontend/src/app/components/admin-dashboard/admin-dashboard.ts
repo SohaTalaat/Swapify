@@ -5,6 +5,8 @@ import { IdVerification } from '../../services/id-verification';
 import { AdminReport } from '../../services/admin-report';
 import { AdminService } from '../../services/admin';
 import { Router } from '@angular/router';
+import Chart from 'chart.js/auto';
+
 declare var bootstrap: any;
 
 interface ReportItem {
@@ -24,6 +26,10 @@ interface ReportItem {
   styleUrls: ['./admin-dashboard.css'],
 })
 export class AdminDashboard implements OnInit {
+  barterStats = { total: 0, cancelled: 0, active: 0 };
+  barterReasons: any[] = [];
+  reasonsChart: any;
+  cancelledBarters: any[] = [];
   activeSection = 'overview';
   loading = false;
 
@@ -31,7 +37,7 @@ export class AdminDashboard implements OnInit {
   overviewStats = {
     active_users: 0,
     completed_barters: 0,
-    active_items: 0
+    active_items: 0,
   };
 
   // Users Data
@@ -39,7 +45,7 @@ export class AdminDashboard implements OnInit {
   usersPagination = {
     current_page: 1,
     total: 0,
-    per_page: 10
+    per_page: 10,
   };
 
   // Offers Data
@@ -47,7 +53,7 @@ export class AdminDashboard implements OnInit {
   listingsPagination = {
     current_page: 1,
     total: 0,
-    per_page: 10
+    per_page: 10,
   };
 
   // Shipments Data
@@ -62,7 +68,7 @@ export class AdminDashboard implements OnInit {
     private reportService: AdminReport,
     private adminService: AdminService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadOverview();
@@ -89,6 +95,9 @@ export class AdminDashboard implements OnInit {
         break;
       case 'content':
         this.loadReports();
+        break;
+      case 'barter-stats':
+        this.loadBarterStats();
         break;
     }
   }
@@ -118,7 +127,7 @@ export class AdminDashboard implements OnInit {
           this.usersPagination = {
             current_page: res.meta.current_page,
             total: res.meta.total,
-            per_page: res.meta.per_page
+            per_page: res.meta.per_page,
           };
         }
         this.loading = false;
@@ -141,7 +150,7 @@ export class AdminDashboard implements OnInit {
       error: (err: any) => {
         console.error('Failed to ban user', err);
         alert(err.error?.message || 'Failed to ban user');
-      }
+      },
     });
   }
 
@@ -156,7 +165,7 @@ export class AdminDashboard implements OnInit {
       error: (err: any) => {
         console.error('Failed to activate user', err);
         alert(err.error?.message || 'Failed to activate user');
-      }
+      },
     });
   }
 
@@ -170,7 +179,7 @@ export class AdminDashboard implements OnInit {
           this.listingsPagination = {
             current_page: res.meta.current_page,
             total: res.meta.total,
-            per_page: res.meta.per_page
+            per_page: res.meta.per_page,
           };
         }
         this.loading = false;
@@ -194,7 +203,7 @@ export class AdminDashboard implements OnInit {
       error: (err: any) => {
         console.error('Failed to toggle listing', err);
         alert(err.error?.message || 'Failed to update listing');
-      }
+      },
     });
   }
 
@@ -214,7 +223,6 @@ export class AdminDashboard implements OnInit {
   }
 
   updateShipmentStatus(shipment: any, event: Event) {
-
     const select = event.target as HTMLSelectElement;
     const newStatus = select.value;
     if (!confirm(`Update shipment status to ${newStatus}?`)) return;
@@ -227,7 +235,7 @@ export class AdminDashboard implements OnInit {
       error: (err: any) => {
         console.error('Failed to update shipment', err);
         alert(err.error?.message || 'Failed to update shipment');
-      }
+      },
     });
   }
 
@@ -313,5 +321,100 @@ export class AdminDashboard implements OnInit {
     const modalElement = document.getElementById('fullscreenModal');
     const modal = new bootstrap.Modal(modalElement!);
     modal.show();
+  }
+
+  loadBarterStats() {
+    this.loading = true;
+    this.adminService.getBarterStats().subscribe({
+      next: (res: any) => {
+        this.loading = false;
+        this.barterStats = res.stats;
+        this.barterReasons = res.reasons;
+
+        // Load cancelled barters list
+        this.loadCancelledBarters();
+
+        this.renderReasonsChart();
+      },
+      error: (err: any) => {
+        console.error('Failed to load barter stats', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  loadCancelledBarters() {
+    this.adminService.getCancelledBarters().subscribe({
+      next: (data: any[]) => {
+        this.cancelledBarters = data;
+      },
+      error: (err) => {
+        console.error('Failed to load cancelled barters', err);
+      },
+    });
+  }
+
+  renderReasonsChart() {
+    const labels = this.barterReasons.map((r: any) => r.cancel_reason);
+    const data = this.barterReasons.map((r: any) => r.count);
+
+    console.log('Reasons data:', this.barterReasons);
+
+    // Destroy previous chart
+    if (this.reasonsChart) {
+      this.reasonsChart.destroy();
+    }
+
+    // Wait for DOM to render the canvas
+    setTimeout(() => {
+      const ctx = document.getElementById('reasonsChart') as HTMLCanvasElement;
+      if (!ctx) {
+        console.error('Canvas element #reasonsChart not found!');
+        return;
+      }
+
+      this.reasonsChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Cancellation Reasons',
+              data,
+              backgroundColor: [
+                '#007bff',
+                '#28a745',
+                '#ffc107',
+                '#dc3545',
+                '#6f42c1',
+                '#20c997',
+                '#fd7e14',
+                '#e83e8c',
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom' as const,
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || '';
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((a: any, b: any) => a + b, 0);
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                  return `${label}: ${value} (${percentage})`;
+                },
+              },
+            },
+          },
+        },
+      });
+    }, 0); // This pushes execution to the next tick
   }
 }

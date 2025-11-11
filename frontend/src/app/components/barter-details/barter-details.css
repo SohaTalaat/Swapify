@@ -158,3 +158,26 @@
   top: 0.5rem;
   right: 0.5rem;
 }
+
+.cancel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.cancel-box {
+  width: 90%;
+  max-width: 400px;
+}
+
+.confirm {
+  background-color: #f76527;
+  color: wheat;
+}
+.can {
+  color: #f76527;
+}
