@@ -162,7 +162,8 @@ export class BarterDetails implements OnInit, OnDestroy {
             attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
           this.viewModel.messages.push({
-            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
+            sender:
+              message.sender_id === currentUserId ? 'You' : message.sender?.username || 'Partner',
             text: message.content,
             time: new Date(message.created_at).toLocaleTimeString('en-US', {
               hour: 'numeric',
@@ -353,14 +354,39 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   /** Delete barter */
-  deleteBarter() {
-    if (!confirm('Are you sure you want to cancel this barter?')) return;
-    this.barterService.deleteBarter(this.viewModel.id).subscribe({
+  // deleteBarter() {
+  //   if (!confirm('Are you sure you want to cancel this barter?')) return;
+  //   this.barterService.deleteBarter(this.viewModel.id).subscribe({
+  //     next: () => {
+  //       alert('Barter cancelled successfully.');
+  //       this.router.navigate(['/my-barters']);
+  //     },
+  //     error: (err) => alert(err.error?.message || 'Failed to delete barter'),
+  //   });
+  // }
+
+  /** Cancel barter with reason */
+  cancelBarter() {
+    const reason = prompt('Please enter a reason for cancellation:');
+    if (!reason || !reason.trim()) {
+      alert('Cancellation reason is required.');
+      return;
+    }
+
+    const token = localStorage.getItem('swapify_token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    this.barterService.cancelBarter(this.viewModel.id, reason).subscribe({
       next: () => {
         alert('Barter cancelled successfully.');
         this.router.navigate(['/my-barters']);
       },
-      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
+      error: (err) => {
+        alert(err.error?.message || 'Failed to cancel barter');
+      },
     });
   }
 
@@ -456,5 +482,40 @@ export class BarterDetails implements OnInit, OnDestroy {
   onReviewSubmitted() {
     this.showReviewModal = false; // ✅ إخفاء الـ div الأب بالكامل
     this.hasReviewed = true; // لتجنب إعادة ظهور الفورم لاحقًا
+  }
+  cancelReason: string = '';
+  showCancelBox: boolean = false;
+
+  openCancelBox() {
+    this.showCancelBox = true;
+  }
+
+  closeCancelBox() {
+    this.showCancelBox = false;
+    this.cancelReason = '';
+  }
+
+  confirmCancel() {
+    if (!this.cancelReason.trim()) {
+      alert('Please enter a reason for cancellation.');
+      return;
+    }
+
+    const token = localStorage.getItem('swapify_token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    this.barterService.cancelBarter(this.viewModel.id, this.cancelReason).subscribe({
+      next: () => {
+        alert('Barter cancelled successfully.');
+        this.closeCancelBox();
+        this.router.navigate(['/my-barters']);
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to cancel barter');
+      },
+    });
   }
 }

@@ -115,7 +115,7 @@ export interface BarterViewModel {
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -183,14 +183,11 @@ export class BarterService {
     });
 
     return this.http
-      .post<{ message: BarterMessage }>(
-        `${this.apiUrl}/barters/${barterId}/messages`,
-        formData,
-        { headers }
-      )
+      .post<{ message: BarterMessage }>(`${this.apiUrl}/barters/${barterId}/messages`, formData, {
+        headers,
+      })
       .pipe(catchError(this.handleError));
   }
-
 
   // Error handler
   private handleError(error: HttpErrorResponse) {
@@ -201,11 +198,26 @@ export class BarterService {
   updateStatus(barterId: number, status: string): Observable<any> {
     return this.http
       .put(`${this.apiUrl}/barters/${barterId}/status`, { status }, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));;
+      .pipe(catchError(this.handleError));
   }
   deleteBarter(barterId: number): Observable<any> {
     return this.http
       .delete(`${this.apiUrl}/barters/${barterId}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError));
+  }
+
+  cancelBarter(barterId: number, reason: string): Observable<any> {
+    return this.http
+      .post(
+        `${this.apiUrl}/barters/${barterId}/cancel`,
+        { cancel_reason: reason },
+        { headers: this.getHeaders() }
+      )
+      .pipe(catchError(this.handleError));
+  }
+  getCancelledBarters(): Observable<any[]> {
+    const token = localStorage.getItem('swapify_token');
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<any[]>(`${this.apiUrl}/barters/cancelled`, { headers });
   }
 }

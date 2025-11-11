@@ -13,6 +13,10 @@
       <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
         <i class="fa-solid fa-tags me-2"></i> Offers
       </li>
+      <li [class.active]="activeSection === 'barter-stats'" (click)="setSection('barter-stats')">
+        <i class="fa-solid fa-chart-pie me-2"></i> Barter Stats
+      </li>
+
       <li [class.active]="activeSection === 'content'" (click)="setSection('content')">
         <i class="fa-solid fa-ban me-2"></i> Content
       </li>
@@ -323,6 +327,71 @@
           </tr>
         </tbody>
       </table>
+    </section>
+
+    <!-- Barter Statistics -->
+    <section *ngIf="activeSection === 'barter-stats' && !loading">
+      <h3 class="mb-4">Barter Statistics</h3>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid mb-4">
+        <div class="stat-card">
+          <i class="fa-solid fa-exchange-alt icon"></i>
+          <h5>Total Barters</h5>
+          <p>{{ barterStats.total }}</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-play icon"></i>
+          <h5>Active</h5>
+          <p>{{ barterStats.active }}</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa-solid fa-xmark icon"></i>
+          <h5>Cancelled</h5>
+          <p>{{ barterStats.cancelled }}</p>
+        </div>
+      </div>
+
+      <!-- Cancellation Reasons Table -->
+      <!-- Cancelled Barters List -->
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+          <h5 class="mb-3">Cancelled Barters</h5>
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Barter ID</th>
+                <th>Cancelled By</th>
+                <th>Reason</th>
+                <th>Cancelled At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cb of cancelledBarters">
+                <td>#{{ cb.id }}</td>
+                <td>{{ cb.cancelled_by_username || 'Unknown' }}</td>
+                <td>{{ cb.cancel_reason }}</td>
+                <td>{{ cb.cancelled_at | date : 'short' }}</td>
+              </tr>
+              <tr *ngIf="cancelledBarters.length === 0">
+                <td colspan="4" class="text-center text-muted">No cancelled barters</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body text-center">
+          <h6 class="mb-3">Cancellation Reasons</h6>
+
+          <!-- Sized Container -->
+          <div class="chart-container">
+            <canvas id="reasonsChart"></canvas>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </div>

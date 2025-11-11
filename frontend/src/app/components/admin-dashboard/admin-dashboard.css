@@ -122,3 +122,9 @@
     padding: 10px;
   }
 }
+.chart-container {
+  width: 260px !important;
+  height: 260px !important;
+  margin: 0 auto;
+  display: block;
+}

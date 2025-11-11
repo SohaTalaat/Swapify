@@ -124,4 +124,46 @@ class BarterController extends Controller
             'barter' => $barter,
         ]);
     }
+public function cancel(Request $request, $id)
+{
+    $request->validate([
+        'cancel_reason' => 'required|string|max:255',
+    ]);
+
+    $barter = Barter::findOrFail($id);
+
+    if ($barter->status === 'cancelled') {
+        return response()->json(['message' => 'Barter already cancelled'], 400);
+    }
+
+    $barter->status = 'cancelled';
+    $barter->cancelled_at = now();
+    $barter->cancelled_by = auth()->id();
+    $barter->cancel_reason = $request->input('cancel_reason');
+    $barter->save();
+
+    return response()->json(['message' => 'Barter cancelled successfully']);
+}
+
+public function cancelledBarters()
+{
+    // جلب كل البارترز اللي تم الغاءها
+    $barters = Barter::with(['cancelledByUser:id,username'])
+        ->where('status', 'cancelled')
+        ->latest()
+        ->get();
+
+    $data = $barters->map(function($b) {
+        return [
+            'id' => $b->id,
+            'cancelled_at' => $b->cancelled_at,
+            'cancel_reason' => $b->cancel_reason,
+            'cancelled_by_id' => $b->cancelled_by,
+            'cancelled_by_username' => $b->cancelledByUser->username ?? null,
+        ];
+    });
+
+    return response()->json($data);
+}
+
 }

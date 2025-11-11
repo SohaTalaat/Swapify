@@ -56,7 +56,28 @@
           class="text-center mt-4"
           *ngIf="viewModel.role === 'offering' && viewModel.status === 'Pending'"
         >
-          <button class="btn btn-danger" (click)="deleteBarter()">Cancel</button>
+          <!-- Cancel button -->
+          <button class="btn btn-danger" (click)="openCancelBox()">Cancel</button>
+
+          <!-- Cancel Reason Modal -->
+          <div *ngIf="showCancelBox" class="cancel-overlay">
+            <div class="cancel-box p-4 rounded shadow bg-white">
+              <h5 class="mb-3 can fw-bold">Cancel Barter</h5>
+              <p>Please enter the reason for cancellation:</p>
+
+              <textarea
+                [(ngModel)]="cancelReason"
+                rows="3"
+                class="form-control mb-3"
+                placeholder="Type your reason..."
+              ></textarea>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-secondary" (click)="closeCancelBox()">Close</button>
+                <button class="btn confirm" (click)="confirmCancel()">Confirm</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- For requesting role -->
