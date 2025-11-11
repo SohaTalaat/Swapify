@@ -25,7 +25,7 @@ class CreateMessageNotification
             $notification = Notification::create([
                 'user_id' => $participant->id,
                 'type' => 'new_message',
-                'message' => "New message in Barter #{$chat->barter->id} message: {$message->content}",
+                'message' => "New message in Barter #{$chat->barter->id}",
                 'is_read' => false,
                 'related_barter_id' => $chat->barter->id,
                 'related_user_id' => $senderId,

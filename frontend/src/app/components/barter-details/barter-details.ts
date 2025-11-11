@@ -38,12 +38,11 @@ export class BarterDetails implements OnInit, OnDestroy {
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
-  hasReviewed = false;
+  hasReviewed = false; // أو تحددها بعد جلب البيانات من السيرفر
   showReviewModal = true;
 
   private echoChannel: any;
   private typingTimeout: any;
-  private reconnectTimeout: any;
   isPartnerTyping = false;
 
   // File upload
@@ -61,7 +60,11 @@ export class BarterDetails implements OnInit, OnDestroy {
   ) {
     // Clean up Echo channel on route changes
     this.router.events.subscribe(() => {
-      this.cleanupEcho();
+      if (this.echoChannel && this.barter?.chat?.id) {
+        window.Echo.leave(`private-chat.${this.barter.chat.id}`);
+        console.log('🧹 Cleaned up channel before route change:', this.barter.chat.id);
+        this.echoChannel = null;
+      }
     });
   }
 
@@ -71,21 +74,12 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.cleanupEcho();
-    if (this.typingTimeout) clearTimeout(this.typingTimeout);
-    if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
-  }
-
-  private cleanupEcho() {
-    if (this.echoChannel && this.barter?.chat?.id) {
-      try {
-        window.Echo.leave(`private-chat.${this.barter.chat.id}`);
-        console.log('🧹 Cleaned up Echo channel:', this.barter.chat.id);
-      } catch (err) {
-        console.error('Error cleaning up Echo:', err);
-      }
+    if (this.echoChannel) {
+      console.log('🔌 Left chat channel:', this.barter?.chat?.id);
+      window.Echo.leave(`chat.${this.barter?.chat?.id}`);
       this.echoChannel = null;
     }
+    if (this.typingTimeout) clearTimeout(this.typingTimeout);
   }
 
   /** Load barter data from backend */
@@ -97,16 +91,9 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.viewModel = this.formatBarter(barter);
         this.isLoading = false;
 
-        // Initialize chat after data is loaded
-        if (barter.chat?.id) {
-          // Small delay to ensure DOM is ready
-          setTimeout(() => {
-            this.subscribeToChat();
-            this.scrollToBottom();
-          }, 100);
-        }
+        if (barter.chat?.id) this.subscribeToChat();
 
-        // Check review status
+        // Show review modal only if barter completed and not reviewed yet
         if (barter.status === 'completed') {
           this.reviewService.hasReviewed(this.barterId).subscribe({
             next: (res) => {
@@ -129,93 +116,53 @@ export class BarterDetails implements OnInit, OnDestroy {
 
   /** Subscribe to Pusher channel for real-time messages */
   private subscribeToChat() {
-    if (!this.barter?.chat?.id) {
-      console.warn('⚠️ No chat ID available');
-      return;
-    }
+    if (!this.barter?.chat?.id) return;
 
     const token = localStorage.getItem('swapify_token');
-    if (!token) {
-      console.error('❌ No auth token found');
-      return;
-    }
-
     const chatId = this.barter.chat.id;
     const currentUserId = this.getCurrentUserId();
 
-    // Clean up any existing subscription first
-    this.cleanupEcho();
-
-    // Ensure Echo is initialized
-    if (!window.Echo) {
-      console.error('❌ Echo not initialized');
-      this.echoService.initEcho(token);
-      // Retry after initialization
-      setTimeout(() => this.subscribeToChat(), 500);
-      return;
+    // Set auth header dynamically
+    if (!this.echoChannel) {
+      if (window.Echo && window.Echo.connector?.options?.auth) {
+        window.Echo.connector.options.auth.headers = {
+          ...window.Echo.connector.options.auth.headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
     }
 
-    // Update auth headers dynamically
-    if (window.Echo.connector?.options?.auth) {
-      window.Echo.connector.options.auth.headers = {
-        ...window.Echo.connector.options.auth.headers,
-        Authorization: `Bearer ${token}`,
-      };
-    }
-
-    console.log('🔌 Subscribing to chat:', chatId);
-
-    // Subscribe to private channel
+    // Subscribe
     this.echoChannel = window.Echo.private(`chat.${chatId}`);
 
-    // Handle channel errors
-    this.echoChannel.error((err: any) => {
-      console.error('❌ Echo channel error:', err);
-      // Attempt reconnection after 3 seconds
-      if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = setTimeout(() => {
-        console.log('🔄 Attempting to reconnect...');
-        this.subscribeToChat();
-      }, 3000);
+    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
+
+    window.Echo.connector.pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher reconnected');
     });
-
-    // Monitor connection state
-    if (window.Echo.connector?.pusher?.connection) {
-      window.Echo.connector.pusher.connection.bind('connected', () => {
-        console.log('✅ Pusher connected');
-      });
-
-      window.Echo.connector.pusher.connection.bind('disconnected', () => {
-        console.warn('⚠️ Pusher disconnected');
-      });
-
-      window.Echo.connector.pusher.connection.bind('error', (err: any) => {
-        console.error('❌ Pusher connection error:', err);
-      });
-    }
+    window.Echo.connector.pusher.connection.bind('disconnected', () => {
+      console.warn('⚠️ Pusher disconnected');
+    });
 
     // Listen for new messages
     this.echoChannel.listen('.message.sent', (data: any) => {
       console.log('📩 Real-time message received:', data);
-
       this.zone.run(() => {
         const message = data.message;
-
-        // More lenient duplicate check - only check recent messages
-        const recentMessages = this.viewModel.messages.slice(-10);
-        const isDuplicate = recentMessages.some(
+        const exists = this.viewModel.messages.some(
           (m) =>
             m.text === message.content &&
-            m.sender === (message.sender_id === currentUserId ? 'You' : message.sender?.username) &&
-            Math.abs(new Date(m.time).getTime() - new Date(message.created_at).getTime()) < 1000
+            m.sender === message.sender.username &&
+            m.attachment_url === message.attachment_url
         );
 
-        if (!isDuplicate) {
+        if (!exists) {
           const attachmentUrl = message.attachment_url || null;
-          const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+          const isImage =
+            attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
           this.viewModel.messages.push({
-            sender: message.sender_id === currentUserId ? 'You' : message.sender?.username || 'Partner',
+            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
             text: message.content,
             time: new Date(message.created_at).toLocaleTimeString('en-US', {
               hour: 'numeric',
@@ -226,8 +173,6 @@ export class BarterDetails implements OnInit, OnDestroy {
           });
 
           setTimeout(() => this.scrollToBottom(), 100);
-        } else {
-          console.log('⏭️ Skipped duplicate message');
         }
       });
     });
@@ -244,8 +189,6 @@ export class BarterDetails implements OnInit, OnDestroy {
         });
       }
     });
-
-    console.log('✅ Successfully subscribed to chat:', chatId);
   }
 
   /** Handle file selection */
@@ -272,17 +215,51 @@ export class BarterDetails implements OnInit, OnDestroy {
   /** Send typing whisper */
   onTyping() {
     if (this.echoChannel) {
-      try {
-        this.echoChannel.whisper('typing', {
-          userId: this.getCurrentUserId(),
-        });
-      } catch (err) {
-        console.error('Error sending typing indicator:', err);
-      }
+      this.echoChannel.whisper('typing', {
+        userId: this.getCurrentUserId(),
+      });
     }
   }
 
   /** Send message */
+  // sendMessage() {
+  //   if (!this.newMessage.trim() && !this.selectedFile) return;
+
+  //   const payload: any = { content: this.newMessage || '📎 Attachment' };
+  //   if (this.selectedFile) {
+  //     payload.attachment = this.selectedFile;
+  //     this.isUploading = true;
+  //   }
+
+  //   const tempMessage = this.newMessage;
+  //   const tempFile = this.selectedFile;
+  //   this.newMessage = '';
+  //   this.selectedFile = null;
+  //   this.scrollToBottom();
+
+  //   this.barterService.sendMessage(this.barterId, payload).subscribe({
+  //     next: (res) => {
+  //       this.isUploading = false;
+  //       console.log('✅ Message sent:', res);
+
+  //       const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
+  //       const attachmentUrl = res.message.attachment_url || null;
+  //       const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
+  //       lastMsg.text = tempMessage || '📎 Attachment';
+  //       lastMsg.attachment_url = attachmentUrl;
+  //       lastMsg.isImage = !!isImage;
+  //     },
+  //     error: (err) => {
+  //       this.isUploading = false;
+  //       this.viewModel.messages.pop();
+  //       alert('Failed to send message: ' + err.message);
+  //       this.newMessage = tempMessage;
+  //       this.selectedFile = tempFile;
+  //     },
+  //   });
+  // }
+
   sendMessage() {
     if (!this.newMessage.trim() && !this.selectedFile) return;
 
@@ -296,18 +273,18 @@ export class BarterDetails implements OnInit, OnDestroy {
     const tempFile = this.selectedFile;
 
     // Add optimistic message immediately
-    const tempTime = new Date().toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    // const tempTime = new Date().toLocaleTimeString('en-US', {
+    //   hour: 'numeric',
+    //   minute: '2-digit',
+    // });
 
-    this.viewModel.messages.push({
-      sender: 'You',
-      text: tempMessage || '📎 Attachment',
-      time: tempTime,
-      attachment_url: null,
-      isImage: false,
-    });
+    // this.viewModel.messages.push({
+    //   sender: 'You',
+    //   text: tempMessage || '📎 Attachment',
+    //   time: tempTime,
+    //   attachment_url: null,
+    //   isImage: false,
+    // });
 
     this.newMessage = '';
     this.selectedFile = null;
@@ -341,20 +318,22 @@ export class BarterDetails implements OnInit, OnDestroy {
       },
     });
   }
-
   /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
 
+    // 👇 نحدد الحالة الجديدة بناءً على نوع التبادل
     let finalStatus = newStatus;
+
     if (newStatus === 'Ongoing') {
       if (this.barter.exchange_type === 'in_person') {
-        finalStatus = 'Completed';
+        finalStatus = 'Completed'; // تم التسليم شخصيًا
       } else if (this.barter.exchange_type === 'delivery') {
-        finalStatus = 'Ongoing';
+        finalStatus = 'Ongoing'; // جاري التنفيذ عبر التوصيل
       }
     }
 
+    // تحويل الحالة لأسم السيرفر
     const map: Record<string, string> = {
       Pending: 'proposed',
       Ongoing: 'accepted',
@@ -363,6 +342,7 @@ export class BarterDetails implements OnInit, OnDestroy {
     };
     const backendStatus = map[finalStatus] || finalStatus;
 
+    // إرسال التحديث للسيرفر
     this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
       next: (res) => {
         this.viewModel.status = this.formatStatus(res.barter.status);
@@ -458,9 +438,7 @@ export class BarterDetails implements OnInit, OnDestroy {
   private scrollToBottom() {
     setTimeout(() => {
       const chatBox = document.querySelector('.chat-box');
-      if (chatBox) {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
+      if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
   }
 
@@ -469,17 +447,14 @@ export class BarterDetails implements OnInit, OnDestroy {
     const otherParticipant = this.barter.participants.find((p) => p.id !== currentUserId);
     return otherParticipant ? otherParticipant.id : null;
   }
-
   get otherUserId(): number | null {
     return this.getOtherUserId();
   }
-
   closeReviewModal() {
     this.showReviewModal = false;
   }
-
   onReviewSubmitted() {
-    this.showReviewModal = false;
-    this.hasReviewed = true;
+    this.showReviewModal = false; // ✅ إخفاء الـ div الأب بالكامل
+    this.hasReviewed = true; // لتجنب إعادة ظهور الفورم لاحقًا
   }
 }
