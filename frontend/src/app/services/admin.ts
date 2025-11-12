@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class AdminService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -29,12 +29,15 @@ export class AdminService {
     return this.http.get(`${this.apiUrl}/admin/users`, { headers: this.getHeaders() });
   }
 
-  banUser(userId: number): Observable<any> {
-    return this.http.patch(
-      `${this.apiUrl}/admin/users/${userId}/ban`,
-      {},
-      { headers: this.getHeaders() }
-    );
+  banUser(userId: number, reason?: string): Observable<any> {
+    const body: any = {};
+    if (reason !== undefined) {
+      body.reason = reason;
+    }
+
+    return this.http.patch(`${this.apiUrl}/admin/users/${userId}/ban`, body, {
+      headers: this.getHeaders(),
+    });
   }
 
   activateUser(userId: number): Observable<any> {

@@ -115,7 +115,7 @@ export interface BarterViewModel {
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -191,8 +191,10 @@ export class BarterService {
 
   // Error handler
   private handleError(error: HttpErrorResponse) {
-    const msg = error.error?.message || 'An unknown error occurred!';
-    return throwError(() => new Error(msg));
+    const payload = error.error || {};
+    const msg = payload.message || payload.error || 'An unknown error occurred!';
+    // Return a structured error so callers can inspect status and backend payload
+    return throwError(() => ({ status: error.status, message: msg, data: payload }));
   }
 
   updateStatus(barterId: number, status: string): Observable<any> {
