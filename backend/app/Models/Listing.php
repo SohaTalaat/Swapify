@@ -44,4 +44,9 @@ class Listing extends Model
             ->withPivot('owner_user_id')
             ->withTimestamps();
     }
+
+    public function listingEmbedding()
+    {
+        return $this->hasOne(ListingEmbedding::class, 'listing_id');
+    }
 }
