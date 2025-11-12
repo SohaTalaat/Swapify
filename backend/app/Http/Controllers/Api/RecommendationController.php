@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Listing;
 use App\Models\ListingEmbedding;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class RecommendationController extends Controller
 {
@@ -13,36 +14,69 @@ class RecommendationController extends Controller
     {
         $user = $request->user();
 
+        // ✅ Cache key per user
+        $cacheKey = "recommendations:{$user->id}";
+
+        // ✅ Return cached recommendations if available
+        if (Cache::has($cacheKey)) {
+            return response()->json([
+                'message' => 'Personalized recommendations (cached).',
+                'recommendations' => Cache::get($cacheKey),
+            ]);
+        }
+
         $userVector = $this->getUserProfileVector($user);
 
-        // if user was recently joined and have no barters , shows most common ten products
+        // ✅ If the user has no barters yet, show latest listings
         if (! $userVector) {
-            $fallbackListings = \App\Models\Listing::with('category')
+            $fallbackListings = Listing::with('category')
+                ->where('user_id', '!=', $user->id) // exclude own listings even in fallback
                 ->latest()
                 ->take(10)
                 ->get();
 
             return response()->json([
                 'message' => 'Not enough data to generate personalized recommendations. Showing latest listings instead.',
-                'recommendations' => $fallbackListings
+                'recommendations' => $fallbackListings,
             ]);
         }
 
-        // ✅ if he has barters , show them recommended products based on his history
-        $listings = \App\Models\ListingEmbedding::with('listing')->get();
+        // ✅ Determine user’s preferred category (for boosting)
+        $userPreferredCategoryId = $this->getUserPreferredCategoryId($user);
 
-        $results = $listings->map(function ($item) use ($userVector) {
+        // ✅ Load all embeddings with listings
+        $listings = ListingEmbedding::with('listing')->get();
+
+        // ✅ Calculate similarities, apply category boost, and filter
+        $results = $listings->map(function ($item) use ($userVector, $user, $userPreferredCategoryId) {
+            $similarity = $this->cosineSimilarity($userVector, $item->embedding);
+
+            // ✅ Boost listings from the same preferred category
+            if ($userPreferredCategoryId && $item->listing->category_id === $userPreferredCategoryId) {
+                $similarity *= 1.1; // small boost
+            }
+
             return [
                 'listing' => $item->listing,
-                'similarity' => $this->cosineSimilarity($userVector, $item->embedding),
+                'similarity' => $similarity,
             ];
-        })->sortByDesc('similarity')->take(10)->values();
+        })
+            // ✅ Filter out the user’s own listings
+            ->filter(fn($r) => $r['listing']->user_id !== $user->id)
+            ->sortByDesc('similarity')
+            ->take(10)
+            ->values();
+
+        // ✅ Cache the results for 30 minutes
+        Cache::put($cacheKey, $results, 1800);
 
         return response()->json([
             'message' => 'Personalized recommendations based on your activity.',
-            'recommendations' => $results
+            'recommendations' => $results,
         ]);
     }
+
+    // ------------------------- HELPER FUNCTIONS -------------------------
 
     protected function cosineSimilarity(array $a, array $b): float
     {
@@ -60,9 +94,12 @@ class RecommendationController extends Controller
 
     protected function getUserProfileVector($user): ?array
     {
+        // ✅ Get all embeddings from listings user has bartered with
         $listings = $user->barters()
-            ->with('listingEmbedding')
+            ->with('listings.listingEmbedding')
             ->get()
+            ->pluck('listings')
+            ->flatten()
             ->pluck('listingEmbedding.embedding')
             ->filter();
 
@@ -81,5 +118,24 @@ class RecommendationController extends Controller
         }
 
         return array_map(fn($x) => $x / $count, $sum);
+    }
+
+    protected function getUserPreferredCategoryId($user): ?int
+    {
+        // ✅ Find the most frequent category from user’s previous listings
+        $categoryCounts = $user->barters()
+            ->with('listings')
+            ->get()
+            ->pluck('listings')
+            ->flatten()
+            ->pluck('category_id')
+            ->filter()
+            ->countBy();
+
+        if ($categoryCounts->isEmpty()) {
+            return null;
+        }
+
+        return (int) $categoryCounts->sortDesc()->keys()->first();
     }
 }
