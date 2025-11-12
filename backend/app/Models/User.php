@@ -38,7 +38,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'total_reviews',
         'subscription_tier',
         'last_login_at',
-        'role'
+        'role',
+        'status',
+        'ban_reason'
     ];
 
     /**

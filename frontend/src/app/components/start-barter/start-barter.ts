@@ -26,8 +26,11 @@ export class StartBarter implements OnInit {
   shippingAddressId: number | null = null;
 
   isLoading = false;
+  // Banned modal state
+  bannedModalMessage: string | null = null;
+  bannedModalReason: string | null = null;
 
-  constructor(private barterService: BarterService) {}
+  constructor(private barterService: BarterService) { }
 
   ngOnInit() {
     this.loadMyListings();
@@ -109,8 +112,26 @@ export class StartBarter implements OnInit {
         this.resetForm();
         this.isLoading = false;
       },
-      error: (err) => {
-        alert('Error: ' + err.message);
+      error: (err: any) => {
+        // handle structured error from service
+        if (err && err.status === 403) {
+          const reason = err.data?.ban_reason || null;
+          this.bannedModalMessage = err.message || 'Your account is restricted.';
+          this.bannedModalReason = reason;
+          // show modal
+          const el = document.getElementById('bannedModal');
+          if (el) {
+            // @ts-ignore
+            const m = new (window as any).bootstrap.Modal(el);
+            m.show();
+          } else {
+            alert(this.bannedModalMessage + (reason ? '\nReason: ' + reason : ''));
+          }
+          this.isLoading = false;
+          return;
+        }
+
+        alert('Error: ' + (err?.message || 'An unknown error occurred!'));
         this.isLoading = false;
       },
     });

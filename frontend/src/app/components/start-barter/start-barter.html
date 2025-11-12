@@ -106,3 +106,35 @@
     </form>
   </div>
 </div>
+
+<!-- Banned Modal -->
+<div
+  class="modal fade"
+  id="bannedModal"
+  tabindex="-1"
+  aria-labelledby="bannedModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bannedModalLabel">Account Restricted</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="lead">{{ bannedModalMessage }}</p>
+        <div *ngIf="bannedModalReason">
+          <h6>Reason</h6>
+          <p class="text-danger small">{{ bannedModalReason }}</p>
+        </div>
+        <p>
+          If you believe this is a mistake, please contact
+          <a href="mailto:support@swapify.example">support</a>.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

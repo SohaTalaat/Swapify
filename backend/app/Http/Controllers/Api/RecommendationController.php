@@ -14,10 +14,10 @@ class RecommendationController extends Controller
     {
         $user = $request->user();
 
-        // ✅ Cache key per user
+        // Cache key per user
         $cacheKey = "recommendations:{$user->id}";
 
-        // ✅ Return cached recommendations if available
+        // Return cached recommendations if available
         if (Cache::has($cacheKey)) {
             return response()->json([
                 'message' => 'Personalized recommendations (cached).',
@@ -27,7 +27,7 @@ class RecommendationController extends Controller
 
         $userVector = $this->getUserProfileVector($user);
 
-        // ✅ If the user has no barters yet, show latest listings
+        // If the user has no barters yet, show latest listings
         if (! $userVector) {
             $fallbackListings = Listing::with('category')
                 ->where('user_id', '!=', $user->id) // exclude own listings even in fallback
@@ -41,17 +41,17 @@ class RecommendationController extends Controller
             ]);
         }
 
-        // ✅ Determine user’s preferred category (for boosting)
+        //  Determine user’s preferred category (for boosting)
         $userPreferredCategoryId = $this->getUserPreferredCategoryId($user);
 
-        // ✅ Load all embeddings with listings
+        // Load all embeddings with listings
         $listings = ListingEmbedding::with('listing')->get();
 
-        // ✅ Calculate similarities, apply category boost, and filter
+        // Calculate similarities, apply category boost, and filter
         $results = $listings->map(function ($item) use ($userVector, $user, $userPreferredCategoryId) {
             $similarity = $this->cosineSimilarity($userVector, $item->embedding);
 
-            // ✅ Boost listings from the same preferred category
+            // Boost listings from the same preferred category
             if ($userPreferredCategoryId && $item->listing->category_id === $userPreferredCategoryId) {
                 $similarity *= 1.1; // small boost
             }
@@ -61,13 +61,13 @@ class RecommendationController extends Controller
                 'similarity' => $similarity,
             ];
         })
-            // ✅ Filter out the user’s own listings
+            //  Filter out the user’s own listings
             ->filter(fn($r) => $r['listing']->user_id !== $user->id)
             ->sortByDesc('similarity')
             ->take(10)
             ->values();
 
-        // ✅ Cache the results for 30 minutes
+        //  Cache the results for 30 minutes
         Cache::put($cacheKey, $results, 1800);
 
         return response()->json([

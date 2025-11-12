@@ -68,7 +68,11 @@ export class AdminDashboard implements OnInit {
     private reportService: AdminReport,
     private adminService: AdminService,
     private router: Router
-  ) {}
+  ) { }
+
+  // Ban modal state
+  selectedUserForBan: any = null;
+  banReasonInput: string = '';
 
   ngOnInit() {
     this.loadOverview();
@@ -140,12 +144,45 @@ export class AdminDashboard implements OnInit {
   }
 
   banUser(user: any) {
-    if (!confirm(`Are you sure you want to ban ${user.full_name}?`)) return;
 
-    this.adminService.banUser(user.id).subscribe({
+    // Open modal and set selected user
+    this.selectedUserForBan = user;
+    this.banReasonInput = user.ban_reason || '';
+    const el = document.getElementById('adminBanModal');
+    if (el) {
+      // @ts-ignore
+      const m = new (window as any).bootstrap.Modal(el);
+      m.show();
+    } else {
+      // fallback to prompt
+      const reason = prompt('Enter reason for banning this user:');
+      if (!reason) return;
+      this.confirmBan(reason);
+    }
+  }
+
+  confirmBan(reason?: string) {
+    const r = reason !== undefined ? reason : this.banReasonInput;
+    if (!r || r.trim() === '') {
+      alert('Ban reason is required.');
+      return;
+    }
+
+    const user = this.selectedUserForBan;
+    if (!user) return;
+
+    this.adminService.banUser(user.id, r.trim()).subscribe({
       next: (res: any) => {
         user.status = 'banned';
+        user.ban_reason = r.trim();
         alert(res.message || 'User banned successfully');
+        // hide modal
+        const el = document.getElementById('adminBanModal');
+        if (el) {
+          // @ts-ignore
+          const m = (window as any).bootstrap.Modal.getInstance(el);
+          if (m) m.hide();
+        }
       },
       error: (err: any) => {
         console.error('Failed to ban user', err);
@@ -153,6 +190,7 @@ export class AdminDashboard implements OnInit {
       },
     });
   }
+
 
   activateUser(user: any) {
     if (!confirm(`Are you sure you want to activate ${user.full_name}?`)) return;

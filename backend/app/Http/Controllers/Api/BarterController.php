@@ -33,6 +33,15 @@ class BarterController extends Controller
 
     public function store(StoreBarterRequest $request)
     {
+        $user = Auth::user();
+
+        if ($user->status === 'banned') {
+            return response()->json([
+                'error' => 'Your account is banned and cannot create barters.',
+                'ban_reason' => $user->ban_reason,
+            ], 403);
+        }
+
         $data = $request->validated();
 
         $barter = Barter::create([
@@ -41,8 +50,8 @@ class BarterController extends Controller
             'meeting_location' => $data['meeting_location'] ?? null,
             'meeting_time' => $data['meeting_time'] ?? null,
             'shipping_address_id' => $data['shipping_address_id'] ?? null,
-            'shipping_address_text' => $data['shipping_address_text'] ?? null, 
-            'transaction_fee_amount' =>  50.00, 
+            'shipping_address_text' => $data['shipping_address_text'] ?? null,
+            'transaction_fee_amount' =>  50.00,
 
 
         ]);
@@ -124,46 +133,45 @@ class BarterController extends Controller
             'barter' => $barter,
         ]);
     }
-public function cancel(Request $request, $id)
-{
-    $request->validate([
-        'cancel_reason' => 'required|string|max:255',
-    ]);
+    public function cancel(Request $request, $id)
+    {
+        $request->validate([
+            'cancel_reason' => 'required|string|max:255',
+        ]);
 
-    $barter = Barter::findOrFail($id);
+        $barter = Barter::findOrFail($id);
 
-    if ($barter->status === 'cancelled') {
-        return response()->json(['message' => 'Barter already cancelled'], 400);
+        if ($barter->status === 'cancelled') {
+            return response()->json(['message' => 'Barter already cancelled'], 400);
+        }
+
+        $barter->status = 'cancelled';
+        $barter->cancelled_at = now();
+        $barter->cancelled_by = auth()->id();
+        $barter->cancel_reason = $request->input('cancel_reason');
+        $barter->save();
+
+        return response()->json(['message' => 'Barter cancelled successfully']);
     }
 
-    $barter->status = 'cancelled';
-    $barter->cancelled_at = now();
-    $barter->cancelled_by = auth()->id();
-    $barter->cancel_reason = $request->input('cancel_reason');
-    $barter->save();
+    public function cancelledBarters()
+    {
+        // جلب كل البارترز اللي تم الغاءها
+        $barters = Barter::with(['cancelledByUser:id,username'])
+            ->where('status', 'cancelled')
+            ->latest()
+            ->get();
 
-    return response()->json(['message' => 'Barter cancelled successfully']);
-}
+        $data = $barters->map(function ($b) {
+            return [
+                'id' => $b->id,
+                'cancelled_at' => $b->cancelled_at,
+                'cancel_reason' => $b->cancel_reason,
+                'cancelled_by_id' => $b->cancelled_by,
+                'cancelled_by_username' => $b->cancelledByUser->username ?? null,
+            ];
+        });
 
-public function cancelledBarters()
-{
-    // جلب كل البارترز اللي تم الغاءها
-    $barters = Barter::with(['cancelledByUser:id,username'])
-        ->where('status', 'cancelled')
-        ->latest()
-        ->get();
-
-    $data = $barters->map(function($b) {
-        return [
-            'id' => $b->id,
-            'cancelled_at' => $b->cancelled_at,
-            'cancel_reason' => $b->cancel_reason,
-            'cancelled_by_id' => $b->cancelled_by,
-            'cancelled_by_username' => $b->cancelledByUser->username ?? null,
-        ];
-    });
-
-    return response()->json($data);
-}
-
+        return response()->json($data);
+    }
 }
