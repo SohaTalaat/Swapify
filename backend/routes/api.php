@@ -70,15 +70,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Listing routes
     Route::get('/listings/my', [ListingController::class, 'myOffers']);
-
-    Route::apiResource('listings', ListingController::class);
+    // Route::apiResource('listings', ListingController::class);
+Route::apiResource('listings', ListingController::class)->except(['store']);
+Route::post('listings', [ListingController::class, 'store'])
+    ->middleware('verified.id');
+    
     Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
     Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
     //Barters routes
 
     Route::apiResource('barters', BarterController::class);
     Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
-
+    
+//     Route::apiResource('barters', BarterController::class)->except(['store']);
+// Route::post('barters', [BarterController::class, 'store'])->middleware('verified.id');
     // Chats and Messages routes
     // Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
     // Route::apiResource('chats.messages', MessageController::class)->shallow();

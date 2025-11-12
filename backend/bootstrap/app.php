@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => IsAdmin::class,
             'checkBarterLimit' => CheckBarterLimit::class,
+            'verified.id' => \App\Http\Middleware\EnsureUserIsIdVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
