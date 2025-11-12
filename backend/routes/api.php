@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\{
     ChatController,
     MessageController,
     NotificationController,
+    RecommendationController,
     ReviewController,
     DisputeController,
     FileUploadController,
@@ -92,7 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews routes
 
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'store']);
-        Route::get('/reviews/has-reviewed/{barter}', [ReviewController::class, 'hasReviewed']);
+    Route::get('/reviews/has-reviewed/{barter}', [ReviewController::class, 'hasReviewed']);
 
 
     // Disputes routes
@@ -199,10 +200,9 @@ Route::get('/chat/{chatId}/messages/latest', function ($chatId, Illuminate\Http\
     return response()->json($messages);
 });
 Route::get('/notifications/test', [NotificationController::class, 'test'])->middleware('auth:sanctum');
-Route::middleware('auth:sanctum')->get('/recommendations', [\App\Http\Controllers\Api\RecommendationController::class, 'recommend']);
+Route::middleware('auth:sanctum')->get('/recommendations', [RecommendationController::class, 'recommend']);
 Route::middleware('auth:sanctum')->post('/barters/{id}/cancel', [BarterController::class, 'cancel']); //abanoub
 Route::middleware('auth:sanctum')->get('/admin/barter-stats', [AdminBarterReportController::class, 'index']); //abanoub
 Route::middleware(['auth:sanctum'])->get('/barters/cancelled', [BarterController::class, 'cancelledBarters']);
 Route::middleware(['auth:sanctum'])->get('/admin/barters/cancelled', [AdminBarterReportController::class, 'cancelledBarters']);
 // routes/api.php
-

@@ -15,11 +15,21 @@ class RecommendationController extends Controller
 
         $userVector = $this->getUserProfileVector($user);
 
+        // if user was recently joined and have no barters , shows most common ten products
         if (! $userVector) {
-            return response()->json(['message' => 'No enough data for recommendations'], 400);
+            $fallbackListings = \App\Models\Listing::with('category')
+                ->latest()
+                ->take(10)
+                ->get();
+
+            return response()->json([
+                'message' => 'Not enough data to generate personalized recommendations. Showing latest listings instead.',
+                'recommendations' => $fallbackListings
+            ]);
         }
 
-        $listings = ListingEmbedding::with('listing')->get();
+        // ✅ if he has barters , show them recommended products based on his history
+        $listings = \App\Models\ListingEmbedding::with('listing')->get();
 
         $results = $listings->map(function ($item) use ($userVector) {
             return [
@@ -28,7 +38,10 @@ class RecommendationController extends Controller
             ];
         })->sortByDesc('similarity')->take(10)->values();
 
-        return response()->json($results);
+        return response()->json([
+            'message' => 'Personalized recommendations based on your activity.',
+            'recommendations' => $results
+        ]);
     }
 
     protected function cosineSimilarity(array $a, array $b): float
