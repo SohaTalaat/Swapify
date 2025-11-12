@@ -30,6 +30,7 @@ import { Verification } from './components/verification/verification';
 import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Subscription } from './components/subscription/subscription';
 import { ReviewList } from './components/review-list/review-list';
+import { Recommendations } from './components/recommendations/recommendations';
 export const routes: Routes = [
   // Public routes
   { path: '', component: Home },
@@ -49,6 +50,8 @@ export const routes: Routes = [
   { path: 'my-offers', component: MyOffers, canActivate: [authGuard] },
   { path: 'create-offer', component: CreateOffer, canActivate: [authGuard] },
   { path: 'edit-offer/:id', component: EditOffer, canActivate: [authGuard] },
+  // Recommendations
+  { path: 'recommendations', component: Recommendations, canActivate: [authGuard] },
 
   // Barters
   { path: 'my-barters', component: MyBarters, canActivate: [authGuard] },

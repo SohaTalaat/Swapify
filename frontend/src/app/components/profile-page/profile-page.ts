@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { Profile } from '../../services/profile';
 import { RouterLink } from '@angular/router';
 import { MyOffers } from '../my-offers/my-offers';
+import { Recommendations } from '../recommendations/recommendations';
 @Component({
   selector: 'app-profile-page',
-  imports: [CommonModule, RouterLink, MyOffers],
+  imports: [CommonModule, RouterLink, MyOffers, Recommendations],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.css',
 })
