@@ -273,18 +273,18 @@ export class BarterDetails implements OnInit, OnDestroy {
     const tempFile = this.selectedFile;
 
     //  Add optimistic message immediately
-    const tempTime = new Date().toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    // const tempTime = new Date().toLocaleTimeString('en-US', {
+    //   hour: 'numeric',
+    //   minute: '2-digit',
+    // });
 
-    this.viewModel.messages.push({
-      sender: 'You',
-      text: tempMessage || '📎 Attachment',
-      time: tempTime,
-      attachment_url: null,
-      isImage: false,
-    });
+    // this.viewModel.messages.push({
+    //   sender: 'You',
+    //   text: tempMessage || '📎 Attachment',
+    //   time: tempTime,
+    //   attachment_url: null,
+    //   isImage: false,
+    // });
 
     this.newMessage = '';
     this.selectedFile = null;
