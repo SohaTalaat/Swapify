@@ -13,6 +13,7 @@ interface ChatMessage {
   time: string;
   attachment_url?: string | null;
   isImage?: boolean;
+  temp?: boolean; // ✅ خاصية اختيارية للرسائل المؤقتة
 }
 
 interface BarterViewModel {
@@ -115,69 +116,144 @@ export class BarterDetails implements OnInit, OnDestroy {
   }
 
   /** Subscribe to Pusher channel for real-time messages */
+  // private subscribeToChat() {
+  //   if (!this.barter?.chat?.id) return;
+
+  //   const token = localStorage.getItem('swapify_token');
+  //   const chatId = this.barter.chat.id;
+  //   const currentUserId = this.getCurrentUserId();
+
+  //   // Set auth header dynamically
+  //   if (!this.echoChannel) {
+  //     if (window.Echo && window.Echo.connector?.options?.auth) {
+  //       window.Echo.connector.options.auth.headers = {
+  //         ...window.Echo.connector.options.auth.headers,
+  //         Authorization: `Bearer ${token}`,
+  //       };
+  //     }
+  //   }
+
+  //   // Subscribe
+  //   this.echoChannel = window.Echo.private(`chat.${chatId}`);
+
+  //   this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
+
+  //   window.Echo.connector.pusher.connection.bind('connected', () => {
+  //     console.log('✅ Pusher reconnected');
+  //   });
+  //   window.Echo.connector.pusher.connection.bind('disconnected', () => {
+  //     console.warn('⚠️ Pusher disconnected');
+  //   });
+
+  //   // Listen for new messages
+  //   this.echoChannel.listen('.message.sent', (data: any) => {
+  //     console.log('📩 Real-time message received:', data);
+  //     this.zone.run(() => {
+  //       const message = data.message;
+  //       const exists = this.viewModel.messages.some(
+  //         (m) =>
+  //           m.text === message.content &&
+  //           m.sender === message.sender.username &&
+  //           m.attachment_url === message.attachment_url
+  //       );
+
+  //       if (!exists) {
+  //         const attachmentUrl = message.attachment_url || null;
+  //         const isImage =
+  //           attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
+  //         this.viewModel.messages.push({
+  //           sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
+  //           text: message.content,
+  //           time: new Date(message.created_at).toLocaleTimeString('en-US', {
+  //             hour: 'numeric',
+  //             minute: '2-digit',
+  //           }),
+  //           attachment_url: attachmentUrl,
+  //           isImage: !!isImage,
+  //         });
+
+  //         setTimeout(() => this.scrollToBottom(), 100);
+  //       }
+  //     });
+  //   });
+
+  //   // Typing whisper
+  //   this.echoChannel.listenForWhisper('typing', (data: any) => {
+  //     if (data.userId !== currentUserId) {
+  //       this.zone.run(() => {
+  //         this.isPartnerTyping = true;
+  //         if (this.typingTimeout) clearTimeout(this.typingTimeout);
+  //         this.typingTimeout = setTimeout(() => {
+  //           this.isPartnerTyping = false;
+  //         }, 2000);
+  //       });
+  //     }
+  //   });
+  // }
+
   private subscribeToChat() {
     if (!this.barter?.chat?.id) return;
 
-    const token = localStorage.getItem('swapify_token');
     const chatId = this.barter.chat.id;
     const currentUserId = this.getCurrentUserId();
 
-    // Set auth header dynamically
-    if (!this.echoChannel) {
-      if (window.Echo && window.Echo.connector?.options?.auth) {
-        window.Echo.connector.options.auth.headers = {
-          ...window.Echo.connector.options.auth.headers,
-          Authorization: `Bearer ${token}`,
-        };
-      }
-    }
-
-    // Subscribe
+    // اشترك في القناة الخاصة
     this.echoChannel = window.Echo.private(`chat.${chatId}`);
 
-    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
-
-    window.Echo.connector.pusher.connection.bind('connected', () => {
-      console.log('✅ Pusher reconnected');
-    });
-    window.Echo.connector.pusher.connection.bind('disconnected', () => {
-      console.warn('⚠️ Pusher disconnected');
-    });
-
-    // Listen for new messages
+    // 👂 الاستماع للرسائل الجديدة
     this.echoChannel.listen('.message.sent', (data: any) => {
       console.log('📩 Real-time message received:', data);
+
       this.zone.run(() => {
         const message = data.message;
+
+        // إذا كانت الرسالة من المستخدم الحالي → استبدال الرسالة المؤقتة
+        if (message.sender_id === currentUserId) {
+          const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+          if (tempIndex !== -1) {
+            this.viewModel.messages[tempIndex] = {
+              sender: 'You',
+              text: message.content,
+              time: new Date(message.created_at).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              }),
+              attachment_url: message.attachment_url,
+              isImage: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(message.attachment_url || ''),
+            };
+            return;
+          }
+        }
+
+        // إذا كانت الرسالة من الطرف الآخر → إضافة جديدة
         const exists = this.viewModel.messages.some(
           (m) =>
             m.text === message.content &&
             m.sender === message.sender.username &&
             m.attachment_url === message.attachment_url
         );
+        if (exists) return;
 
-        if (!exists) {
-          const attachmentUrl = message.attachment_url || null;
-          const isImage =
-            attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+        const attachmentUrl = message.attachment_url || null;
+        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
-          this.viewModel.messages.push({
-            sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
-            text: message.content,
-            time: new Date(message.created_at).toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-            }),
-            attachment_url: attachmentUrl,
-            isImage: !!isImage,
-          });
+        this.viewModel.messages.push({
+          sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
+          text: message.content,
+          time: new Date(message.created_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+          attachment_url: attachmentUrl,
+          isImage: !!isImage,
+        });
 
-          setTimeout(() => this.scrollToBottom(), 100);
-        }
+        setTimeout(() => this.scrollToBottom(), 100);
       });
     });
 
-    // Typing whisper
+    // 👂 الاستماع لـ whisper للكتابة
     this.echoChannel.listenForWhisper('typing', (data: any) => {
       if (data.userId !== currentUserId) {
         this.zone.run(() => {
@@ -185,10 +261,19 @@ export class BarterDetails implements OnInit, OnDestroy {
           if (this.typingTimeout) clearTimeout(this.typingTimeout);
           this.typingTimeout = setTimeout(() => {
             this.isPartnerTyping = false;
-          }, 2000);
+          }, 2000); // تختفي بعد ثانيتين
         });
       }
     });
+
+    // ربط أحداث الاتصال
+    window.Echo.connector.pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher connected');
+    });
+    window.Echo.connector.pusher.connection.bind('disconnected', () => {
+      console.warn('⚠️ Pusher disconnected');
+    });
+    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
   }
 
   /** Handle file selection */
@@ -260,10 +345,69 @@ export class BarterDetails implements OnInit, OnDestroy {
   //   });
   // }
 
+  // sendMessage() {
+  //   if (!this.newMessage.trim() && !this.selectedFile) return;
+
+  //   const payload: any = { content: this.newMessage || '📎 Attachment' };
+  //   if (this.selectedFile) {
+  //     payload.attachment = this.selectedFile;
+  //     this.isUploading = true;
+  //   }
+
+  //   const tempMessage = this.newMessage;
+  //   const tempFile = this.selectedFile;
+
+  //   //  Add optimistic message immediately
+  //   // const tempTime = new Date().toLocaleTimeString('en-US', {
+  //   //   hour: 'numeric',
+  //   //   minute: '2-digit',
+  //   // });
+
+  //   // this.viewModel.messages.push({
+  //   //   sender: 'You',
+  //   //   text: tempMessage || '📎 Attachment',
+  //   //   time: tempTime,
+  //   //   attachment_url: null,
+  //   //   isImage: false,
+  //   // });
+
+  //   this.newMessage = '';
+  //   this.selectedFile = null;
+  //   this.scrollToBottom();
+
+  //   this.barterService.sendMessage(this.barterId, payload).subscribe({
+  //     next: (res) => {
+  //       this.isUploading = false;
+  //       console.log('✅ Message sent:', res);
+
+  //       // Update the last message with actual data
+  //       const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
+  //       const attachmentUrl = res.message.attachment_url || null;
+  //       const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+
+  //       lastMsg.text = res.message.content;
+  //       lastMsg.attachment_url = attachmentUrl;
+  //       lastMsg.isImage = !!isImage;
+  //       lastMsg.time = new Date(res.message.created_at).toLocaleTimeString('en-US', {
+  //         hour: 'numeric',
+  //         minute: '2-digit',
+  //       });
+  //     },
+  //     error: (err) => {
+  //       this.isUploading = false;
+  //       // Remove failed message
+  //       this.viewModel.messages.pop();
+  //       alert('Failed to send message: ' + err.message);
+  //       this.newMessage = tempMessage;
+  //       this.selectedFile = tempFile;
+  //     },
+  //   });
+  // }
+
   sendMessage() {
     if (!this.newMessage.trim() && !this.selectedFile) return;
 
-    const payload: any = { content: this.newMessage || '📎 Attachment' };
+    const payload: any = { content: this.newMessage || '📎 Attachment (reload page to see)' };
     if (this.selectedFile) {
       payload.attachment = this.selectedFile;
       this.isUploading = true;
@@ -272,20 +416,21 @@ export class BarterDetails implements OnInit, OnDestroy {
     const tempMessage = this.newMessage;
     const tempFile = this.selectedFile;
 
-    //  Add optimistic message immediately
-    // const tempTime = new Date().toLocaleTimeString('en-US', {
-    //   hour: 'numeric',
-    //   minute: '2-digit',
-    // });
+    const tempTime = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
 
-    // this.viewModel.messages.push({
-    //   sender: 'You',
-    //   text: tempMessage || '📎 Attachment',
-    //   time: tempTime,
-    //   attachment_url: null,
-    //   isImage: false,
-    // });
-
+    // 🟢 أضف الرسالة مؤقتًا (محليًا)
+    const tempMsg = {
+      sender: 'You',
+      text: tempMessage || '📎 Attachment',
+      time: tempTime,
+      attachment_url: null,
+      isImage: false,
+      temp: true, // ✅ علامة لتمييزها كمؤقتة
+    };
+    this.viewModel.messages.push(tempMsg);
     this.newMessage = '';
     this.selectedFile = null;
     this.scrollToBottom();
@@ -295,29 +440,32 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isUploading = false;
         console.log('✅ Message sent:', res);
 
-        // Update the last message with actual data
-        const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
-        const attachmentUrl = res.message.attachment_url || null;
-        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
-
-        lastMsg.text = res.message.content;
-        lastMsg.attachment_url = attachmentUrl;
-        lastMsg.isImage = !!isImage;
-        lastMsg.time = new Date(res.message.created_at).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        });
+        // 🔄 استبدل الرسالة المؤقتة بالبيانات الحقيقية
+        const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+        if (tempIndex !== -1) {
+          this.viewModel.messages[tempIndex] = {
+            sender: 'You',
+            text: res.message.content,
+            time: new Date(res.message.created_at).toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+            }),
+            attachment_url: res.message.attachment_url,
+            isImage: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(res.message.attachment_url || ''),
+          };
+        }
       },
       error: (err) => {
         this.isUploading = false;
-        // Remove failed message
-        this.viewModel.messages.pop();
+        const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+        if (tempIndex !== -1) this.viewModel.messages.splice(tempIndex, 1);
         alert('Failed to send message: ' + err.message);
         this.newMessage = tempMessage;
         this.selectedFile = tempFile;
       },
     });
   }
+
   /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
