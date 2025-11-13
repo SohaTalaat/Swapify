@@ -22,7 +22,7 @@ export class Faq {
     {
       question: 'Q: How do I contact support?',
       answer:
-        'A: You can reach us anytime through the "Contact Us" page or via support@swapify.com.',
+        'A: You can reach us anytime through the "Contact Us" page or via swapifyservices@gmail.com.',
     },
     {
       question: 'Q: What can I exchange on Swapify?',

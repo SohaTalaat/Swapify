@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\{
     AdminBarterReportController,
     ReportController
 };
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\AdminListingController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
@@ -40,6 +41,9 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');;
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
+// Public Routes
+Route::post('/contact', [ContactController::class, 'store']);
 
 // Google Auth
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
