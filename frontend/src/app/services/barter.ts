@@ -1,7 +1,7 @@
 // src/app/services/barter.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 // ---------- Listing Models ----------
@@ -114,6 +114,9 @@ export interface BarterViewModel {
 })
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
+
+  // Event emitter for subscription limit exceeded
+  subscriptionLimitExceeded = new Subject<any>();
 
   constructor(private http: HttpClient) { }
 

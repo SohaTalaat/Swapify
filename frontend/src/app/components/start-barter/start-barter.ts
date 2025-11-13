@@ -3,11 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BarterService, Listing } from '../../services/barter';
+import { UpgradePrompt } from '../upgrade-prompt/upgrade-prompt';
 
 @Component({
   selector: 'app-start-barter',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UpgradePrompt],
   templateUrl: './start-barter.html',
   styleUrls: ['./start-barter.css'],
 })
@@ -29,6 +30,14 @@ export class StartBarter implements OnInit {
   // Banned modal state
   bannedModalMessage: string | null = null;
   bannedModalReason: string | null = null;
+
+  // Upgrade modal state
+  showUpgradeModal = false;
+  upgradeData: any = {
+    currentLimit: 2,
+    bartersUsed: 0,
+    plans: []
+  };
 
   constructor(private barterService: BarterService) { }
 
@@ -113,6 +122,22 @@ export class StartBarter implements OnInit {
         this.isLoading = false;
       },
       error: (err: any) => {
+        // Handle subscription limit exceeded (402)
+        if (err && err.status === 402) {
+          this.showUpgradeModal = true;
+          this.upgradeData = {
+            currentLimit: err.data?.current_limit || 2,
+            bartersUsed: err.data?.barters_used || 0,
+            plans: err.data?.plans || [
+              { tier: 'free', limit: 2, price: 0 },
+              { tier: 'pro', limit: 5, price: '$9.99/month' },
+              { tier: 'premium', limit: 20, price: '$19.99/month' },
+            ]
+          };
+          this.isLoading = false;
+          return;
+        }
+
         // handle structured error from service
         if (err && err.status === 403) {
           const reason = err.data?.ban_reason || null;
@@ -135,6 +160,10 @@ export class StartBarter implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  closeUpgradeModal() {
+    this.showUpgradeModal = false;
   }
 
   resetForm() {

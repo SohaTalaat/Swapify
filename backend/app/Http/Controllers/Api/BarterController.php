@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Barter\StoreBarterRequest;
 use App\Http\Requests\Barter\UpdateBarterRequest;
 use App\Models\Shipment;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 
 class BarterController extends Controller
@@ -44,6 +45,29 @@ class BarterController extends Controller
                 'error' => 'Your account is banned and cannot create barters.',
                 'ban_reason' => $user->ban_reason,
             ], 403);
+        }
+
+        // ✅ Check subscription barter limit
+        $subscription = $user->subscription;
+        $barterLimit = $this->getBarterLimitForUser($subscription);
+        // Count ALL barter requests (including cancelled) - any barter request counts toward the limit
+        $activeBarterCount = Barter::whereHas('participants', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->count();
+
+        if ($activeBarterCount >= $barterLimit) {
+            return response()->json([
+                'error' => 'You have reached your barter limit',
+                'code' => 'BARTER_LIMIT_EXCEEDED',
+                'current_limit' => $barterLimit,
+                'barters_used' => $activeBarterCount,
+                'plans' => [
+                    ['tier' => 'free', 'limit' => 2, 'price' => 0],
+                    ['tier' => 'pro', 'limit' => 5, 'price' => 'TBD'],
+                    ['tier' => 'premium', 'limit' => 20, 'price' => 'TBD'],
+                ],
+                'message' => 'Upgrade your subscription to create more barters'
+            ], 402);
         }
 
         $data = $request->validated();
@@ -80,6 +104,19 @@ class BarterController extends Controller
                     ->with('images:id,listing_id,image_url');
             },
         ]);
+    }
+
+    /**
+     * Get barter limit based on subscription tier
+     */
+    private function getBarterLimitForUser($subscription)
+    {
+        if (!$subscription || !$subscription->is_active) {
+            return 2; // Free plan default
+        }
+
+        $tierLimits = ['free' => 2, 'pro' => 5, 'premium' => 20];
+        return $tierLimits[$subscription->tier] ?? 2;
     }
 
     public function show(Barter $barter)
