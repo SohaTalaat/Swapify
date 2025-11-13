@@ -26,6 +26,9 @@
       <li [class.active]="activeSection === 'shipping'" (click)="setSection('shipping')">
         <i class="fa-solid fa-truck me-2"></i> Shipping
       </li>
+      <li [class.active]="activeSection === 'disputes'" (click)="setSection('disputes')">
+        <i class="fa-solid fa-gavel me-2"></i> Disputes
+      </li>
     </ul>
   </aside>
 
@@ -367,6 +370,107 @@
         </tbody>
       </table>
     </section>
+
+    <!-- Disputes -->
+    <section *ngIf="activeSection === 'disputes' && !loading">
+      <h3>Disputes Management</h3>
+      <table class="table table-striped mt-3 shadow-sm">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Initiator</th>
+            <th>Barter</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dispute of disputes">
+            <td>#{{ dispute.id }}</td>
+            <td>{{ dispute.initiator?.username || 'N/A' }}</td>
+            <td>#{{ dispute.barter_id }}</td>
+            <td>{{ dispute.reason }}</td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-warning text-dark': dispute.status === 'open',
+                  'bg-success': dispute.status === 'resolved',
+                  'bg-danger': dispute.status === 'closed'
+                }"
+              >
+                {{ dispute.status }}
+              </span>
+            </td>
+            <td>{{ dispute.created_at | date : 'short' }}</td>
+            <td>
+              <button
+                *ngIf="dispute.status === 'open'"
+                class="btn btn-primary btn-sm"
+                (click)="openResolveDisputeModal(dispute)"
+              >
+                Resolve
+              </button>
+              <span *ngIf="dispute.status !== 'open'" class="text-muted">-</span>
+            </td>
+          </tr>
+          <tr *ngIf="disputes.length === 0">
+            <td colspan="7" class="text-center text-muted">No disputes found</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Resolve Dispute Modal -->
+    <div
+      class="modal fade"
+      id="resolveDisputeModal"
+      tabindex="-1"
+      aria-labelledby="resolveDisputeModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resolveDisputeModalLabel">
+              Resolve Dispute #{{ selectedDisputeForResolve?.id }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Reason:</strong> {{ selectedDisputeForResolve?.reason }}</p>
+            <p><strong>Description:</strong> {{ selectedDisputeForResolve?.description }}</p>
+            <p>
+              <strong>Initiated by:</strong> {{ selectedDisputeForResolve?.initiator?.username }}
+            </p>
+            <hr />
+            <label for="resolutionNotes" class="form-label"
+              ><strong>Resolution Notes:</strong></label
+            >
+            <textarea
+              id="resolutionNotes"
+              class="form-control"
+              rows="4"
+              [(ngModel)]="resolutionNotes"
+              placeholder="Enter resolution notes and action taken"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" (click)="confirmResolveDispute()">
+              Resolve Dispute
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Barter Statistics -->
     <section *ngIf="activeSection === 'barter-stats' && !loading">

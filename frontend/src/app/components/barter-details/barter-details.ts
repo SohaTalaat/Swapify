@@ -50,6 +50,11 @@ export class BarterDetails implements OnInit, OnDestroy {
   selectedFile: File | null = null;
   uploadProgress = 0;
   isUploading = false;
+  // Dispute properties
+  showDisputeModal = false;
+  disputeReason = '';
+  disputeDescription = '';
+  isSubmittingDispute = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -444,6 +449,7 @@ export class BarterDetails implements OnInit, OnDestroy {
         const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
         if (tempIndex !== -1) {
           this.viewModel.messages[tempIndex] = {
+
             sender: 'You',
             text: res.message.content,
             time: new Date(res.message.created_at).toLocaleTimeString('en-US', {
@@ -638,5 +644,50 @@ export class BarterDetails implements OnInit, OnDestroy {
         alert(err.error?.message || 'Failed to cancel barter');
       },
     });
+  }
+
+  // Dispute methods
+  openDisputeModal() {
+    this.showDisputeModal = true;
+    this.disputeReason = '';
+    this.disputeDescription = '';
+  }
+
+  closeDisputeModal() {
+    this.showDisputeModal = false;
+    this.disputeReason = '';
+    this.disputeDescription = '';
+    this.isSubmittingDispute = false;
+  }
+
+  submitDispute() {
+    if (!this.disputeReason.trim() || !this.disputeDescription.trim()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    if (this.disputeDescription.length > 500) {
+      alert('Description must be 500 characters or less.');
+      return;
+    }
+
+    this.isSubmittingDispute = true;
+
+    this.barterService
+      .createDispute(this.barterId, this.disputeReason, this.disputeDescription)
+      .subscribe({
+        next: (res) => {
+          alert('Dispute created successfully. An admin will review it shortly.');
+          this.closeDisputeModal();
+          this.isSubmittingDispute = false;
+          // Reload barter to show updated status if needed
+          this.loadBarter();
+        },
+        error: (err) => {
+          console.error('Error creating dispute:', err);
+          alert(err.message || 'Failed to create dispute. Please try again.');
+          this.isSubmittingDispute = false;
+        },
+      });
   }
 }

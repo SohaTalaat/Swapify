@@ -222,4 +222,22 @@ export class BarterService {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return this.http.get<any[]>(`${this.apiUrl}/barters/cancelled`, { headers });
   }
+
+  // Disputes
+  createDispute(barterId: number, reason: string, description: string): Observable<any> {
+    return this.http
+      .post(
+        `${this.apiUrl}/disputes`,
+        { barter_id: barterId, reason, description },
+        { headers: this.getHeaders() }
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  getMyDisputes(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.apiUrl}/disputes`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
+  }
+
 }

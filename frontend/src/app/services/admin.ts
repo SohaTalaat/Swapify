@@ -117,4 +117,19 @@ export class AdminService {
       headers: this.getHeaders(),
     });
   }
+
+  // Disputes
+  getDisputes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/disputes`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  resolveDispute(disputeId: number, resolutionNotes: string, status: string = 'resolved'): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/admin/disputes/${disputeId}/resolve`,
+      { resolution_notes: resolutionNotes, status },
+      { headers: this.getHeaders() }
+    );
+  }
 }
