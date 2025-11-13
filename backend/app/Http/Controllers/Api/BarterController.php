@@ -17,7 +17,11 @@ class BarterController extends Controller
 {
     public function index()
     {
-        return Auth::user()
+        /** @var \App\Models\User $user */
+
+        $user = Auth::user();
+
+        return $user
             ->bartersAsParticipant()
             ->with([
                 'participants:id,username',
@@ -97,13 +101,6 @@ class BarterController extends Controller
     public function update(UpdateBarterRequest $request, Barter $barter)
     {
         $barter->update($request->validated());
-
-        Shipment::create([
-            'barter_id' => $barter->id,
-            'shipping_type' => 'outbound',
-            'status' => 'pending'
-        ]);
-
         return $barter;
     }
 
@@ -127,6 +124,31 @@ class BarterController extends Controller
         $barter->save();
 
         event(new BarterStatusUpdated($barter, Auth::id()));
+        // If barter was accepted and requires delivery, create a shipment record if not exists
+        try {
+            if ($request->status === 'accepted' && $barter->exchange_type === 'delivery') {
+                $existing = Shipment::where('barter_id', $barter->id)->first();
+                if (!$existing) {
+                    $shipment = Shipment::create([
+                        'barter_id' => $barter->id,
+                        'shipping_type' => 'outbound',
+                        'status' => 'pending',
+                    ]);
+
+                    // notify participants immediately (bypass queue during testing)
+                    foreach ($barter->participants as $participant) {
+                        try {
+                            $participant->notifyNow(new \App\Notifications\ShipmentStatusUpdated($shipment, $shipment->status));
+                        } catch (\Exception $e) {
+                            // avoid breaking the status update if notification fails
+                            \Illuminate\Support\Facades\Log::error('Failed to notify participant about shipment creation: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error while creating shipment on barter accepted: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Barter status updated successfully',
@@ -147,7 +169,7 @@ class BarterController extends Controller
 
         $barter->status = 'cancelled';
         $barter->cancelled_at = now();
-        $barter->cancelled_by = auth()->id();
+        $barter->cancelled_by = Auth::id();
         $barter->cancel_reason = $request->input('cancel_reason');
         $barter->save();
 
@@ -156,7 +178,6 @@ class BarterController extends Controller
 
     public function cancelledBarters()
     {
-        // جلب كل البارترز اللي تم الغاءها
         $barters = Barter::with(['cancelledByUser:id,username'])
             ->where('status', 'cancelled')
             ->latest()

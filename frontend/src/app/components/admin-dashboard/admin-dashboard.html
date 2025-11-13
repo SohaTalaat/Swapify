@@ -350,8 +350,8 @@
             <td>
               <select
                 class="form-select form-select-sm"
-                [value]="shipment.status"
-                (change)="updateShipmentStatus(shipment, $event)"
+                [(ngModel)]="shipment.status"
+                (ngModelChange)="updateShipmentStatus(shipment, $event)"
               >
                 <option value="pending">Pending</option>
                 <option value="picked_up">Picked Up</option>

@@ -260,19 +260,24 @@ export class AdminDashboard implements OnInit {
     });
   }
 
-  updateShipmentStatus(shipment: any, event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const newStatus = select.value;
-    if (!confirm(`Update shipment status to ${newStatus}?`)) return;
+  updateShipmentStatus(shipment: any, newStatus: string) {
+    if (!confirm(`Update shipment status to ${newStatus}?`)) {
+      // revert selection in UI to previous value by reloading shipments or undoing assignment
+      this.loadShipments();
+      return;
+    }
 
     this.adminService.updateShipmentStatus(shipment.id, newStatus).subscribe({
       next: (res: any) => {
+        // update already bound via ngModel; ensure local model matches server
         shipment.status = newStatus;
         alert(res.message || 'Shipment status updated');
       },
       error: (err: any) => {
         console.error('Failed to update shipment', err);
         alert(err.error?.message || 'Failed to update shipment');
+        // revert selection by reloading shipments
+        this.loadShipments();
       },
     });
   }
