@@ -16,7 +16,11 @@ class Listing extends Model
         'condition',
         'availability_info',
         'desired_in_return',
-        'is_active'
+        'is_active',
+        'approval_status',
+        'rejection_reason',
+        'reviewed_by_admin_id',
+        'reviewed_at'
     ];
 
     protected $casts = [

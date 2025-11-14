@@ -13,7 +13,7 @@ interface ChatMessage {
   time: string;
   attachment_url?: string | null;
   isImage?: boolean;
-  temp?: boolean; // ✅ خاصية اختيارية للرسائل المؤقتة
+  temp?: boolean;
 }
 
 interface BarterViewModel {
@@ -39,7 +39,7 @@ export class BarterDetails implements OnInit, OnDestroy {
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
-  hasReviewed = false; // أو تحددها بعد جلب البيانات من السيرفر
+  hasReviewed = false;
   showReviewModal = true;
 
   private echoChannel: any;
@@ -50,11 +50,16 @@ export class BarterDetails implements OnInit, OnDestroy {
   selectedFile: File | null = null;
   uploadProgress = 0;
   isUploading = false;
+
   // Dispute properties
   showDisputeModal = false;
   disputeReason = '';
   disputeDescription = '';
   isSubmittingDispute = false;
+
+  // Cancel modal
+  showCancelBox = false;
+  cancelReason = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -64,7 +69,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     private echoService: EchoService,
     private reviewService: Review
   ) {
-    // Clean up Echo channel on route changes
     this.router.events.subscribe(() => {
       if (this.echoChannel && this.barter?.chat?.id) {
         window.Echo.leave(`private-chat.${this.barter.chat.id}`);
@@ -88,7 +92,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     if (this.typingTimeout) clearTimeout(this.typingTimeout);
   }
 
-  /** Load barter data from backend */
   private loadBarter() {
     this.isLoading = true;
     this.barterService.getBarter(this.barterId).subscribe({
@@ -99,7 +102,6 @@ export class BarterDetails implements OnInit, OnDestroy {
 
         if (barter.chat?.id) this.subscribeToChat();
 
-        // Show review modal only if barter completed and not reviewed yet
         if (barter.status === 'completed') {
           this.reviewService.hasReviewed(this.barterId).subscribe({
             next: (res) => {
@@ -120,100 +122,22 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Subscribe to Pusher channel for real-time messages */
-  // private subscribeToChat() {
-  //   if (!this.barter?.chat?.id) return;
-
-  //   const token = localStorage.getItem('swapify_token');
-  //   const chatId = this.barter.chat.id;
-  //   const currentUserId = this.getCurrentUserId();
-
-  //   // Set auth header dynamically
-  //   if (!this.echoChannel) {
-  //     if (window.Echo && window.Echo.connector?.options?.auth) {
-  //       window.Echo.connector.options.auth.headers = {
-  //         ...window.Echo.connector.options.auth.headers,
-  //         Authorization: `Bearer ${token}`,
-  //       };
-  //     }
-  //   }
-
-  //   // Subscribe
-  //   this.echoChannel = window.Echo.private(`chat.${chatId}`);
-
-  //   this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
-
-  //   window.Echo.connector.pusher.connection.bind('connected', () => {
-  //     console.log('✅ Pusher reconnected');
-  //   });
-  //   window.Echo.connector.pusher.connection.bind('disconnected', () => {
-  //     console.warn('⚠️ Pusher disconnected');
-  //   });
-
-  //   // Listen for new messages
-  //   this.echoChannel.listen('.message.sent', (data: any) => {
-  //     console.log('📩 Real-time message received:', data);
-  //     this.zone.run(() => {
-  //       const message = data.message;
-  //       const exists = this.viewModel.messages.some(
-  //         (m) =>
-  //           m.text === message.content &&
-  //           m.sender === message.sender.username &&
-  //           m.attachment_url === message.attachment_url
-  //       );
-
-  //       if (!exists) {
-  //         const attachmentUrl = message.attachment_url || null;
-  //         const isImage =
-  //           attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
-
-  //         this.viewModel.messages.push({
-  //           sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
-  //           text: message.content,
-  //           time: new Date(message.created_at).toLocaleTimeString('en-US', {
-  //             hour: 'numeric',
-  //             minute: '2-digit',
-  //           }),
-  //           attachment_url: attachmentUrl,
-  //           isImage: !!isImage,
-  //         });
-
-  //         setTimeout(() => this.scrollToBottom(), 100);
-  //       }
-  //     });
-  //   });
-
-  //   // Typing whisper
-  //   this.echoChannel.listenForWhisper('typing', (data: any) => {
-  //     if (data.userId !== currentUserId) {
-  //       this.zone.run(() => {
-  //         this.isPartnerTyping = true;
-  //         if (this.typingTimeout) clearTimeout(this.typingTimeout);
-  //         this.typingTimeout = setTimeout(() => {
-  //           this.isPartnerTyping = false;
-  //         }, 2000);
-  //       });
-  //     }
-  //   });
-  // }
-
   private subscribeToChat() {
     if (!this.barter?.chat?.id) return;
 
     const chatId = this.barter.chat.id;
     const currentUserId = this.getCurrentUserId();
 
-    // اشترك في القناة الخاصة
     this.echoChannel = window.Echo.private(`chat.${chatId}`);
 
-    // 👂 الاستماع للرسائل الجديدة
+    // ✅ FIX: Listen for new messages
     this.echoChannel.listen('.message.sent', (data: any) => {
       console.log('📩 Real-time message received:', data);
 
       this.zone.run(() => {
         const message = data.message;
 
-        // إذا كانت الرسالة من المستخدم الحالي → استبدال الرسالة المؤقتة
+        // If from current user, replace temp message
         if (message.sender_id === currentUserId) {
           const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
           if (tempIndex !== -1) {
@@ -231,7 +155,7 @@ export class BarterDetails implements OnInit, OnDestroy {
           }
         }
 
-        // إذا كانت الرسالة من الطرف الآخر → إضافة جديدة
+        // If from partner, add new message
         const exists = this.viewModel.messages.some(
           (m) =>
             m.text === message.content &&
@@ -258,20 +182,20 @@ export class BarterDetails implements OnInit, OnDestroy {
       });
     });
 
-    // 👂 الاستماع لـ whisper للكتابة
+    // ✅ FIX: Listen for typing whisper
     this.echoChannel.listenForWhisper('typing', (data: any) => {
+      console.log('⌨️ Typing whisper received:', data);
       if (data.userId !== currentUserId) {
         this.zone.run(() => {
           this.isPartnerTyping = true;
           if (this.typingTimeout) clearTimeout(this.typingTimeout);
           this.typingTimeout = setTimeout(() => {
             this.isPartnerTyping = false;
-          }, 2000); // تختفي بعد ثانيتين
+          }, 2000);
         });
       }
     });
 
-    // ربط أحداث الاتصال
     window.Echo.connector.pusher.connection.bind('connected', () => {
       console.log('✅ Pusher connected');
     });
@@ -281,13 +205,12 @@ export class BarterDetails implements OnInit, OnDestroy {
     this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
   }
 
-  /** Handle file selection */
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
 
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       alert('❌ Only images (JPEG, PNG, GIF, WebP) are allowed');
@@ -302,7 +225,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     this.selectedFile = file;
   }
 
-  /** Send typing whisper */
   onTyping() {
     if (this.echoChannel) {
       this.echoChannel.whisper('typing', {
@@ -310,104 +232,6 @@ export class BarterDetails implements OnInit, OnDestroy {
       });
     }
   }
-
-  /** Send message */
-  // sendMessage() {
-  //   if (!this.newMessage.trim() && !this.selectedFile) return;
-
-  //   const payload: any = { content: this.newMessage || '📎 Attachment' };
-  //   if (this.selectedFile) {
-  //     payload.attachment = this.selectedFile;
-  //     this.isUploading = true;
-  //   }
-
-  //   const tempMessage = this.newMessage;
-  //   const tempFile = this.selectedFile;
-  //   this.newMessage = '';
-  //   this.selectedFile = null;
-  //   this.scrollToBottom();
-
-  //   this.barterService.sendMessage(this.barterId, payload).subscribe({
-  //     next: (res) => {
-  //       this.isUploading = false;
-  //       console.log('✅ Message sent:', res);
-
-  //       const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
-  //       const attachmentUrl = res.message.attachment_url || null;
-  //       const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
-
-  //       lastMsg.text = tempMessage || '📎 Attachment';
-  //       lastMsg.attachment_url = attachmentUrl;
-  //       lastMsg.isImage = !!isImage;
-  //     },
-  //     error: (err) => {
-  //       this.isUploading = false;
-  //       this.viewModel.messages.pop();
-  //       alert('Failed to send message: ' + err.message);
-  //       this.newMessage = tempMessage;
-  //       this.selectedFile = tempFile;
-  //     },
-  //   });
-  // }
-
-  // sendMessage() {
-  //   if (!this.newMessage.trim() && !this.selectedFile) return;
-
-  //   const payload: any = { content: this.newMessage || '📎 Attachment' };
-  //   if (this.selectedFile) {
-  //     payload.attachment = this.selectedFile;
-  //     this.isUploading = true;
-  //   }
-
-  //   const tempMessage = this.newMessage;
-  //   const tempFile = this.selectedFile;
-
-  //   //  Add optimistic message immediately
-  //   // const tempTime = new Date().toLocaleTimeString('en-US', {
-  //   //   hour: 'numeric',
-  //   //   minute: '2-digit',
-  //   // });
-
-  //   // this.viewModel.messages.push({
-  //   //   sender: 'You',
-  //   //   text: tempMessage || '📎 Attachment',
-  //   //   time: tempTime,
-  //   //   attachment_url: null,
-  //   //   isImage: false,
-  //   // });
-
-  //   this.newMessage = '';
-  //   this.selectedFile = null;
-  //   this.scrollToBottom();
-
-  //   this.barterService.sendMessage(this.barterId, payload).subscribe({
-  //     next: (res) => {
-  //       this.isUploading = false;
-  //       console.log('✅ Message sent:', res);
-
-  //       // Update the last message with actual data
-  //       const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
-  //       const attachmentUrl = res.message.attachment_url || null;
-  //       const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
-
-  //       lastMsg.text = res.message.content;
-  //       lastMsg.attachment_url = attachmentUrl;
-  //       lastMsg.isImage = !!isImage;
-  //       lastMsg.time = new Date(res.message.created_at).toLocaleTimeString('en-US', {
-  //         hour: 'numeric',
-  //         minute: '2-digit',
-  //       });
-  //     },
-  //     error: (err) => {
-  //       this.isUploading = false;
-  //       // Remove failed message
-  //       this.viewModel.messages.pop();
-  //       alert('Failed to send message: ' + err.message);
-  //       this.newMessage = tempMessage;
-  //       this.selectedFile = tempFile;
-  //     },
-  //   });
-  // }
 
   sendMessage() {
     if (!this.newMessage.trim() && !this.selectedFile) return;
@@ -426,14 +250,14 @@ export class BarterDetails implements OnInit, OnDestroy {
       minute: '2-digit',
     });
 
-    // 🟢 أضف الرسالة مؤقتًا (محليًا)
+    // ✅ Add temp message
     const tempMsg = {
       sender: 'You',
       text: tempMessage || '📎 Attachment',
       time: tempTime,
       attachment_url: null,
       isImage: false,
-      temp: true, // ✅ علامة لتمييزها كمؤقتة
+      temp: true,
     };
     this.viewModel.messages.push(tempMsg);
     this.newMessage = '';
@@ -445,11 +269,10 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isUploading = false;
         console.log('✅ Message sent:', res);
 
-        // 🔄 استبدل الرسالة المؤقتة بالبيانات الحقيقية
+        // ✅ Replace temp message with real data
         const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
         if (tempIndex !== -1) {
           this.viewModel.messages[tempIndex] = {
-
             sender: 'You',
             text: res.message.content,
             time: new Date(res.message.created_at).toLocaleTimeString('en-US', {
@@ -472,22 +295,19 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
 
-    // 👇 نحدد الحالة الجديدة بناءً على نوع التبادل
     let finalStatus = newStatus;
 
     if (newStatus === 'Ongoing') {
       if (this.barter.exchange_type === 'in_person') {
-        finalStatus = 'Completed'; // تم التسليم شخصيًا
+        finalStatus = 'Completed';
       } else if (this.barter.exchange_type === 'delivery') {
-        finalStatus = 'Ongoing'; // جاري التنفيذ عبر التوصيل
+        finalStatus = 'Ongoing';
       }
     }
 
-    // تحويل الحالة لأسم السيرفر
     const map: Record<string, string> = {
       Pending: 'proposed',
       Ongoing: 'accepted',
@@ -496,7 +316,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     };
     const backendStatus = map[finalStatus] || finalStatus;
 
-    // إرسال التحديث للسيرفر
     this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
       next: (res) => {
         this.viewModel.status = this.formatStatus(res.barter.status);
@@ -506,7 +325,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Delete barter */
   deleteBarter() {
     if (!confirm('Are you sure you want to cancel this barter?')) return;
     this.barterService.deleteBarter(this.viewModel.id).subscribe({
@@ -518,7 +336,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Format barter for display */
   private formatBarter(barter: Barter): BarterViewModel {
     const currentUserId = this.getCurrentUserId();
     const partner = barter.participants.find((p) => p.id !== currentUserId);
@@ -566,7 +383,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     };
   }
 
-  /** Helpers */
   private getCurrentUserId(): number {
     try {
       const user = JSON.parse(localStorage.getItem('swapify_user') || '{}');
@@ -601,18 +417,20 @@ export class BarterDetails implements OnInit, OnDestroy {
     const otherParticipant = this.barter.participants.find((p) => p.id !== currentUserId);
     return otherParticipant ? otherParticipant.id : null;
   }
+
   get otherUserId(): number | null {
     return this.getOtherUserId();
   }
+
   closeReviewModal() {
     this.showReviewModal = false;
   }
+
   onReviewSubmitted() {
-    this.showReviewModal = false; // ✅ إخفاء الـ div الأب بالكامل
-    this.hasReviewed = true; // لتجنب إعادة ظهور الفورم لاحقًا
+    this.showReviewModal = false;
+    this.hasReviewed = true;
   }
-  cancelReason: string = '';
-  showCancelBox: boolean = false;
+
   openCancelBox() {
     this.showCancelBox = true;
   }
@@ -646,7 +464,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  // Dispute methods
   openDisputeModal() {
     this.showDisputeModal = true;
     this.disputeReason = '';
@@ -680,7 +497,6 @@ export class BarterDetails implements OnInit, OnDestroy {
           alert('Dispute created successfully. An admin will review it shortly.');
           this.closeDisputeModal();
           this.isSubmittingDispute = false;
-          // Reload barter to show updated status if needed
           this.loadBarter();
         },
         error: (err) => {

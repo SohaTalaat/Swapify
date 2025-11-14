@@ -69,6 +69,18 @@ export class AdminDashboard implements OnInit {
   verifications: any[] = [];
   reports: ReportItem[] = [];
 
+  // Listing Approval Data
+  approvingListings: any[] = [];
+  approvingListingsPage = 1;
+  approvingListingsLastPage = 1;
+  approvingListingsPerPage = 10;
+  approvingListingsTotal = 0;
+  approvingIds = new Set<number>();
+  showRejectModal = false;
+  rejectingListingId: number | null = null;
+  rejectionReason = '';
+  isSubmittingReject = false;
+
   constructor(
     private idService: IdVerification,
     private reportService: AdminReport,
@@ -131,6 +143,9 @@ export class AdminDashboard implements OnInit {
         break;
       case 'barter-stats':
         this.loadBarterStats();
+        break;
+      case 'listings-approval':
+        this.loadApprovingListings(1);
         break;
     }
   }
@@ -543,5 +558,92 @@ export class AdminDashboard implements OnInit {
         },
       });
     }, 0); // This pushes execution to the next tick
+  }
+
+  // Listing Approval Methods
+  loadApprovingListings(page: number = 1) {
+    this.loading = true;
+    this.adminService.getListings().subscribe({
+      next: (res: any) => {
+        // Filter for pending listings only
+        this.approvingListings = (res.data || res).filter((l: any) => l.approval_status === 'pending');
+        this.approvingListingsPage = page;
+        this.approvingListingsTotal = this.approvingListings.length;
+        this.approvingListingsLastPage = Math.ceil(this.approvingListingsTotal / this.approvingListingsPerPage);
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load listings for approval', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  approveListing(listing: any) {
+    this.approvingIds.add(listing.id);
+    this.adminService.approveListing(listing.id).subscribe({
+      next: (res: any) => {
+        // Remove from the list
+        this.approvingListings = this.approvingListings.filter(l => l.id !== listing.id);
+        this.approvingIds.delete(listing.id);
+      },
+      error: (err: any) => {
+        console.error('Failed to approve listing', err);
+        this.approvingIds.delete(listing.id);
+      },
+    });
+  }
+
+  openRejectModal(listing: any) {
+    this.rejectingListingId = listing.id;
+    this.rejectionReason = '';
+    this.showRejectModal = true;
+  }
+
+  closeRejectModal() {
+    this.showRejectModal = false;
+    this.rejectingListingId = null;
+    this.rejectionReason = '';
+  }
+
+  submitReject() {
+    if (!this.rejectingListingId || !this.rejectionReason.trim()) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+
+    this.isSubmittingReject = true;
+    this.adminService.rejectListing(this.rejectingListingId, this.rejectionReason).subscribe({
+      next: (res: any) => {
+        // Remove from the list
+        this.approvingListings = this.approvingListings.filter(l => l.id !== this.rejectingListingId);
+        this.closeRejectModal();
+        this.isSubmittingReject = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to reject listing', err);
+        this.isSubmittingReject = false;
+      },
+    });
+  }
+
+  getPendingListingsCount(): number {
+    return this.approvingListings.length;
+  }
+
+  goToApprovingListingsPage(page: number) {
+    this.loadApprovingListings(page);
+  }
+
+  prevApprovingListingsPage() {
+    if (this.approvingListingsPage > 1) {
+      this.loadApprovingListings(this.approvingListingsPage - 1);
+    }
+  }
+
+  nextApprovingListingsPage() {
+    if (this.approvingListingsPage < this.approvingListingsLastPage) {
+      this.loadApprovingListings(this.approvingListingsPage + 1);
+    }
   }
 }

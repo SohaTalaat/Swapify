@@ -61,6 +61,22 @@ export class AdminService {
     );
   }
 
+  approveListing(listingId: number): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/admin/listings/${listingId}/approve`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  rejectListing(listingId: number, rejectionReason: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/admin/listings/${listingId}/reject`,
+      { rejection_reason: rejectionReason },
+      { headers: this.getHeaders() }
+    );
+  }
+
   // Content Reports
   getReports(): Observable<any> {
     return this.http.get(`${this.apiUrl}/reports`);

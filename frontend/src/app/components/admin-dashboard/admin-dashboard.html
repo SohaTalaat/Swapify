@@ -13,6 +13,12 @@
       <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
         <i class="fa-solid fa-tags me-2"></i> Offers
       </li>
+      <li
+        [class.active]="activeSection === 'listings-approval'"
+        (click)="setSection('listings-approval')"
+      >
+        <i class="fa-solid fa-file-check me-2"></i> Manage Listings
+      </li>
       <li [class.active]="activeSection === 'barter-stats'" (click)="setSection('barter-stats')">
         <i class="fa-solid fa-chart-pie me-2"></i> Barter Stats
       </li>
@@ -535,6 +541,177 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Listings Approval Section -->
+    <section *ngIf="activeSection === 'listings-approval' && !loading">
+      <h3>Manage Listings</h3>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <i class="fa-solid fa-hourglass-end icon text-warning"></i>
+          <h5>Pending</h5>
+          <p>{{ getPendingListingsCount() }}</p>
+        </div>
+      </div>
+
+      <!-- Listings Table -->
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+          <h5 class="mb-3">Pending Listings</h5>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let listing of approvingListings">
+                  <td>
+                    <img
+                      *ngIf="listing.image_url"
+                      [src]="listing.image_url"
+                      alt="Listing"
+                      class="img-thumbnail"
+                      style="width: 50px; height: 50px; object-fit: cover"
+                    />
+                    <span *ngIf="!listing.image_url" class="text-muted">N/A</span>
+                  </td>
+                  <td>{{ listing.title }}</td>
+                  <td>{{ listing.user_name || 'Unknown' }}</td>
+                  <td>{{ listing.category || 'N/A' }}</td>
+                  <td>
+                    <span class="badge bg-warning">{{ listing.approval_status || 'Pending' }}</span>
+                  </td>
+                  <td>
+                    <button
+                      class="btn btn-sm btn-success me-2"
+                      (click)="approveListing(listing)"
+                      [disabled]="approvingIds.has(listing.id)"
+                    >
+                      <i class="fa-solid fa-check"></i> Approve
+                    </button>
+                    <button
+                      class="btn btn-sm btn-danger"
+                      (click)="openRejectModal(listing)"
+                      [disabled]="approvingIds.has(listing.id)"
+                    >
+                      <i class="fa-solid fa-times"></i> Reject
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="approvingListings.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">
+                    No pending listings for approval
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <nav *ngIf="approvingListingsLastPage > 1" class="mt-3">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" [class.disabled]="approvingListingsPage === 1">
+                <button
+                  class="page-link"
+                  (click)="prevApprovingListingsPage()"
+                  [disabled]="approvingListingsPage === 1"
+                >
+                  Previous
+                </button>
+              </li>
+              <li
+                *ngFor="let page of [].constructor(approvingListingsLastPage); let i = index"
+                class="page-item"
+                [class.active]="i + 1 === approvingListingsPage"
+              >
+                <button class="page-link" (click)="goToApprovingListingsPage(i + 1)">
+                  {{ i + 1 }}
+                </button>
+              </li>
+              <li
+                class="page-item"
+                [class.disabled]="approvingListingsPage === approvingListingsLastPage"
+              >
+                <button
+                  class="page-link"
+                  (click)="nextApprovingListingsPage()"
+                  [disabled]="approvingListingsPage === approvingListingsLastPage"
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center text-muted small mt-2" *ngIf="approvingListingsLastPage > 0">
+            Page {{ approvingListingsPage }} of {{ approvingListingsLastPage }} (Total:
+            {{ approvingListingsTotal }})
+          </div>
+        </div>
+      </div>
+
+      <!-- Rejection Modal -->
+      <div
+        class="modal fade"
+        id="rejectModal"
+        [class.show]="showRejectModal"
+        [style.display]="showRejectModal ? 'block' : 'none'"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Reject Listing</h5>
+              <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Provide a reason for rejecting this listing:</p>
+              <textarea
+                class="form-control"
+                rows="4"
+                [(ngModel)]="rejectionReason"
+                placeholder="Enter rejection reason"
+              ></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeRejectModal()">
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="submitReject()"
+                [disabled]="isSubmittingReject || !rejectionReason.trim()"
+              >
+                <span *ngIf="!isSubmittingReject">Reject</span>
+                <span *ngIf="isSubmittingReject">
+                  <span
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Submitting...
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Backdrop -->
+      <div
+        class="modal-backdrop fade"
+        [class.show]="showRejectModal"
+        [style.display]="showRejectModal ? 'block' : 'none'"
+      ></div>
     </section>
   </main>
 </div>

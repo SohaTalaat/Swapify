@@ -156,6 +156,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Minitor Offers
     Route::get('/listings', [AdminListingController::class, 'index']);
     Route::patch('/listings/{id}/toggle', [AdminListingController::class, 'toggleStatus']);
+    Route::post('/listings/{id}/approve', [AdminListingController::class, 'approveListing']);
+    Route::post('/listings/{id}/reject', [AdminListingController::class, 'rejectListing']);
 
     // Shipment
     Route::get('/shipments', [AdminShipmentController::class, 'index']);
