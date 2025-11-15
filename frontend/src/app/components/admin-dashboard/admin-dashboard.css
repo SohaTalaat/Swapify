@@ -128,3 +128,14 @@
   margin: 0 auto;
   display: block;
 }
+
+/* make the filter row look nice on small screens */
+@media (max-width: 576px) {
+  .d-flex.mb-3 {
+    flex-direction: column;
+  }
+  .d-flex.mb-3 .btn {
+    margin-top: 0.5rem;
+    margin-left: 0 !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IdVerification } from '../../services/id-verification';
@@ -7,6 +7,7 @@ import { AdminService } from '../../services/admin';
 import { EchoService } from '../../services/echo';
 import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 declare var bootstrap: any;
 
@@ -26,7 +27,28 @@ interface ReportItem {
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css'],
 })
-export class AdminDashboard implements OnInit {
+export class AdminDashboard implements OnInit, AfterViewInit {
+  // ────── FILTER INPUTS ──────
+  searchUsers = '';
+  searchListings = '';
+  searchReports = '';
+  searchVerifications = '';
+  searchShipments = '';
+  searchDisputes = '';
+  searchCancelledBarters = '';
+  searchPendingListings = '';
+
+  // ────── DEBOUNCE SUBJECTS ──────
+  private userSearch$ = new Subject<string>();
+  private listingSearch$ = new Subject<string>();
+  private reportSearch$ = new Subject<string>();
+  private verificationSearch$ = new Subject<string>();
+  private shipmentSearch$ = new Subject<string>();
+  private disputeSearch$ = new Subject<string>();
+  private cancelledSearch$ = new Subject<string>();
+  private pendingSearch$ = new Subject<string>();
+
+  // ────── DATA ──────
   barterStats = { total: 0, cancelled: 0, active: 0 };
   barterReasons: any[] = [];
   reasonsChart: any;
@@ -34,52 +56,44 @@ export class AdminDashboard implements OnInit {
   activeSection = 'overview';
   loading = false;
 
-  // Overview Data
-  overviewStats = {
-    active_users: 0,
-    completed_barters: 0,
-    active_items: 0,
-  };
+  overviewStats = { active_users: 0, completed_barters: 0, active_items: 0 };
 
-  // Users Data
+  // Users
   users: any[] = [];
-  usersPagination = {
-    current_page: 1,
-    total: 0,
-    per_page: 10,
-  };
+  usersPagination = { current_page: 1, total: 0, per_page: 10 };
 
-  // Offers Data
+  // Offers (active listings)
   listings: any[] = [];
-  listingsPagination = {
-    current_page: 1,
-    total: 0,
-    per_page: 10,
-  };
+  listingsPagination = { current_page: 1, total: 0, per_page: 10 };
 
-  // Shipments Data
+  // Shipments
   shipments: any[] = [];
 
-  // Disputes Data
+  // Disputes
   disputes: any[] = [];
-  selectedDisputeForResolve: any = null;
-  resolutionNotes: string = '';
 
-  // Reports & Verifications (existing)
+  // Reports & Verifications
   verifications: any[] = [];
   reports: ReportItem[] = [];
 
-  // Listing Approval Data
+  // Pending listings (approval)
   approvingListings: any[] = [];
   approvingListingsPage = 1;
   approvingListingsLastPage = 1;
   approvingListingsPerPage = 10;
   approvingListingsTotal = 0;
   approvingIds = new Set<number>();
+
+  // Modals
+  selectedUserForBan: any = null;
+  banReasonInput = '';
+  selectedDisputeForResolve: any = null;
+  resolutionNotes = '';
   showRejectModal = false;
   rejectingListingId: number | null = null;
   rejectionReason = '';
   isSubmittingReject = false;
+  fullscreenImg = '';
 
   constructor(
     private idService: IdVerification,
@@ -87,38 +101,176 @@ export class AdminDashboard implements OnInit {
     private adminService: AdminService,
     private echoService: EchoService,
     private router: Router
-  ) { }
-
-  // Ban modal state
-  selectedUserForBan: any = null;
-  banReasonInput: string = '';
+  ) {}
 
   ngOnInit() {
     this.loadOverview();
     this.initializeEchoListeners();
+    this.setupDebounce();
   }
 
-  initializeEchoListeners() {
-    // Listen for dispute events on the admin.disputes channel
-    const adminChannel = this.echoService.instance?.private('admin.disputes');
-    if (adminChannel) {
-      adminChannel
-        .listen('dispute.resolved', (data: any) => {
-          console.log('Dispute resolved event received:', data);
-          // Update the dispute in the local list
-          const dispute = this.disputes.find(d => d.id === data.dispute_id);
-          if (dispute) {
-            dispute.status = data.status;
-            dispute.resolution_notes = data.resolution_notes;
-            dispute.resolved_by_admin_id = data.resolved_by_admin_id;
-          }
-        });
-    }
+  ngAfterViewInit() {
+    // Chart will be rendered when section becomes active
   }
 
+  /*** ────── FILTER DEBOUNCE ────── ***/
+  private setupDebounce() {
+    const debounceMs = 300;
+
+    this.userSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyUserFilter());
+    this.listingSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyListingFilter());
+    this.reportSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyReportFilter());
+    this.verificationSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyVerificationFilter());
+    this.shipmentSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyShipmentFilter());
+    this.disputeSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyDisputeFilter());
+    this.cancelledSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyCancelledFilter());
+    this.pendingSearch$
+      .pipe(debounceTime(debounceMs), distinctUntilChanged())
+      .subscribe(() => this.applyPendingFilter());
+  }
+
+  // ────── INPUT CHANGE HANDLERS ──────
+  onUserSearch(term: string) {
+    this.userSearch$.next(term);
+  }
+  onListingSearch(term: string) {
+    this.listingSearch$.next(term);
+  }
+  onReportSearch(term: string) {
+    this.reportSearch$.next(term);
+  }
+  onVerificationSearch(term: string) {
+    this.verificationSearch$.next(term);
+  }
+  onShipmentSearch(term: string) {
+    this.shipmentSearch$.next(term);
+  }
+  onDisputeSearch(term: string) {
+    this.disputeSearch$.next(term);
+  }
+  onCancelledSearch(term: string) {
+    this.cancelledSearch$.next(term);
+  }
+  onPendingSearch(term: string) {
+    this.pendingSearch$.next(term);
+  }
+
+  // ────── FILTER IMPLEMENTATIONS ──────
+  private applyUserFilter() {
+    // no extra work – filteredUsers getter does the job
+  }
+  private applyListingFilter() {}
+  private applyReportFilter() {}
+  private applyVerificationFilter() {}
+  private applyShipmentFilter() {}
+  private applyDisputeFilter() {}
+  private applyCancelledFilter() {}
+  private applyPendingFilter() {}
+
+  /*** ────── COMPUTED FILTERED ARRAYS ────── ***/
+  get filteredUsers() {
+    if (!this.searchUsers) return this.users;
+    const term = this.searchUsers.toLowerCase();
+    return this.users.filter(
+      (u) => u.full_name?.toLowerCase().includes(term) || u.email?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredListings() {
+    if (!this.searchListings) return this.listings;
+    const term = this.searchListings.toLowerCase();
+    return this.listings.filter(
+      (l) =>
+        l.title?.toLowerCase().includes(term) ||
+        l.category?.toLowerCase().includes(term) ||
+        l.user_name?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredReports() {
+    if (!this.searchReports) return this.reports;
+    const term = this.searchReports.toLowerCase();
+    return this.reports.filter(
+      (r) =>
+        r.listing_title?.toLowerCase().includes(term) ||
+        r.reported_by?.toLowerCase().includes(term) ||
+        r.reason?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredVerifications() {
+    if (!this.searchVerifications) return this.verifications;
+    const term = this.searchVerifications.toLowerCase();
+    return this.verifications.filter(
+      (v) =>
+        v.user?.full_name?.toLowerCase().includes(term) ||
+        v.user?.email?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredShipments() {
+    if (!this.searchShipments) return this.shipments;
+    const term = this.searchShipments.toLowerCase();
+    return this.shipments.filter(
+      (s) =>
+        s.barter_id?.toString().includes(term) ||
+        s.shipping_type?.toLowerCase().includes(term) ||
+        s.tracking_number?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredDisputes() {
+    if (!this.searchDisputes) return this.disputes;
+    const term = this.searchDisputes.toLowerCase();
+    return this.disputes.filter(
+      (d) =>
+        d.id?.toString().includes(term) ||
+        d.initiator?.username?.toLowerCase().includes(term) ||
+        d.barter_id?.toString().includes(term) ||
+        d.reason?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredCancelledBarters() {
+    if (!this.searchCancelledBarters) return this.cancelledBarters;
+    const term = this.searchCancelledBarters.toLowerCase();
+    return this.cancelledBarters.filter(
+      (c) =>
+        c.id?.toString().includes(term) ||
+        c.cancelled_by_username?.toLowerCase().includes(term) ||
+        c.cancel_reason?.toLowerCase().includes(term)
+    );
+  }
+
+  get filteredPendingListings() {
+    if (!this.searchPendingListings) return this.approvingListings;
+    const term = this.searchPendingListings.toLowerCase();
+    return this.approvingListings.filter(
+      (l) =>
+        l.title?.toLowerCase().includes(term) ||
+        l.user_name?.toLowerCase().includes(term) ||
+        l.category?.toLowerCase().includes(term)
+    );
+  }
+
+  // ────── SECTION SWITCH ──────
   setSection(section: string) {
     this.activeSection = section;
-
+    this.resetFilters(); // optional – clear previous searches
     switch (section) {
       case 'overview':
         this.loadOverview();
@@ -150,7 +302,34 @@ export class AdminDashboard implements OnInit {
     }
   }
 
-  // Overview
+  private resetFilters() {
+    this.searchUsers =
+      this.searchListings =
+      this.searchReports =
+      this.searchVerifications =
+      this.searchShipments =
+      this.searchDisputes =
+      this.searchCancelledBarters =
+      this.searchPendingListings =
+        '';
+  }
+
+  // ────── ECHO LISTENERS ──────
+  initializeEchoListeners() {
+    const adminChannel = this.echoService.instance?.private('admin.disputes');
+    if (adminChannel) {
+      adminChannel.listen('dispute.resolved', (data: any) => {
+        const dispute = this.disputes.find((d) => d.id === data.dispute_id);
+        if (dispute) {
+          dispute.status = data.status;
+          dispute.resolution_notes = data.resolution_notes;
+          dispute.resolved_by_admin_id = data.resolved_by_admin_id;
+        }
+      });
+    }
+  }
+
+  // ────── OVERVIEW ──────
   loadOverview() {
     this.loading = true;
     this.adminService.getOverview().subscribe({
@@ -158,14 +337,11 @@ export class AdminDashboard implements OnInit {
         this.overviewStats = res;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load overview', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
-  //Users
+  // ────── USERS ──────
   loadUsers() {
     this.loading = true;
     this.adminService.getUsers().subscribe({
@@ -180,78 +356,45 @@ export class AdminDashboard implements OnInit {
         }
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load users', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
+  // ────── BAN / ACTIVATE ──────
   banUser(user: any) {
-
-    // Open modal and set selected user
     this.selectedUserForBan = user;
     this.banReasonInput = user.ban_reason || '';
     const el = document.getElementById('adminBanModal');
-    if (el) {
-      // @ts-ignore
-      const m = new (window as any).bootstrap.Modal(el);
-      m.show();
-    } else {
-      // fallback to prompt
-      const reason = prompt('Enter reason for banning this user:');
-      if (!reason) return;
-      this.confirmBan(reason);
-    }
+    const modal = el ? new bootstrap.Modal(el) : null;
+    modal?.show();
   }
 
   confirmBan(reason?: string) {
-    const r = reason !== undefined ? reason : this.banReasonInput;
-    if (!r || r.trim() === '') {
-      alert('Ban reason is required.');
+    const r = reason ?? this.banReasonInput?.trim();
+    if (!r) {
+      alert('Ban reason required');
       return;
     }
-
     const user = this.selectedUserForBan;
-    if (!user) return;
-
-    this.adminService.banUser(user.id, r.trim()).subscribe({
-      next: (res: any) => {
+    this.adminService.banUser(user.id, r).subscribe({
+      next: () => {
         user.status = 'banned';
-        user.ban_reason = r.trim();
-        alert(res.message || 'User banned successfully');
-        // hide modal
-        const el = document.getElementById('adminBanModal');
-        if (el) {
-          // @ts-ignore
-          const m = (window as any).bootstrap.Modal.getInstance(el);
-          if (m) m.hide();
-        }
+        user.ban_reason = r;
+        bootstrap.Modal.getInstance(document.getElementById('adminBanModal')!)?.hide();
       },
-      error: (err: any) => {
-        console.error('Failed to ban user', err);
-        alert(err.error?.message || 'Failed to ban user');
-      },
+      error: (e) => alert(e.error?.message ?? 'Failed'),
     });
   }
-
 
   activateUser(user: any) {
-    if (!confirm(`Are you sure you want to activate ${user.full_name}?`)) return;
-
+    if (!confirm(`Activate ${user.full_name}?`)) return;
     this.adminService.activateUser(user.id).subscribe({
-      next: (res: any) => {
-        user.status = 'active';
-        alert(res.message || 'User activated successfully');
-      },
-      error: (err: any) => {
-        console.error('Failed to activate user', err);
-        alert(err.error?.message || 'Failed to activate user');
-      },
+      next: () => (user.status = 'active'),
+      error: (e) => alert(e.error?.message ?? 'Failed'),
     });
   }
 
-  //Listings
+  // ────── OFFERS (ACTIVE LISTINGS) ──────
   loadListings() {
     this.loading = true;
     this.adminService.getListings().subscribe({
@@ -266,30 +409,20 @@ export class AdminDashboard implements OnInit {
         }
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load listings', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
   toggleListingStatus(listing: any) {
     const action = listing.is_active ? 'deactivate' : 'activate';
-    if (!confirm(`Are you sure you want to ${action} this listing?`)) return;
-
+    if (!confirm(`Sure to ${action} this listing?`)) return;
     this.adminService.toggleListingStatus(listing.id).subscribe({
-      next: (res: any) => {
-        listing.is_active = res.is_active;
-        alert(res.message || 'Listing status updated');
-      },
-      error: (err: any) => {
-        console.error('Failed to toggle listing', err);
-        alert(err.error?.message || 'Failed to update listing');
-      },
+      next: (res: any) => (listing.is_active = res.is_active),
+      error: () => {},
     });
   }
 
-  // Shipments
+  // ────── SHIPMENTS ──────
   loadShipments() {
     this.loading = true;
     this.adminService.getShipments().subscribe({
@@ -297,36 +430,22 @@ export class AdminDashboard implements OnInit {
         this.shipments = res;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load shipments', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
   updateShipmentStatus(shipment: any, newStatus: string) {
-    if (!confirm(`Update shipment status to ${newStatus}?`)) {
-      // revert selection in UI to previous value by reloading shipments or undoing assignment
+    if (!confirm(`Change status to ${newStatus}?`)) {
       this.loadShipments();
       return;
     }
-
     this.adminService.updateShipmentStatus(shipment.id, newStatus).subscribe({
-      next: (res: any) => {
-        // update already bound via ngModel; ensure local model matches server
-        shipment.status = newStatus;
-        alert(res.message || 'Shipment status updated');
-      },
-      error: (err: any) => {
-        console.error('Failed to update shipment', err);
-        alert(err.error?.message || 'Failed to update shipment');
-        // revert selection by reloading shipments
-        this.loadShipments();
-      },
+      next: () => (shipment.status = newStatus),
+      error: () => this.loadShipments(),
     });
   }
 
-  // Disputes
+  // ────── DISPUTES ──────
   loadDisputes() {
     this.loading = true;
     this.adminService.getDisputes().subscribe({
@@ -334,10 +453,7 @@ export class AdminDashboard implements OnInit {
         this.disputes = res;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load disputes', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
@@ -345,43 +461,28 @@ export class AdminDashboard implements OnInit {
     this.selectedDisputeForResolve = dispute;
     this.resolutionNotes = '';
     const el = document.getElementById('resolveDisputeModal');
-    if (el) {
-      // @ts-ignore
-      const m = new (window as any).bootstrap.Modal(el);
-      m.show();
-    }
+    new bootstrap.Modal(el!).show();
   }
 
   confirmResolveDispute() {
-    if (!this.selectedDisputeForResolve || !this.resolutionNotes.trim()) {
-      alert('Please enter resolution notes');
+    if (!this.resolutionNotes.trim()) {
+      alert('Notes required');
       return;
     }
-
     this.adminService
       .resolveDispute(this.selectedDisputeForResolve.id, this.resolutionNotes.trim())
       .subscribe({
-        next: (res: any) => {
+        next: () => {
           this.selectedDisputeForResolve.status = 'resolved';
           this.selectedDisputeForResolve.resolution_notes = this.resolutionNotes;
-          alert(res.message || 'Dispute resolved successfully');
-          // hide modal
-          const el = document.getElementById('resolveDisputeModal');
-          if (el) {
-            // @ts-ignore
-            const m = (window as any).bootstrap.Modal.getInstance(el);
-            if (m) m.hide();
-          }
+          bootstrap.Modal.getInstance(document.getElementById('resolveDisputeModal')!)?.hide();
           this.loadDisputes();
         },
-        error: (err: any) => {
-          console.error('Failed to resolve dispute', err);
-          alert(err.error?.message || 'Failed to resolve dispute');
-        },
+        error: (e) => alert(e.error?.message ?? 'Failed'),
       });
   }
 
-  // Verification
+  // ────── VERIFICATIONS ──────
   loadVerifications() {
     this.loading = true;
     this.idService.getAllVerifications().subscribe({
@@ -389,131 +490,83 @@ export class AdminDashboard implements OnInit {
         this.verifications = res;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load verifications', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
   approve(v: any) {
-    this.idService.approve(v.id).subscribe({
-      next: () => (v.status = 'verified'),
-      error: (err: any) => console.error(err),
-    });
+    this.idService.approve(v.id).subscribe(() => (v.status = 'verified'));
   }
 
   reject(v: any) {
-    const reason = prompt('Enter rejection reason:');
+    const reason = prompt('Rejection reason:');
     if (!reason) return;
-
-    this.idService.reject(v.id, reason).subscribe({
-      next: () => {
-        v.status = 'rejected';
-        v.rejection_reason = reason;
-      },
-      error: (err: any) => console.error(err),
+    this.idService.reject(v.id, reason).subscribe(() => {
+      v.status = 'rejected';
+      v.rejection_reason = reason;
     });
   }
 
-  // Reports
+  // ────── CONTENT REPORTS ──────
   loadReports() {
     this.loading = true;
     this.reportService.getReports().subscribe({
       next: (res: any) => {
-        this.reports = res.data as ReportItem[];
+        this.reports = res.data;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load reports', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
   dismissReport(r: any) {
-    this.reportService.dismissReport(r.id).subscribe({
-      next: () => {
-        r.status = 'reviewed';
-      },
-      error: (err: any) => console.error(err),
-    });
+    this.reportService.dismissReport(r.id).subscribe(() => (r.status = 'reviewed'));
   }
 
   removeReport(r: any) {
-    if (!confirm('Are you sure you want to remove this offer?')) return;
-
-    this.reportService.removeOffer(r.id).subscribe({
-      next: () => {
-        r.status = 'removed';
-        this.reports = this.reports.filter((rep) => rep.id !== r.id);
-      },
-      error: (err: any) => console.error(err),
+    if (!confirm('Remove this offer?')) return;
+    this.reportService.removeOffer(r.id).subscribe(() => {
+      this.reports = this.reports.filter((rep) => rep.id !== r.id);
     });
   }
 
-  toggleUserStatus(u: any) {
-    u.status = u.status === 'Active' ? 'Banned' : 'Active';
-  }
-
-  //Utility
-  fullscreenImg: string = '';
+  // ────── FULLSCREEN IMAGE ──────
   openFullscreen(url: string) {
     this.fullscreenImg = url;
-    const modalElement = document.getElementById('fullscreenModal');
-    const modal = new bootstrap.Modal(modalElement!);
-    modal.show();
+    new bootstrap.Modal(document.getElementById('fullscreenModal')!).show();
   }
 
+  // ────── BARTER STATS ──────
   loadBarterStats() {
     this.loading = true;
     this.adminService.getBarterStats().subscribe({
       next: (res: any) => {
-        this.loading = false;
         this.barterStats = res.stats;
         this.barterReasons = res.reasons;
-
-        // Load cancelled barters list
         this.loadCancelledBarters();
-
         this.renderReasonsChart();
-      },
-      error: (err: any) => {
-        console.error('Failed to load barter stats', err);
         this.loading = false;
       },
+      error: () => (this.loading = false),
     });
   }
 
   loadCancelledBarters() {
     this.adminService.getCancelledBarters().subscribe({
-      next: (data: any[]) => {
-        this.cancelledBarters = data;
-      },
-      error: (err) => {
-        console.error('Failed to load cancelled barters', err);
-      },
+      next: (data: any[]) => (this.cancelledBarters = data),
+      error: () => {},
     });
   }
 
   renderReasonsChart() {
-    const labels = this.barterReasons.map((r: any) => r.cancel_reason);
-    const data = this.barterReasons.map((r: any) => r.count);
+    if (this.reasonsChart) this.reasonsChart.destroy();
 
-    console.log('Reasons data:', this.barterReasons);
-
-    // Destroy previous chart
-    if (this.reasonsChart) {
-      this.reasonsChart.destroy();
-    }
-
-    // Wait for DOM to render the canvas
     setTimeout(() => {
       const ctx = document.getElementById('reasonsChart') as HTMLCanvasElement;
-      if (!ctx) {
-        console.error('Canvas element #reasonsChart not found!');
-        return;
-      }
+      if (!ctx) return;
+
+      const labels = this.barterReasons.map((r) => r.cancel_reason);
+      const data = this.barterReasons.map((r) => r.count);
 
       this.reasonsChart = new Chart(ctx, {
         type: 'pie',
@@ -521,7 +574,7 @@ export class AdminDashboard implements OnInit {
           labels,
           datasets: [
             {
-              label: 'Cancellation Reasons',
+              label: 'Reasons',
               data,
               backgroundColor: [
                 '#007bff',
@@ -533,64 +586,40 @@ export class AdminDashboard implements OnInit {
                 '#fd7e14',
                 '#e83e8c',
               ],
-              borderWidth: 1,
             },
           ],
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom' as const,
-            },
-            tooltip: {
-              callbacks: {
-                label: (context) => {
-                  const label = context.label || '';
-                  const value = context.parsed;
-                  const total = context.dataset.data.reduce((a: any, b: any) => a + b, 0);
-                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                  return `${label}: ${value} (${percentage})`;
-                },
-              },
-            },
-          },
-        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' as const } } },
       });
-    }, 0); // This pushes execution to the next tick
+    }, 0);
   }
 
-  // Listing Approval Methods
+  // ────── LISTINGS APPROVAL ──────
   loadApprovingListings(page: number = 1) {
     this.loading = true;
     this.adminService.getListings().subscribe({
       next: (res: any) => {
-        // Filter for pending listings only
-        this.approvingListings = (res.data || res).filter((l: any) => l.approval_status === 'pending');
+        const all = res.data || res;
+        this.approvingListings = all.filter((l: any) => l.approval_status === 'pending');
         this.approvingListingsPage = page;
         this.approvingListingsTotal = this.approvingListings.length;
-        this.approvingListingsLastPage = Math.ceil(this.approvingListingsTotal / this.approvingListingsPerPage);
+        this.approvingListingsLastPage = Math.ceil(
+          this.approvingListingsTotal / this.approvingListingsPerPage
+        );
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Failed to load listings for approval', err);
-        this.loading = false;
-      },
+      error: () => (this.loading = false),
     });
   }
 
   approveListing(listing: any) {
     this.approvingIds.add(listing.id);
     this.adminService.approveListing(listing.id).subscribe({
-      next: (res: any) => {
-        // Remove from the list
-        this.approvingListings = this.approvingListings.filter(l => l.id !== listing.id);
+      next: () => {
+        this.approvingListings = this.approvingListings.filter((l) => l.id !== listing.id);
         this.approvingIds.delete(listing.id);
       },
-      error: (err: any) => {
-        console.error('Failed to approve listing', err);
-        this.approvingIds.delete(listing.id);
-      },
+      error: () => this.approvingIds.delete(listing.id),
     });
   }
 
@@ -607,23 +636,20 @@ export class AdminDashboard implements OnInit {
   }
 
   submitReject() {
-    if (!this.rejectingListingId || !this.rejectionReason.trim()) {
-      alert('Please provide a rejection reason');
+    if (!this.rejectionReason.trim()) {
+      alert('Reason required');
       return;
     }
-
     this.isSubmittingReject = true;
-    this.adminService.rejectListing(this.rejectingListingId, this.rejectionReason).subscribe({
-      next: (res: any) => {
-        // Remove from the list
-        this.approvingListings = this.approvingListings.filter(l => l.id !== this.rejectingListingId);
+    this.adminService.rejectListing(this.rejectingListingId!, this.rejectionReason).subscribe({
+      next: () => {
+        this.approvingListings = this.approvingListings.filter(
+          (l) => l.id !== this.rejectingListingId
+        );
         this.closeRejectModal();
         this.isSubmittingReject = false;
       },
-      error: (err: any) => {
-        console.error('Failed to reject listing', err);
-        this.isSubmittingReject = false;
-      },
+      error: () => (this.isSubmittingReject = false),
     });
   }
 
@@ -631,19 +657,14 @@ export class AdminDashboard implements OnInit {
     return this.approvingListings.length;
   }
 
-  goToApprovingListingsPage(page: number) {
-    this.loadApprovingListings(page);
+  goToApprovingListingsPage(p: number) {
+    this.loadApprovingListings(p);
   }
-
   prevApprovingListingsPage() {
-    if (this.approvingListingsPage > 1) {
-      this.loadApprovingListings(this.approvingListingsPage - 1);
-    }
+    if (this.approvingListingsPage > 1) this.loadApprovingListings(this.approvingListingsPage - 1);
   }
-
   nextApprovingListingsPage() {
-    if (this.approvingListingsPage < this.approvingListingsLastPage) {
+    if (this.approvingListingsPage < this.approvingListingsLastPage)
       this.loadApprovingListings(this.approvingListingsPage + 1);
-    }
   }
 }
