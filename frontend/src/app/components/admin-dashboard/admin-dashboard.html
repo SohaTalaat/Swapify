@@ -49,6 +49,8 @@
     <!-- Overview -->
     <section *ngIf="activeSection === 'overview' && !loading">
       <h3>Overview</h3>
+
+      <!-- ==== ORIGINAL 3 STAT CARDS ==== -->
       <div class="stats-grid">
         <div class="stat-card">
           <i class="fa-solid fa-user-check icon"></i>
@@ -64,6 +66,46 @@
           <i class="fa-solid fa-box icon"></i>
           <h5>Active Items</h5>
           <p>{{ overviewStats.active_items }}</p>
+        </div>
+      </div>
+
+      <!-- ==== NEW: SUBSCRIPTION PLAN CARDS + CHART ==== -->
+      <h4 class="mt-5 mb-3">Subscription Plans</h4>
+
+      <div class="row g-4">
+        <!-- Cards (left column) -->
+        <div class="col-lg-6">
+          <div class="stats-grid">
+            <div class="stat-card bg-secondary text-white">
+              <i class="fa-solid fa-users icon"></i>
+              <h5>Free Plan</h5>
+              <p>{{ subscriptionStats.free }}</p>
+            </div>
+
+            <div class="stat-card bg-warning text-dark">
+              <i class="fa-solid fa-star icon"></i>
+              <h5>Basic Plan</h5>
+              <p>{{ subscriptionStats.basic }}</p>
+            </div>
+
+            <div class="stat-card bg-success text-white">
+              <i class="fa-solid fa-crown icon"></i>
+              <h5>Pro Plan</h5>
+              <p>{{ subscriptionStats.pro }}</p>
+            </div>
+          </div>
+
+          <p class="text-muted text-center mt-2">
+            Total subscribers:
+            {{ subscriptionStats.free + subscriptionStats.basic + subscriptionStats.pro }}
+          </p>
+        </div>
+
+        <!-- Chart (right column) -->
+        <div class="col-lg-6">
+          <div class="chart-container">
+            <canvas id="subscriptionChart"></canvas>
+          </div>
         </div>
       </div>
     </section>

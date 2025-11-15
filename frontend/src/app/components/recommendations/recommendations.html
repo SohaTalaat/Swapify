@@ -20,6 +20,7 @@
         <img
           *ngIf="item.listing.images && item.listing.images[0]?.url"
           [src]="item.listing.images[0].url"
+          style="width: 600px; height: 250px"
           [alt]="item.listing.title"
           class="card-img-top rounded-top"
         />

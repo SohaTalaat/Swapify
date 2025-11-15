@@ -93,7 +93,11 @@
 .alert {
   border-radius: 10px;
 }
-
+.chart-container {
+  position: relative;
+  height: 260px;
+  margin-top: 1rem;
+}
 /* ===== Animations ===== */
 @keyframes fadeIn {
   from {

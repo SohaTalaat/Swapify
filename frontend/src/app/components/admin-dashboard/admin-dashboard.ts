@@ -57,7 +57,8 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   loading = false;
 
   overviewStats = { active_users: 0, completed_barters: 0, active_items: 0 };
-
+  subscriptionStats = { free: 0, basic: 0, pro: 0 };
+  subscriptionChart: any;
   // Users
   users: any[] = [];
   usersPagination = { current_page: 1, total: 0, per_page: 10 };
@@ -330,17 +331,86 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   }
 
   // ────── OVERVIEW ──────
+  // loadOverview() {
+  //   this.loading = true;
+  //   this.adminService.getOverview().subscribe({
+  //     next: (res: any) => {
+  //       this.overviewStats = res;
+  //       this.loading = false;
+  //     },
+  //     error: () => (this.loading = false),
+  //   });
+  // }
   loadOverview() {
     this.loading = true;
     this.adminService.getOverview().subscribe({
       next: (res: any) => {
-        this.overviewStats = res;
+        this.overviewStats = {
+          active_users: res.active_users,
+          completed_barters: res.completed_barters,
+          active_items: res.active_items,
+        };
+        this.subscriptionStats = res.subscriptions;
+
+        // Remove $nextTick — just call it directly
+        setTimeout(() => this.renderSubscriptionChart(), 0);
+
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
   }
+  /*** ────── SUBSCRIPTION CHART ────── ***/
+  renderSubscriptionChart() {
+    if (this.subscriptionChart) {
+      this.subscriptionChart.destroy();
+    }
 
+    const ctx = document.getElementById('subscriptionChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.warn('Canvas #subscriptionChart not found');
+      return;
+    }
+
+    const labels = ['Free', 'Basic', 'Pro'];
+    const data = [
+      this.subscriptionStats.free,
+      this.subscriptionStats.basic,
+      this.subscriptionStats.pro,
+    ];
+
+    this.subscriptionChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+            backgroundColor: ['#6c757d', '#ffc107', '#28a745'],
+            borderColor: ['#ffffff', '#ffffff', '#ffffff'],
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' as const },
+          tooltip: {
+            callbacks: {
+              label: (context: any) => {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: any, b: any) => a + b, 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                return `${label}: ${value} (${percentage})`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
   // ────── USERS ──────
   loadUsers() {
     this.loading = true;
