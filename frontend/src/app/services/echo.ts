@@ -23,7 +23,7 @@ export class EchoService {
 
     this.echo = new Echo({
       broadcaster: 'pusher',
-      key: 'c33fb43a7e823f4c9b22',
+      key: '3ad51a0a95a1b73945f5',
       cluster: 'eu',
       forceTLS: true,
       authEndpoint: 'http://127.0.0.1:8000/broadcasting/auth',

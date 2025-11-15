@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Dispute;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Barter;
+use Illuminate\Support\Facades\Auth;
 
 class StoreDisputeRequest extends FormRequest
 {
@@ -11,7 +13,21 @@ class StoreDisputeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        // Allow only authenticated participants of the barter or admins to create a dispute.
+        $user = Auth::user();
+        if (!$user) return false;
+
+        // If the user is an admin, allow
+        if (property_exists($user, 'is_admin') && $user->is_admin) return true;
+
+        // Check barter_id is present in the request
+        $barterId = $this->input('barter_id');
+        if (!$barterId) return false;
+
+        $barter = Barter::with('participants')->find($barterId);
+        if (!$barter) return false;
+
+        return $barter->participants->contains('id', $user->id);
     }
 
     /**

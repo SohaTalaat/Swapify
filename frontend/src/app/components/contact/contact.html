@@ -21,7 +21,7 @@
           Reach out anytime — we’ll get back to you as soon as possible!
         </p>
         <div class="contact-info mt-4">
-          <p><i class="fa-solid fa-envelope text-primary me-2"></i> support@swapify.com</p>
+          <p><i class="fa-solid fa-envelope text-primary me-2"></i> swapifyservices@gmail.com</p>
           <p><i class="fa-solid fa-phone text-success me-2"></i> +20 111 398 1508</p>
           <p><i class="fa-solid fa-location-dot text-danger me-2"></i> Assuit, Egypt</p>
         </div>
@@ -31,14 +31,48 @@
       <div class="col-md-6 animate-fade">
         <div class="glass-card p-4 shadow-lg">
           <h4 class="text-center mb-3 text-gradient">Send Us a Message</h4>
-          <form>
+          <!-- Success Message -->
+          <div
+            *ngIf="successMessage"
+            class="alert alert-success alert-dismissible fade show mb-3"
+            role="alert"
+          >
+            <i class="fa-solid fa-circle-check me-2"></i>{{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+
+          <!-- Error Message -->
+          <div
+            *ngIf="errorMessage"
+            class="alert alert-danger alert-dismissible fade show mb-3"
+            role="alert"
+          >
+            <i class="fa-solid fa-circle-exclamation me-2"></i>{{ errorMessage }}
+            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+          </div>
+
+          <form (ngSubmit)="submitForm()" #contactForm="ngForm">
             <div class="mb-3">
               <label class="fw-semibold">Name</label>
-              <input type="text" class="form-control" placeholder="Your name" />
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Your name"
+                [(ngModel)]="formData.name"
+                name="name"
+                [disabled]="isLoading"
+              />
             </div>
             <div class="mb-3">
               <label class="fw-semibold">Email</label>
-              <input type="email" class="form-control" placeholder="Your email" />
+              <input
+                type="email"
+                class="form-control"
+                placeholder="Your email"
+                [(ngModel)]="formData.email"
+                name="email"
+                [disabled]="isLoading"
+              />
             </div>
             <div class="mb-3">
               <label class="fw-semibold">Message</label>
@@ -46,10 +80,23 @@
                 class="form-control"
                 rows="4"
                 placeholder="Write your message..."
+                [(ngModel)]="formData.message"
+                name="message"
+                [disabled]="isLoading"
               ></textarea>
             </div>
-            <button class="btn w-100 mt-2" style="background-color: #ee6931; color: white">
-              <i class="fa-solid fa-paper-plane me-2"></i>Send Message
+            <button
+              type="submit"
+              class="btn w-100 mt-2"
+              style="background-color: #ee6931; color: white"
+              [disabled]="isLoading"
+            >
+              <span *ngIf="!isLoading">
+                <i class="fa-solid fa-paper-plane me-2"></i>Send Message
+              </span>
+              <span *ngIf="isLoading">
+                <i class="fa-solid fa-spinner fa-spin me-2"></i>Sending...
+              </span>
             </button>
           </form>
         </div>

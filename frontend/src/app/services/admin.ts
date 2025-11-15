@@ -61,6 +61,22 @@ export class AdminService {
     );
   }
 
+  approveListing(listingId: number): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/admin/listings/${listingId}/approve`,
+      {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  rejectListing(listingId: number, rejectionReason: string): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/admin/listings/${listingId}/reject`,
+      { rejection_reason: rejectionReason },
+      { headers: this.getHeaders() }
+    );
+  }
+
   // Content Reports
   getReports(): Observable<any> {
     return this.http.get(`${this.apiUrl}/reports`);
@@ -116,5 +132,20 @@ export class AdminService {
     return this.http.get<any[]>(`${this.apiUrl}/admin/barters/cancelled`, {
       headers: this.getHeaders(),
     });
+  }
+
+  // Disputes
+  getDisputes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/disputes`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  resolveDispute(disputeId: number, resolutionNotes: string, status: string = 'resolved'): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/admin/disputes/${disputeId}/resolve`,
+      { resolution_notes: resolutionNotes, status },
+      { headers: this.getHeaders() }
+    );
   }
 }

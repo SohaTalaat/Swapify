@@ -11,13 +11,18 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Barter\StoreBarterRequest;
 use App\Http\Requests\Barter\UpdateBarterRequest;
 use App\Models\Shipment;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 
 class BarterController extends Controller
 {
     public function index()
     {
-        return Auth::user()
+        /** @var \App\Models\User $user */
+
+        $user = Auth::user();
+
+        return $user
             ->bartersAsParticipant()
             ->with([
                 'participants:id,username',
@@ -40,6 +45,29 @@ class BarterController extends Controller
                 'error' => 'Your account is banned and cannot create barters.',
                 'ban_reason' => $user->ban_reason,
             ], 403);
+        }
+
+        // ✅ Check subscription barter limit
+        $subscription = $user->subscription;
+        $barterLimit = $this->getBarterLimitForUser($subscription);
+        // Count ALL barter requests (including cancelled) - any barter request counts toward the limit
+        $activeBarterCount = Barter::whereHas('participants', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->count();
+
+        if ($activeBarterCount >= $barterLimit) {
+            return response()->json([
+                'error' => 'You have reached your barter limit',
+                'code' => 'BARTER_LIMIT_EXCEEDED',
+                'current_limit' => $barterLimit,
+                'barters_used' => $activeBarterCount,
+                'plans' => [
+                    ['tier' => 'free', 'limit' => 2, 'price' => 0],
+                    ['tier' => 'pro', 'limit' => 5, 'price' => 'TBD'],
+                    ['tier' => 'premium', 'limit' => 20, 'price' => 'TBD'],
+                ],
+                'message' => 'Upgrade your subscription to create more barters'
+            ], 402);
         }
 
         $data = $request->validated();
@@ -78,6 +106,19 @@ class BarterController extends Controller
         ]);
     }
 
+    /**
+     * Get barter limit based on subscription tier
+     */
+    private function getBarterLimitForUser($subscription)
+    {
+        if (!$subscription || !$subscription->is_active) {
+            return 2; // Free plan default
+        }
+
+        $tierLimits = ['free' => 2, 'pro' => 5, 'premium' => 20];
+        return $tierLimits[$subscription->tier] ?? 2;
+    }
+
     public function show(Barter $barter)
     {
         return $barter->load([
@@ -97,13 +138,6 @@ class BarterController extends Controller
     public function update(UpdateBarterRequest $request, Barter $barter)
     {
         $barter->update($request->validated());
-
-        Shipment::create([
-            'barter_id' => $barter->id,
-            'shipping_type' => 'outbound',
-            'status' => 'pending'
-        ]);
-
         return $barter;
     }
 
@@ -127,6 +161,31 @@ class BarterController extends Controller
         $barter->save();
 
         event(new BarterStatusUpdated($barter, Auth::id()));
+        // If barter was accepted and requires delivery, create a shipment record if not exists
+        try {
+            if ($request->status === 'accepted' && $barter->exchange_type === 'delivery') {
+                $existing = Shipment::where('barter_id', $barter->id)->first();
+                if (!$existing) {
+                    $shipment = Shipment::create([
+                        'barter_id' => $barter->id,
+                        'shipping_type' => 'outbound',
+                        'status' => 'pending',
+                    ]);
+
+                    // notify participants immediately (bypass queue during testing)
+                    foreach ($barter->participants as $participant) {
+                        try {
+                            $participant->notifyNow(new \App\Notifications\ShipmentStatusUpdated($shipment, $shipment->status));
+                        } catch (\Exception $e) {
+                            // avoid breaking the status update if notification fails
+                            \Illuminate\Support\Facades\Log::error('Failed to notify participant about shipment creation: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error while creating shipment on barter accepted: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Barter status updated successfully',
@@ -147,7 +206,7 @@ class BarterController extends Controller
 
         $barter->status = 'cancelled';
         $barter->cancelled_at = now();
-        $barter->cancelled_by = auth()->id();
+        $barter->cancelled_by = Auth::id();
         $barter->cancel_reason = $request->input('cancel_reason');
         $barter->save();
 
@@ -156,7 +215,6 @@ class BarterController extends Controller
 
     public function cancelledBarters()
     {
-        // جلب كل البارترز اللي تم الغاءها
         $barters = Barter::with(['cancelledByUser:id,username'])
             ->where('status', 'cancelled')
             ->latest()

@@ -116,6 +116,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Use a simpler channel naming for broadcasted notifications so frontend Echo listens on `private('user.{id}')`.
+     */
+    public function routeNotificationForBroadcast($notification = null)
+    {
+        return 'user.' . $this->id;
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

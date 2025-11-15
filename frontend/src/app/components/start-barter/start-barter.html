@@ -107,6 +107,15 @@
   </div>
 </div>
 
+<!-- Upgrade Modal -->
+<app-upgrade-prompt
+  [isVisible]="showUpgradeModal"
+  [currentLimit]="upgradeData.currentLimit"
+  [bartersUsed]="upgradeData.bartersUsed"
+  [plans]="upgradeData.plans"
+  (closed)="closeUpgradeModal()"
+></app-upgrade-prompt>
+
 <!-- Banned Modal -->
 <div
   class="modal fade"

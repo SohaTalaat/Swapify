@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IdVerification } from '../../services/id-verification';
 import { AdminReport } from '../../services/admin-report';
 import { AdminService } from '../../services/admin';
+import { EchoService } from '../../services/echo';
 import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
 
@@ -59,14 +60,32 @@ export class AdminDashboard implements OnInit {
   // Shipments Data
   shipments: any[] = [];
 
+  // Disputes Data
+  disputes: any[] = [];
+  selectedDisputeForResolve: any = null;
+  resolutionNotes: string = '';
+
   // Reports & Verifications (existing)
   verifications: any[] = [];
   reports: ReportItem[] = [];
+
+  // Listing Approval Data
+  approvingListings: any[] = [];
+  approvingListingsPage = 1;
+  approvingListingsLastPage = 1;
+  approvingListingsPerPage = 10;
+  approvingListingsTotal = 0;
+  approvingIds = new Set<number>();
+  showRejectModal = false;
+  rejectingListingId: number | null = null;
+  rejectionReason = '';
+  isSubmittingReject = false;
 
   constructor(
     private idService: IdVerification,
     private reportService: AdminReport,
     private adminService: AdminService,
+    private echoService: EchoService,
     private router: Router
   ) { }
 
@@ -76,6 +95,25 @@ export class AdminDashboard implements OnInit {
 
   ngOnInit() {
     this.loadOverview();
+    this.initializeEchoListeners();
+  }
+
+  initializeEchoListeners() {
+    // Listen for dispute events on the admin.disputes channel
+    const adminChannel = this.echoService.instance?.private('admin.disputes');
+    if (adminChannel) {
+      adminChannel
+        .listen('dispute.resolved', (data: any) => {
+          console.log('Dispute resolved event received:', data);
+          // Update the dispute in the local list
+          const dispute = this.disputes.find(d => d.id === data.dispute_id);
+          if (dispute) {
+            dispute.status = data.status;
+            dispute.resolution_notes = data.resolution_notes;
+            dispute.resolved_by_admin_id = data.resolved_by_admin_id;
+          }
+        });
+    }
   }
 
   setSection(section: string) {
@@ -94,6 +132,9 @@ export class AdminDashboard implements OnInit {
       case 'shipping':
         this.loadShipments();
         break;
+      case 'disputes':
+        this.loadDisputes();
+        break;
       case 'verification':
         this.loadVerifications();
         break;
@@ -102,6 +143,9 @@ export class AdminDashboard implements OnInit {
         break;
       case 'barter-stats':
         this.loadBarterStats();
+        break;
+      case 'listings-approval':
+        this.loadApprovingListings(1);
         break;
     }
   }
@@ -260,21 +304,81 @@ export class AdminDashboard implements OnInit {
     });
   }
 
-  updateShipmentStatus(shipment: any, event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const newStatus = select.value;
-    if (!confirm(`Update shipment status to ${newStatus}?`)) return;
+  updateShipmentStatus(shipment: any, newStatus: string) {
+    if (!confirm(`Update shipment status to ${newStatus}?`)) {
+      // revert selection in UI to previous value by reloading shipments or undoing assignment
+      this.loadShipments();
+      return;
+    }
 
     this.adminService.updateShipmentStatus(shipment.id, newStatus).subscribe({
       next: (res: any) => {
+        // update already bound via ngModel; ensure local model matches server
         shipment.status = newStatus;
         alert(res.message || 'Shipment status updated');
       },
       error: (err: any) => {
         console.error('Failed to update shipment', err);
         alert(err.error?.message || 'Failed to update shipment');
+        // revert selection by reloading shipments
+        this.loadShipments();
       },
     });
+  }
+
+  // Disputes
+  loadDisputes() {
+    this.loading = true;
+    this.adminService.getDisputes().subscribe({
+      next: (res: any) => {
+        this.disputes = res;
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load disputes', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  openResolveDisputeModal(dispute: any) {
+    this.selectedDisputeForResolve = dispute;
+    this.resolutionNotes = '';
+    const el = document.getElementById('resolveDisputeModal');
+    if (el) {
+      // @ts-ignore
+      const m = new (window as any).bootstrap.Modal(el);
+      m.show();
+    }
+  }
+
+  confirmResolveDispute() {
+    if (!this.selectedDisputeForResolve || !this.resolutionNotes.trim()) {
+      alert('Please enter resolution notes');
+      return;
+    }
+
+    this.adminService
+      .resolveDispute(this.selectedDisputeForResolve.id, this.resolutionNotes.trim())
+      .subscribe({
+        next: (res: any) => {
+          this.selectedDisputeForResolve.status = 'resolved';
+          this.selectedDisputeForResolve.resolution_notes = this.resolutionNotes;
+          alert(res.message || 'Dispute resolved successfully');
+          // hide modal
+          const el = document.getElementById('resolveDisputeModal');
+          if (el) {
+            // @ts-ignore
+            const m = (window as any).bootstrap.Modal.getInstance(el);
+            if (m) m.hide();
+          }
+          this.loadDisputes();
+        },
+        error: (err: any) => {
+          console.error('Failed to resolve dispute', err);
+          alert(err.error?.message || 'Failed to resolve dispute');
+        },
+      });
   }
 
   // Verification
@@ -454,5 +558,92 @@ export class AdminDashboard implements OnInit {
         },
       });
     }, 0); // This pushes execution to the next tick
+  }
+
+  // Listing Approval Methods
+  loadApprovingListings(page: number = 1) {
+    this.loading = true;
+    this.adminService.getListings().subscribe({
+      next: (res: any) => {
+        // Filter for pending listings only
+        this.approvingListings = (res.data || res).filter((l: any) => l.approval_status === 'pending');
+        this.approvingListingsPage = page;
+        this.approvingListingsTotal = this.approvingListings.length;
+        this.approvingListingsLastPage = Math.ceil(this.approvingListingsTotal / this.approvingListingsPerPage);
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load listings for approval', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  approveListing(listing: any) {
+    this.approvingIds.add(listing.id);
+    this.adminService.approveListing(listing.id).subscribe({
+      next: (res: any) => {
+        // Remove from the list
+        this.approvingListings = this.approvingListings.filter(l => l.id !== listing.id);
+        this.approvingIds.delete(listing.id);
+      },
+      error: (err: any) => {
+        console.error('Failed to approve listing', err);
+        this.approvingIds.delete(listing.id);
+      },
+    });
+  }
+
+  openRejectModal(listing: any) {
+    this.rejectingListingId = listing.id;
+    this.rejectionReason = '';
+    this.showRejectModal = true;
+  }
+
+  closeRejectModal() {
+    this.showRejectModal = false;
+    this.rejectingListingId = null;
+    this.rejectionReason = '';
+  }
+
+  submitReject() {
+    if (!this.rejectingListingId || !this.rejectionReason.trim()) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+
+    this.isSubmittingReject = true;
+    this.adminService.rejectListing(this.rejectingListingId, this.rejectionReason).subscribe({
+      next: (res: any) => {
+        // Remove from the list
+        this.approvingListings = this.approvingListings.filter(l => l.id !== this.rejectingListingId);
+        this.closeRejectModal();
+        this.isSubmittingReject = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to reject listing', err);
+        this.isSubmittingReject = false;
+      },
+    });
+  }
+
+  getPendingListingsCount(): number {
+    return this.approvingListings.length;
+  }
+
+  goToApprovingListingsPage(page: number) {
+    this.loadApprovingListings(page);
+  }
+
+  prevApprovingListingsPage() {
+    if (this.approvingListingsPage > 1) {
+      this.loadApprovingListings(this.approvingListingsPage - 1);
+    }
+  }
+
+  nextApprovingListingsPage() {
+    if (this.approvingListingsPage < this.approvingListingsLastPage) {
+      this.loadApprovingListings(this.approvingListingsPage + 1);
+    }
   }
 }

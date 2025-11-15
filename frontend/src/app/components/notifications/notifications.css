@@ -61,6 +61,15 @@
   color: white;
 }
 
+.page-item.active button {
+  background-color: #f87d49;
+  color: white;
+  border: #f87d49;
+}
+.page-item button {
+  color: #f87d49;
+}
+
 /* Animation */
 @keyframes float {
   from {
