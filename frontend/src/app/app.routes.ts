@@ -31,6 +31,8 @@ import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Subscription } from './components/subscription/subscription';
 import { ReviewList } from './components/review-list/review-list';
 import { Recommendations } from './components/recommendations/recommendations';
+import { Chatbot } from './components/chatbot/chatbot';
+
 export const routes: Routes = [
   // Public routes
   { path: '', component: Home },
@@ -43,6 +45,7 @@ export const routes: Routes = [
   { path: 'contact', component: Contact },
   { path: 'faq', component: Faq },
   { path: 'terms-privacy', component: TermsPrivacy },
+  { path: 'chatbot', component: Chatbot },
 
   // Offers
   { path: 'offers', component: BrowseOffers },

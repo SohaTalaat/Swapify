@@ -24,7 +24,9 @@ use App\Http\Controllers\Api\{
     GoogleAuthController,
     Admin\AdminIDVerificationController,
     AdminBarterReportController,
-    ReportController
+    ReportController,
+    ChatbotController,
+
 };
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\AdminListingController;
@@ -40,6 +42,7 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');;
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::post('/chatbot', [ChatbotController::class, 'chat']);
 
 // Google Auth
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
