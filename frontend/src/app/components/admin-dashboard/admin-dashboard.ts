@@ -95,7 +95,10 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   rejectionReason = '';
   isSubmittingReject = false;
   fullscreenImg = '';
-
+  totalRevenue = 0;
+  revenueCurrency = 'EGP';
+  monthlyRevenue: any[] = [];
+  revenueChart: any;
   constructor(
     private idService: IdVerification,
     private reportService: AdminReport,
@@ -187,7 +190,10 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     if (!this.searchUsers) return this.users;
     const term = this.searchUsers.toLowerCase();
     return this.users.filter(
-      (u) => u.full_name?.toLowerCase().includes(term) || u.email?.toLowerCase().includes(term)
+      (u) =>
+        u.full_name?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term) ||
+        u.status?.toLowerCase().includes(term)
     );
   }
 
@@ -351,13 +357,76 @@ export class AdminDashboard implements OnInit, AfterViewInit {
           active_items: res.active_items,
         };
         this.subscriptionStats = res.subscriptions;
+        this.totalRevenue = res.total_revenue || 0;
+        this.revenueCurrency = res.revenue_currency || 'EGP';
 
-        // Remove $nextTick — just call it directly
-        setTimeout(() => this.renderSubscriptionChart(), 0);
+        // الجديد
+        this.monthlyRevenue = res.monthly_revenue || [];
+
+        setTimeout(() => {
+          this.renderSubscriptionChart();
+          this.renderMonthlyRevenueChart(); // رسم الرسم البياني الجديد
+        }, 100);
 
         this.loading = false;
       },
       error: () => (this.loading = false),
+    });
+  }
+  renderMonthlyRevenueChart() {
+    if (this.revenueChart) this.revenueChart.destroy();
+
+    const ctx = document.getElementById('revenueChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    const labels = this.monthlyRevenue.map((m) => m.short_month);
+    const data = this.monthlyRevenue.map((m) => m.revenue);
+
+    this.revenueChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'الإيرادات الشهرية (ج.م)',
+            data,
+            borderColor: '#00d4aa',
+            backgroundColor: 'rgba(0, 212, 170, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#00d4aa',
+            pointRadius: 6,
+            pointHoverRadius: 10,
+            borderWidth: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context: any) => {
+                const month = this.monthlyRevenue[context.dataIndex]?.month || '';
+                const value = context.parsed.y;
+                return `${month}: ${value.toLocaleString()} ج.م`;
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#ccc' },
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#ccc' },
+          },
+        },
+      },
     });
   }
   /*** ────── SUBSCRIPTION CHART ────── ***/
