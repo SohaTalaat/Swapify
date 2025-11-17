@@ -3,6 +3,7 @@
 namespace App\Services\Recommendation;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\ListingEmbedding;
 use App\Models\Listing;
 
@@ -26,13 +27,12 @@ class HFEmbeddingService
         ])->post($this->baseUrl, ['inputs' => $text]);
 
         if (! $response->successful()) {
-            \Log::error('HF embed failed: ' . $response->body());
+            Log::error('HF embed failed: ' . $response->body());  // ✅ استخدم Log بدل \Log
             return null;
         }
 
         $body = $response->json();
 
-        // Normalize to numeric array
         if (isset($body[0]) && is_array($body[0])) {
             return array_map(fn($v) => (float) $v, $body[0]);
         }
