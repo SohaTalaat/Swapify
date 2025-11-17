@@ -21,6 +21,10 @@ class StoreBarterRequest extends FormRequest
             'meeting_location' => 'nullable|string|max:255',
             'meeting_time' => 'nullable|date',
             'shipping_address_id' => 'nullable|exists:addresses,id',
+            'shipping_address_text' => 'nullable|string|max:255',
+            'transaction_fee_amount' => 'nullable|numeric|min:0',
+
+
         ];
     }
 }

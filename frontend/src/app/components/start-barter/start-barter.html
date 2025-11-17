@@ -87,22 +87,63 @@
       <!-- Delivery Address -->
       <div *ngIf="exchangeType === 'delivery'" class="mb-3">
         <label class="form-label fw-semibold">Shipping Address</label>
-        <select
-          class="form-select modern-input"
-          [(ngModel)]="shippingAddressId"
-          name="shippingAddress"
+        <input
+          type="text"
+          class="form-control modern-input"
+          [(ngModel)]="shippingAddressText"
+          name="shippingAddressText"
+          placeholder="Enter your shipping address"
           required
-        >
-          <option [ngValue]="null">Select address</option>
-          <!-- يمكن جلب العناوين من API لاحقًا -->
-          <option value="1">123 Main St, Cairo</option>
-          <option value="2">456 Nile Ave, Giza</option>
-        </select>
+        />
+        <label class="form-label fw-semibold">Transaction Fee (EGP)</label>
+        <input type="number" class="form-control" [value]="transactionFee" readonly />
+        <small class="text-muted">Fixed fees per swap transaction</small>
       </div>
 
       <button type="submit" class="btn btn-gradient w-100" [disabled]="isLoading || !form.valid">
         {{ isLoading ? 'Creating...' : 'Start Barter' }}
       </button>
     </form>
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<app-upgrade-prompt
+  [isVisible]="showUpgradeModal"
+  [currentLimit]="upgradeData.currentLimit"
+  [bartersUsed]="upgradeData.bartersUsed"
+  [plans]="upgradeData.plans"
+  (closed)="closeUpgradeModal()"
+></app-upgrade-prompt>
+
+<!-- Banned Modal -->
+<div
+  class="modal fade"
+  id="bannedModal"
+  tabindex="-1"
+  aria-labelledby="bannedModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bannedModalLabel">Account Restricted</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="lead">{{ bannedModalMessage }}</p>
+        <div *ngIf="bannedModalReason">
+          <h6>Reason</h6>
+          <p class="text-danger small">{{ bannedModalReason }}</p>
+        </div>
+        <p>
+          If you believe this is a mistake, please contact
+          <a href="mailto:support@swapify.example">support</a>.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
   </div>
 </div>

@@ -2,22 +2,26 @@
 
 namespace App\Listeners;
 
-use App\Events\NewReviewCreated;
+// use App\Events\NewReviewCreated;
+use App\Events\UserNotificationCreated;
 use App\Models\Notification;
 
 class CreateReviewNotification
 {
-    public function handle(NewReviewCreated $event)
+    public function handle($event)
     {
         $review = $event->review;
+        $reviewerId = $review->reviewer_id;
+        $revieweeId = $review->reviewee_id;
 
-        // Notify the user being reviewed
-        Notification::create([
-            'user_id' => $review->reviewed_user_id,
-            'type' => 'review',
-            'message' => 'You received a new review from ' . ($review->reviewer->username ?? 'someone'),
+        $notification = Notification::create([
+            'user_id' => $revieweeId,
+            'type' => 'new_review',
+            'message' => "You received a {$review->rating}-star review",
             'is_read' => false,
-            'related_user_id' => $review->reviewer_id,
+            'related_user_id' => $reviewerId,
         ]);
+
+        event(new UserNotificationCreated($notification));
     }
 }

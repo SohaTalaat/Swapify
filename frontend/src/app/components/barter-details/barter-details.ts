@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BarterService, Barter } from '../../services/barter';
 import { EchoService } from '../../services/echo';
+import { ReviewForm } from '../review-form/review-form';
+import { Review } from '../../services/review';
 
 interface ChatMessage {
   sender: string;
@@ -11,6 +13,7 @@ interface ChatMessage {
   time: string;
   attachment_url?: string | null;
   isImage?: boolean;
+  temp?: boolean;
 }
 
 interface BarterViewModel {
@@ -26,7 +29,7 @@ interface BarterViewModel {
 @Component({
   selector: 'app-barter-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReviewForm],
   templateUrl: './barter-details.html',
   styleUrls: ['./barter-details.css'],
 })
@@ -36,6 +39,8 @@ export class BarterDetails implements OnInit, OnDestroy {
   viewModel!: BarterViewModel;
   newMessage = '';
   isLoading = true;
+  hasReviewed = false;
+  showReviewModal = true;
 
   private echoChannel: any;
   private typingTimeout: any;
@@ -46,14 +51,24 @@ export class BarterDetails implements OnInit, OnDestroy {
   uploadProgress = 0;
   isUploading = false;
 
+  // Dispute properties
+  showDisputeModal = false;
+  disputeReason = '';
+  disputeDescription = '';
+  isSubmittingDispute = false;
+
+  // Cancel modal
+  showCancelBox = false;
+  cancelReason = '';
+
   constructor(
     private route: ActivatedRoute,
     private barterService: BarterService,
     private router: Router,
     private zone: NgZone,
-    private echoService: EchoService
+    private echoService: EchoService,
+    private reviewService: Review
   ) {
-    // Clean up Echo channel on route changes
     this.router.events.subscribe(() => {
       if (this.echoChannel && this.barter?.chat?.id) {
         window.Echo.leave(`private-chat.${this.barter.chat.id}`);
@@ -77,7 +92,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     if (this.typingTimeout) clearTimeout(this.typingTimeout);
   }
 
-  /** Load barter data from backend */
   private loadBarter() {
     this.isLoading = true;
     this.barterService.getBarter(this.barterId).subscribe({
@@ -87,6 +101,19 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isLoading = false;
 
         if (barter.chat?.id) this.subscribeToChat();
+
+        if (barter.status === 'completed') {
+          this.reviewService.hasReviewed(this.barterId).subscribe({
+            next: (res) => {
+              this.hasReviewed = res.hasReviewed;
+              this.showReviewModal = !res.hasReviewed;
+            },
+            error: () => {
+              this.hasReviewed = false;
+              this.showReviewModal = false;
+            },
+          });
+        }
       },
       error: (err) => {
         alert('Failed to load barter: ' + err.message);
@@ -95,75 +122,69 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Subscribe to Pusher channel for real-time messages */
   private subscribeToChat() {
     if (!this.barter?.chat?.id) return;
 
-    const token = localStorage.getItem('swapify_token');
     const chatId = this.barter.chat.id;
     const currentUserId = this.getCurrentUserId();
 
-    // Set auth header dynamically
-    if (!this.echoChannel) {
-      if (window.Echo && window.Echo.connector?.options?.auth) {
-        window.Echo.connector.options.auth.headers = {
-          ...window.Echo.connector.options.auth.headers,
-          Authorization: `Bearer ${token}`,
-        };
-      }
-    }
-
-    // Subscribe
     this.echoChannel = window.Echo.private(`chat.${chatId}`);
 
-    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
-
-    window.Echo.connector.pusher.connection.bind('connected', () => {
-      console.log('✅ Pusher reconnected');
-    });
-    window.Echo.connector.pusher.connection.bind('disconnected', () => {
-      console.warn('⚠️ Pusher disconnected');
-    });
-
-    // Listen for new messages
+    // ✅ FIX: Listen for new messages
     this.echoChannel.listen('.message.sent', (data: any) => {
       console.log('📩 Real-time message received:', data);
+
       this.zone.run(() => {
         const message = data.message;
+
+        // If from current user, replace temp message
+        if (message.sender_id === currentUserId) {
+          const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+          if (tempIndex !== -1) {
+            this.viewModel.messages[tempIndex] = {
+              sender: 'You',
+              text: message.content,
+              time: new Date(message.created_at).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              }),
+              attachment_url: message.attachment_url,
+              isImage: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(message.attachment_url || ''),
+            };
+            return;
+          }
+        }
+
+        // If from partner, add new message
         const exists = this.viewModel.messages.some(
           (m) =>
             m.text === message.content &&
             m.sender === message.sender.username &&
             m.attachment_url === message.attachment_url
         );
+        if (exists) return;
 
-        if (!exists) {
-          const attachmentUrl = message.attachment_url || null;
-          const isImage =
-            attachmentUrl &&
-            /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+        const attachmentUrl = message.attachment_url || null;
+        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
-          this.viewModel.messages.push({
-            sender:
-              message.sender_id === currentUserId
-                ? 'You'
-                : message.sender.username,
-            text: message.content,
-            time: new Date(message.created_at).toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-            }),
-            attachment_url: attachmentUrl,
-            isImage: !!isImage,
-          });
+        this.viewModel.messages.push({
+          sender: message.sender_id === currentUserId ? 'You' : message.sender.username,
+          text: message.content,
+          time: new Date(message.created_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+          attachment_url: attachmentUrl,
+          isImage: !!isImage,
+        });
 
-          setTimeout(() => this.scrollToBottom(), 100);
-        }
+        setTimeout(() => this.scrollToBottom(), 100);
       });
     });
 
-    // Typing whisper
+    // ✅ FIX: Listen for typing whisper
     this.echoChannel.listenForWhisper('typing', (data: any) => {
+      console.log('⌨️ Typing whisper received:', data);
       if (data.userId !== currentUserId) {
         this.zone.run(() => {
           this.isPartnerTyping = true;
@@ -174,15 +195,22 @@ export class BarterDetails implements OnInit, OnDestroy {
         });
       }
     });
+
+    window.Echo.connector.pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher connected');
+    });
+    window.Echo.connector.pusher.connection.bind('disconnected', () => {
+      console.warn('⚠️ Pusher disconnected');
+    });
+    this.echoChannel.error((err: any) => console.error('❌ Echo channel error:', err));
   }
 
-  /** Handle file selection */
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
 
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       alert('❌ Only images (JPEG, PNG, GIF, WebP) are allowed');
@@ -197,7 +225,6 @@ export class BarterDetails implements OnInit, OnDestroy {
     this.selectedFile = file;
   }
 
-  /** Send typing whisper */
   onTyping() {
     if (this.echoChannel) {
       this.echoChannel.whisper('typing', {
@@ -206,11 +233,10 @@ export class BarterDetails implements OnInit, OnDestroy {
     }
   }
 
-  /** Send message */
   sendMessage() {
     if (!this.newMessage.trim() && !this.selectedFile) return;
 
-    const payload: any = { content: this.newMessage || '📎 Attachment' };
+    const payload: any = { content: this.newMessage || '📎 Attachment (reload page to see)' };
     if (this.selectedFile) {
       payload.attachment = this.selectedFile;
       this.isUploading = true;
@@ -218,6 +244,22 @@ export class BarterDetails implements OnInit, OnDestroy {
 
     const tempMessage = this.newMessage;
     const tempFile = this.selectedFile;
+
+    const tempTime = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    // ✅ Add temp message
+    const tempMsg = {
+      sender: 'You',
+      text: tempMessage || '📎 Attachment',
+      time: tempTime,
+      attachment_url: null,
+      isImage: false,
+      temp: true,
+    };
+    this.viewModel.messages.push(tempMsg);
     this.newMessage = '';
     this.selectedFile = null;
     this.scrollToBottom();
@@ -227,19 +269,25 @@ export class BarterDetails implements OnInit, OnDestroy {
         this.isUploading = false;
         console.log('✅ Message sent:', res);
 
-        const lastMsg = this.viewModel.messages[this.viewModel.messages.length - 1];
-        const attachmentUrl = res.message.attachment_url || null;
-        const isImage =
-          attachmentUrl &&
-          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
-
-        lastMsg.text = tempMessage || '📎 Attachment';
-        lastMsg.attachment_url = attachmentUrl;
-        lastMsg.isImage = !!isImage;
+        // ✅ Replace temp message with real data
+        const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+        if (tempIndex !== -1) {
+          this.viewModel.messages[tempIndex] = {
+            sender: 'You',
+            text: res.message.content,
+            time: new Date(res.message.created_at).toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+            }),
+            attachment_url: res.message.attachment_url,
+            isImage: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(res.message.attachment_url || ''),
+          };
+        }
       },
       error: (err) => {
         this.isUploading = false;
-        this.viewModel.messages.pop();
+        const tempIndex = this.viewModel.messages.findIndex((m) => m.temp);
+        if (tempIndex !== -1) this.viewModel.messages.splice(tempIndex, 1);
         alert('Failed to send message: ' + err.message);
         this.newMessage = tempMessage;
         this.selectedFile = tempFile;
@@ -247,28 +295,36 @@ export class BarterDetails implements OnInit, OnDestroy {
     });
   }
 
-  /** Update barter status */
   updateStatus(newStatus: string) {
     if (!this.viewModel) return;
+
+    let finalStatus = newStatus;
+
+    if (newStatus === 'Ongoing') {
+      if (this.barter.exchange_type === 'in_person') {
+        finalStatus = 'Completed';
+      } else if (this.barter.exchange_type === 'delivery') {
+        finalStatus = 'Ongoing';
+      }
+    }
+
     const map: Record<string, string> = {
       Pending: 'proposed',
       Ongoing: 'accepted',
       Completed: 'completed',
       Cancelled: 'cancelled',
     };
-    const backendStatus = map[newStatus] || newStatus;
+    const backendStatus = map[finalStatus] || finalStatus;
 
     this.barterService.updateStatus(this.viewModel.id, backendStatus).subscribe({
       next: (res) => {
         this.viewModel.status = this.formatStatus(res.barter.status);
-        alert('Status updated successfully');
+        alert(`Status updated to ${this.viewModel.status}`);
       },
-      error: (err) =>
-        alert(err.error?.message || 'Failed to update status'),
+      error: (err) => alert(err.error?.message || 'Failed to update status'),
     });
   }
 
-  /** Delete barter */
   deleteBarter() {
     if (!confirm('Are you sure you want to cancel this barter?')) return;
     this.barterService.deleteBarter(this.viewModel.id).subscribe({
@@ -276,12 +332,10 @@ export class BarterDetails implements OnInit, OnDestroy {
         alert('Barter cancelled successfully.');
         this.router.navigate(['/my-barters']);
       },
-      error: (err) =>
-        alert(err.error?.message || 'Failed to delete barter'),
+      error: (err) => alert(err.error?.message || 'Failed to delete barter'),
     });
   }
 
-  /** Format barter for display */
   private formatBarter(barter: Barter): BarterViewModel {
     const currentUserId = this.getCurrentUserId();
     const partner = barter.participants.find((p) => p.id !== currentUserId);
@@ -289,9 +343,7 @@ export class BarterDetails implements OnInit, OnDestroy {
     const messages =
       barter.chat?.messages.map((msg) => {
         const attachmentUrl = msg.attachment_url || null;
-        const isImage =
-          attachmentUrl &&
-          /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
+        const isImage = attachmentUrl && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentUrl);
 
         return {
           sender:
@@ -308,16 +360,10 @@ export class BarterDetails implements OnInit, OnDestroy {
         };
       }) || [];
 
-    const myListing = barter.listings.find(
-      (l) => l.pivot?.owner_user_id === currentUserId
-    );
-    const theirListing = barter.listings.find(
-      (l) => l.pivot?.owner_user_id !== currentUserId
-    );
+    const myListing = barter.listings.find((l) => l.pivot?.owner_user_id === currentUserId);
+    const theirListing = barter.listings.find((l) => l.pivot?.owner_user_id !== currentUserId);
 
-    const myParticipant = barter.participants.find(
-      (p) => p.id === currentUserId
-    );
+    const myParticipant = barter.participants.find((p) => p.id === currentUserId);
     const myRole = myParticipant?.pivot?.role || 'offering';
 
     return {
@@ -326,21 +372,17 @@ export class BarterDetails implements OnInit, OnDestroy {
       status: this.formatStatus(barter.status),
       yourOffer: {
         title: myListing?.title || 'Your Offer',
-        image:
-          myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
+        image: myListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
       },
       partnerOffer: {
         title: theirListing?.title || 'Their Offer',
-        image:
-          theirListing?.images?.[0]?.image_url ||
-          'assets/placeholder.jpg',
+        image: theirListing?.images?.[0]?.image_url || 'assets/placeholder.jpg',
       },
       messages,
       role: myRole,
     };
   }
 
-  /** Helpers */
   private getCurrentUserId(): number {
     try {
       const user = JSON.parse(localStorage.getItem('swapify_user') || '{}');
@@ -368,5 +410,100 @@ export class BarterDetails implements OnInit, OnDestroy {
       const chatBox = document.querySelector('.chat-box');
       if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
+  }
+
+  getOtherUserId(): number | null {
+    const currentUserId = this.getCurrentUserId();
+    const otherParticipant = this.barter.participants.find((p) => p.id !== currentUserId);
+    return otherParticipant ? otherParticipant.id : null;
+  }
+
+  get otherUserId(): number | null {
+    return this.getOtherUserId();
+  }
+
+  closeReviewModal() {
+    this.showReviewModal = false;
+  }
+
+  onReviewSubmitted() {
+    this.showReviewModal = false;
+    this.hasReviewed = true;
+  }
+
+  openCancelBox() {
+    this.showCancelBox = true;
+  }
+
+  closeCancelBox() {
+    this.showCancelBox = false;
+    this.cancelReason = '';
+  }
+
+  confirmCancel() {
+    if (!this.cancelReason.trim()) {
+      alert('Please enter a reason for cancellation.');
+      return;
+    }
+
+    const token = localStorage.getItem('swapify_token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    this.barterService.cancelBarter(this.viewModel.id, this.cancelReason).subscribe({
+      next: () => {
+        alert('Barter cancelled successfully.');
+        this.closeCancelBox();
+        this.router.navigate(['/my-barters']);
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to cancel barter');
+      },
+    });
+  }
+
+  openDisputeModal() {
+    this.showDisputeModal = true;
+    this.disputeReason = '';
+    this.disputeDescription = '';
+  }
+
+  closeDisputeModal() {
+    this.showDisputeModal = false;
+    this.disputeReason = '';
+    this.disputeDescription = '';
+    this.isSubmittingDispute = false;
+  }
+
+  submitDispute() {
+    if (!this.disputeReason.trim() || !this.disputeDescription.trim()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    if (this.disputeDescription.length > 500) {
+      alert('Description must be 500 characters or less.');
+      return;
+    }
+
+    this.isSubmittingDispute = true;
+
+    this.barterService
+      .createDispute(this.barterId, this.disputeReason, this.disputeDescription)
+      .subscribe({
+        next: (res) => {
+          alert('Dispute created successfully. An admin will review it shortly.');
+          this.closeDisputeModal();
+          this.isSubmittingDispute = false;
+          this.loadBarter();
+        },
+        error: (err) => {
+          console.error('Error creating dispute:', err);
+          alert(err.message || 'Failed to create dispute. Please try again.');
+          this.isSubmittingDispute = false;
+        },
+      });
   }
 }

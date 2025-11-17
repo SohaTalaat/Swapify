@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Review;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -10,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 
 class NewReviewCreated implements ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, SerializesModels, InteractsWithSockets;
 
     public Review $review;
 

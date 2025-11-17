@@ -93,7 +93,11 @@
 .alert {
   border-radius: 10px;
 }
-
+.chart-container {
+  position: relative;
+  height: 260px;
+  margin-top: 1rem;
+}
 /* ===== Animations ===== */
 @keyframes fadeIn {
   from {
@@ -120,5 +124,22 @@
   .menu li {
     font-size: 0.9rem;
     padding: 10px;
+  }
+}
+.chart-container {
+  width: 260px !important;
+  height: 260px !important;
+  margin: 0 auto;
+  display: block;
+}
+
+/* make the filter row look nice on small screens */
+@media (max-width: 576px) {
+  .d-flex.mb-3 {
+    flex-direction: column;
+  }
+  .d-flex.mb-3 .btn {
+    margin-top: 0.5rem;
+    margin-left: 0 !important;
   }
 }

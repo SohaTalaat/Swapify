@@ -56,7 +56,28 @@
           class="text-center mt-4"
           *ngIf="viewModel.role === 'offering' && viewModel.status === 'Pending'"
         >
-          <button class="btn btn-danger" (click)="deleteBarter()">Cancel</button>
+          <!-- Cancel button -->
+          <button class="btn btn-danger" (click)="openCancelBox()">Cancel</button>
+
+          <!-- Cancel Reason Modal -->
+          <div *ngIf="showCancelBox" class="cancel-overlay">
+            <div class="cancel-box p-4 rounded shadow bg-white">
+              <h5 class="mb-3 can fw-bold">Cancel Barter</h5>
+              <p>Please enter the reason for cancellation:</p>
+
+              <textarea
+                [(ngModel)]="cancelReason"
+                rows="3"
+                class="form-control mb-3"
+                placeholder="Type your reason..."
+              ></textarea>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-secondary" (click)="closeCancelBox()">Close</button>
+                <button class="btn confirm" (click)="confirmCancel()">Confirm</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- For requesting role -->
@@ -66,6 +87,13 @@
         >
           <button class="btn btn-gradient me-2" (click)="updateStatus('Ongoing')">Accept</button>
           <button class="btn btn-danger" (click)="updateStatus('Cancelled')">Reject</button>
+        </div>
+
+        <!-- Dispute Button (for any role if barter is not Pending) -->
+        <div class="text-center mt-4" *ngIf="viewModel.status !== 'Pending'">
+          <button class="btn btn-outline-danger" (click)="openDisputeModal()">
+            <i class="fa-solid fa-exclamation-triangle me-2"></i> Open Dispute
+          </button>
         </div>
 
         <!-- Chat Section -->
@@ -159,5 +187,87 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+<!-- Review Modal -->
+<!-- Review Modal -->
+<div
+  *ngIf="
+    barter &&
+    barter.status === 'completed' &&
+    !hasReviewed &&
+    otherUserId !== null &&
+    showReviewModal
+  "
+  class="review-modal-overlay d-flex justify-content-center align-items-center"
+>
+  <div class="review-modal-card p-4 rounded-4 shadow-lg">
+    <button class="btn-close float-end" (click)="closeReviewModal()"></button>
+
+    <app-review-form
+      [barterId]="barter.id"
+      [revieweeId]="otherUserId!"
+      (reviewSubmitted)="onReviewSubmitted()"
+    ></app-review-form>
+  </div>
+</div>
+
+<!-- Dispute Modal -->
+<div
+  *ngIf="showDisputeModal"
+  class="review-modal-overlay d-flex justify-content-center align-items-center"
+>
+  <div class="review-modal-card p-4 rounded-4 shadow-lg">
+    <button class="btn-close float-end" (click)="closeDisputeModal()"></button>
+
+    <h5 class="mb-4 fw-bold text-danger">
+      <i class="fa-solid fa-exclamation-triangle me-2"></i> Open a Dispute
+    </h5>
+
+    <form (ngSubmit)="submitDispute()">
+      <!-- Reason Field -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Reason for Dispute *</label>
+        <select class="form-select" [(ngModel)]="disputeReason" name="reason" required>
+          <option value="">-- Select a reason --</option>
+          <option value="Item not as described">Item not as described</option>
+          <option value="Item damaged on arrival">Item damaged on arrival</option>
+          <option value="Item not received">Item not received</option>
+          <option value="Misrepresentation">Misrepresentation</option>
+          <option value="Non-compliance with agreement">Non-compliance with agreement</option>
+          <option value="Quality issues">Quality issues</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Description Field -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Description *</label>
+        <textarea
+          class="form-control"
+          rows="4"
+          [(ngModel)]="disputeDescription"
+          name="description"
+          placeholder="Please describe the issue in detail..."
+          required
+        ></textarea>
+        <small class="form-text text-muted">Max 500 characters</small>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="closeDisputeModal()">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-danger"
+          [disabled]="!disputeReason || !disputeDescription || isSubmittingDispute"
+        >
+          <span *ngIf="isSubmittingDispute" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSubmittingDispute ? 'Submitting...' : 'Open Dispute' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

@@ -22,6 +22,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ReturnRequestCreated::class => [
             \App\Listeners\CreateReturnRequestNotification::class,
         ],
+        \App\Events\BarterCreated::class => [
+            \App\Listeners\CreateBarterNotification::class,
+        ],
         \App\Events\UserNotificationCreated::class => [],
     ];
 

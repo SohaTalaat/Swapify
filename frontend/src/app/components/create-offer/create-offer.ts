@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Offer } from '../../services/offer';
+import { Router } from '@angular/router'; // Import Router
 
 @Component({
   selector: 'app-create-offer',
@@ -25,7 +26,7 @@ export class CreateOffer {
   previewUrls: string[] = [];
   loading = false;
 
-  constructor(private offerService: Offer) {}
+  constructor(private offerService: Offer, private router: Router) {}
 
   /** ✅ عند اختيار صور */
   onFileSelected(event: any) {
@@ -57,10 +58,19 @@ export class CreateOffer {
         console.log('✅ Offer Created:', res);
         alert('Offer created successfully!');
         this.resetForm();
+        this.router.navigate(['/my-offers']); // Redirect after success
       },
       error: (err) => {
         console.error('❌ Error:', err);
-        alert('Error creating offer. Check console for details.');
+        if (err.status === 403 && err.error?.requires_verification) {
+          alert(
+            'You must verify your account first to create an offer. Redirecting to verification page...'
+          );
+          this.router.navigate(['/id-verification']);
+        } else {
+          const msg = err.error?.error || 'Failed to create the offer. Please try again.';
+          alert(msg);
+        }
       },
       complete: () => {
         this.loading = false;

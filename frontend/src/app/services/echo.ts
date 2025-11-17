@@ -3,7 +3,7 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class EchoService {
   private echo!: Echo<any>;
@@ -39,7 +39,6 @@ export class EchoService {
 
     console.log('🔄 Echo initialized with token:', token ? '✅ Present' : '❌ None');
   }
-
 
   disconnect() {
     if (this.echo) {
