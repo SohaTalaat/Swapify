@@ -45,9 +45,9 @@ export class Subscription {
   loading = false;
   walletNumber = '';
   private pollInterval: any;
-  apiUrl = 'https://continues-answers-mumbai-signatures.trycloudflare.com/api';
+  apiUrl = 'https://edmonton-safari-foo-hopes.trycloudflare.com/api';
 
-  constructor(private http: HttpClient, private paymentService: PaymentService) { }
+  constructor(private http: HttpClient, private paymentService: PaymentService) {}
 
   ngOnInit() {
     this.loadCurrentSubscription();
@@ -137,12 +137,10 @@ export class Subscription {
         if (res.url) {
           localStorage.setItem('pending_plan', JSON.stringify(plan));
           window.location.href = res.url;
-        }
-        else if (res.wallet_response?.redirect_url) {
+        } else if (res.wallet_response?.redirect_url) {
           localStorage.setItem('pending_plan', JSON.stringify(plan));
           window.location.href = res.wallet_response.redirect_url; // Redirect user to Paymob wallet page
-        }
-        else {
+        } else {
           console.error('Unexpected Paymob response:', res);
           alert('Unexpected response from server.');
         }
