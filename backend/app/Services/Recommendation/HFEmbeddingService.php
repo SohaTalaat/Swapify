@@ -20,16 +20,10 @@ class HFEmbeddingService
     {
         // Try in order of preference
 
-<<<<<<< HEAD
-        if (! $response->successful()) {
-            Log::error('HF embed failed: ' . $response->body());  // ✅ استخدم Log بدل \Log
-            return null;
-=======
         // 1. Try OpenAI first (free with account, pay-per-use after free credits)
         $openaiEmbedding = $this->tryOpenAIEmbedding($text);
         if ($openaiEmbedding) {
             return $openaiEmbedding;
->>>>>>> e0e40b0bd2d2a12308ae670c89df3520dbc3dbfe
         }
 
         // 2. Try Google Gemini (free tier available)
@@ -38,10 +32,6 @@ class HFEmbeddingService
             return $geminiEmbedding;
         }
 
-<<<<<<< HEAD
-        if (isset($body[0]) && is_array($body[0])) {
-            return array_map(fn($v) => (float) $v, $body[0]);
-=======
         // Last resort: hash-based
         Log::warning('OpenAI and Gemini embeddings failed - using hash-based fallback');
         return $this->generateLocalEmbedding($text);
@@ -75,7 +65,6 @@ class HFEmbeddingService
             }
         } catch (\Exception $e) {
             Log::debug('OpenAI embedding unavailable: ' . $e->getMessage());
->>>>>>> e0e40b0bd2d2a12308ae670c89df3520dbc3dbfe
         }
 
         return null;
