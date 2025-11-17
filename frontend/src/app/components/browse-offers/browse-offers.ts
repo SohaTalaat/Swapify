@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Offer } from '../../services/offer';
+import { Recommendations } from '../recommendations/recommendations';
 @Component({
   selector: 'app-browse-offers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Recommendations],
   templateUrl: './browse-offers.html',
   styleUrls: ['./browse-offers.css'],
 })

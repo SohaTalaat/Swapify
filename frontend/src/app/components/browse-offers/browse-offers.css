@@ -52,6 +52,12 @@
   transform: scale(1.05);
 }
 
+.text-gradient {
+  background: linear-gradient(90deg, #ff3d00, #ff6f00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

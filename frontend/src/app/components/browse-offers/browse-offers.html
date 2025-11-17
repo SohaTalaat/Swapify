@@ -1,9 +1,7 @@
 <!-- Hero Section -->
 <div class="browse-hero text-center text-white py-5">
   <h1 class="fw-bold mb-3 animate-fade"><span class="highlight">Browse Offers</span></h1>
-  <p class="lead animate-fade delay-1">
-    Explore hundreds of products & services waiting to be swapped!
-  </p>
+  <p class="lead animate-fade delay-1">Explore hundreds of products waiting to be swapped!</p>
 </div>
 
 <!-- Filter Section -->
@@ -15,17 +13,13 @@
       placeholder="Search offers..."
       [(ngModel)]="searchTerm"
     />
-
-    <select class="form-select category-select" [(ngModel)]="selectedCategory">
-      <option value="All">All Categories</option>
-      <option value="Product">Products</option>
-      <option value="Service">Services</option>
-    </select>
   </div>
 </div>
+<app-recommendations></app-recommendations>
 
 <!-- Offers Grid -->
 <div class="container py-5">
+  <h2 style="text-align: center; padding: 15px" class="fw-bold text-gradient mb-2">All Offers</h2>
   <div class="row g-4 justify-content-center">
     <div class="col-md-4" *ngFor="let offer of filteredOffers" (click)="viewOffer(offer.id)">
       <div class="offer-card shadow-sm">
