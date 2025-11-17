@@ -1,0 +1,55 @@
+<section class="rec-section container py-5">
+  <div class="text-center mb-4">
+    <a routerLink="/recommendations" class="text-decoration-none"
+      ><h2 class="fw-bold text-gradient mb-2">🔥 AI Recommendations</h2></a
+    >
+
+    <p class="text-muted" *ngIf="message">{{ message }}</p>
+    <p class="text-danger fw-semibold" *ngIf="error">{{ error }}</p>
+  </div>
+
+  <div class="text-center" *ngIf="loading">
+    <div class="spinner-border text-warning" role="status" style="color: #ff3d00 !important">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div class="row g-4" *ngIf="!loading && items.length">
+    <div class="col-md-6 col-lg-4" *ngFor="let item of items">
+      <div class="card rec-card h-100 shadow-sm border-0" (click)="viewListing(item.listing.id)">
+        <img
+          *ngIf="item.listing.images && item.listing.images[0]?.url"
+          [src]="item.listing.images[0].url"
+          style="width: 600px; height: 250px"
+          [alt]="item.listing.title"
+          class="card-img-top rounded-top"
+        />
+
+        <div class="card-body">
+          <h5 class="card-title fw-bold text-dark mb-1">{{ item.listing.title }}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">
+            <span class="float-end score">Score: {{ item.similarity | number : '1.2-2' }}</span>
+          </h6>
+
+          <p class="card-text text-secondary small mt-2">
+            {{ item.listing.description?.slice(0, 130)
+            }}{{ (item.listing.description?.length ?? 0) > 130 ? '...' : '' }}
+          </p>
+        </div>
+
+        <div class="card-footer bg-transparent border-0 text-center">
+          <button
+            class="btn btn-outline-warning rounded-pill fw-semibold"
+            style="color: #ff3d00; border-color: #ff3d00"
+          >
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !items.length" class="text-center text-muted mt-5 fst-italic">
+    No recommendations yet – start bartering to get personalized picks!
+  </div>
+</section>

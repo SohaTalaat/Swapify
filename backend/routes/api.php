@@ -24,8 +24,11 @@ use App\Http\Controllers\Api\{
     GoogleAuthController,
     Admin\AdminIDVerificationController,
     AdminBarterReportController,
-    ReportController
+    ReportController,
+    ChatbotController,
+
 };
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\Admin\AdminListingController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
@@ -40,6 +43,10 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');;
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::post('/chatbot', [ChatbotController::class, 'chat']);
+
+// Public Routes
+Route::post('/contact', [ContactController::class, 'store']);
 
 // Google Auth
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
@@ -70,8 +77,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Listing routes
     Route::get('/listings/my', [ListingController::class, 'myOffers']);
+    // Route::apiResource('listings', ListingController::class);
+    Route::apiResource('listings', ListingController::class)->except(['store']);
+    Route::post('listings', [ListingController::class, 'store'])
+        ->middleware('verified.id');
 
-    Route::apiResource('listings', ListingController::class);
     Route::get('/my-offers', [ListingController::class, 'myOffers']);  //abanoub
     Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
     //Barters routes
@@ -79,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('barters', BarterController::class);
     Route::put('/barters/{id}/status', [BarterController::class, 'updateStatus']); //abanoub
 
+    //     Route::apiResource('barters', BarterController::class)->except(['store']);
+    // Route::post('barters', [BarterController::class, 'store'])->middleware('verified.id');
     // Chats and Messages routes
     // Route::apiResource('chats', ChatController::class)->only(['index', 'show', 'store']);
     // Route::apiResource('chats.messages', MessageController::class)->shallow();
@@ -147,11 +159,17 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Minitor Offers
     Route::get('/listings', [AdminListingController::class, 'index']);
     Route::patch('/listings/{id}/toggle', [AdminListingController::class, 'toggleStatus']);
+    Route::post('/listings/{id}/approve', [AdminListingController::class, 'approveListing']);
+    Route::post('/listings/{id}/reject', [AdminListingController::class, 'rejectListing']);
 
     // Shipment
     Route::get('/shipments', [AdminShipmentController::class, 'index']);
     Route::patch('/shipments/{id}/status', [AdminShipmentController::class, 'updateStatus']);
     Route::post('/shipments/{id}/upload-photo', [AdminShipmentController::class, 'uploadPhoto']);
+
+    // Disputes
+    Route::get('/disputes', [DisputeController::class, 'adminIndex']);
+    Route::patch('/disputes/{id}/resolve', [DisputeController::class, 'adminResolve']);
 
     // Content
     Route::get('/reports', [AdminReportController::class, 'index']);

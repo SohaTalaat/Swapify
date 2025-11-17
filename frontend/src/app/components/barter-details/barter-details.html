@@ -89,6 +89,13 @@
           <button class="btn btn-danger" (click)="updateStatus('Cancelled')">Reject</button>
         </div>
 
+        <!-- Dispute Button (for any role if barter is not Pending) -->
+        <div class="text-center mt-4" *ngIf="viewModel.status !== 'Pending'">
+          <button class="btn btn-outline-danger" (click)="openDisputeModal()">
+            <i class="fa-solid fa-exclamation-triangle me-2"></i> Open Dispute
+          </button>
+        </div>
+
         <!-- Chat Section -->
         <div class="chat-section mt-5">
           <h5 class="mb-3 fw-semibold text-gradient">💬 Messages</h5>
@@ -202,5 +209,65 @@
       [revieweeId]="otherUserId!"
       (reviewSubmitted)="onReviewSubmitted()"
     ></app-review-form>
+  </div>
+</div>
+
+<!-- Dispute Modal -->
+<div
+  *ngIf="showDisputeModal"
+  class="review-modal-overlay d-flex justify-content-center align-items-center"
+>
+  <div class="review-modal-card p-4 rounded-4 shadow-lg">
+    <button class="btn-close float-end" (click)="closeDisputeModal()"></button>
+
+    <h5 class="mb-4 fw-bold text-danger">
+      <i class="fa-solid fa-exclamation-triangle me-2"></i> Open a Dispute
+    </h5>
+
+    <form (ngSubmit)="submitDispute()">
+      <!-- Reason Field -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Reason for Dispute *</label>
+        <select class="form-select" [(ngModel)]="disputeReason" name="reason" required>
+          <option value="">-- Select a reason --</option>
+          <option value="Item not as described">Item not as described</option>
+          <option value="Item damaged on arrival">Item damaged on arrival</option>
+          <option value="Item not received">Item not received</option>
+          <option value="Misrepresentation">Misrepresentation</option>
+          <option value="Non-compliance with agreement">Non-compliance with agreement</option>
+          <option value="Quality issues">Quality issues</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Description Field -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Description *</label>
+        <textarea
+          class="form-control"
+          rows="4"
+          [(ngModel)]="disputeDescription"
+          name="description"
+          placeholder="Please describe the issue in detail..."
+          required
+        ></textarea>
+        <small class="form-text text-muted">Max 500 characters</small>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="closeDisputeModal()">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-danger"
+          [disabled]="!disputeReason || !disputeDescription || isSubmittingDispute"
+        >
+          <span *ngIf="isSubmittingDispute" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSubmittingDispute ? 'Submitting...' : 'Open Dispute' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

@@ -1,7 +1,7 @@
 // src/app/services/barter.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 // ---------- Listing Models ----------
@@ -115,7 +115,10 @@ export interface BarterViewModel {
 export class BarterService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  // Event emitter for subscription limit exceeded
+  subscriptionLimitExceeded = new Subject<any>();
+
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -191,8 +194,10 @@ export class BarterService {
 
   // Error handler
   private handleError(error: HttpErrorResponse) {
-    const msg = error.error?.message || 'An unknown error occurred!';
-    return throwError(() => new Error(msg));
+    const payload = error.error || {};
+    const msg = payload.message || payload.error || 'An unknown error occurred!';
+    // Return a structured error so callers can inspect status and backend payload
+    return throwError(() => ({ status: error.status, message: msg, data: payload }));
   }
 
   updateStatus(barterId: number, status: string): Observable<any> {
@@ -220,4 +225,22 @@ export class BarterService {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return this.http.get<any[]>(`${this.apiUrl}/barters/cancelled`, { headers });
   }
+
+  // Disputes
+  createDispute(barterId: number, reason: string, description: string): Observable<any> {
+    return this.http
+      .post(
+        `${this.apiUrl}/disputes`,
+        { barter_id: barterId, reason, description },
+        { headers: this.getHeaders() }
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  getMyDisputes(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.apiUrl}/disputes`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
+  }
+
 }

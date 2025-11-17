@@ -38,7 +38,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'total_reviews',
         'subscription_tier',
         'last_login_at',
-        'role'
+        'role',
+        'status',
+        'ban_reason'
     ];
 
     /**
@@ -111,6 +113,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getIsAdminAttribute()
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Use a simpler channel naming for broadcasted notifications so frontend Echo listens on `private('user.{id}')`.
+     */
+    public function routeNotificationForBroadcast($notification = null)
+    {
+        return 'user.' . $this->id;
     }
 
     /**

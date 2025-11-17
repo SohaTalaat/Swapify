@@ -14,13 +14,22 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        $notifications = Notification::where('user_id', Auth::id())
+        // Support pagination via ?page= and ?per_page=
+        $perPage = request()->query('per_page', 10);
+
+        $query = Notification::where('user_id', Auth::id())
             ->orderByDesc('created_at')
-            ->get(['id', 'type', 'message', 'is_read', 'related_barter_id', 'related_user_id', 'created_at']);
+            ->select(['id', 'type', 'message', 'is_read', 'related_barter_id', 'related_user_id', 'created_at']);
+
+        $paginated = $query->paginate((int) $perPage);
 
         return response()->json([
-            'count_unread' => $notifications->where('is_read', false)->count(),
-            'notifications' => $notifications
+            'count_unread' => Notification::where('user_id', Auth::id())->where('is_read', false)->count(),
+            'notifications' => $paginated->items(),
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
         ]);
     }
 

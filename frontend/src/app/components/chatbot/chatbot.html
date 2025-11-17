@@ -1,0 +1,25 @@
+<!-- أيقونة الدردشة -->
+<div class="chat-icon" (click)="toggle()">💬</div>
+
+<!-- صندوق الدردشة -->
+<div class="chat-box" [class.open]="open">
+  <div class="chat-header">
+    <span>🤖 Swapfiy Bot</span>
+    <button class="close-btn" (click)="toggle()">✕</button>
+  </div>
+
+  <div class="chat-container">
+    <div
+      *ngFor="let m of messages"
+      [ngClass]="{ message: true, user: m.from === 'user', bot: m.from === 'bot' }"
+    >
+      {{ m.text }}
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input [(ngModel)]="inputText" (keydown.enter)="send()" placeholder="Send Message..." />
+    <button (click)="send()" [disabled]="loading">Send</button>
+    <button (click)="clearHistory()" title=" Clear">🗑️</button>
+  </div>
+</div>

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Listing;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ListingController extends Controller
 {
@@ -13,6 +15,7 @@ class ListingController extends Controller
     {
         return Listing::with(['category', 'images', 'user:id,username,profile_picture_url'])
             ->where('is_active', true)
+            ->where('approval_status', 'approved')
             ->latest()
             ->get();
     }
@@ -59,7 +62,7 @@ class ListingController extends Controller
         ]);
 
         $listing = Listing::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'title' => $request->title,
             'description' => $request->description,
             'type' => $request->type,
@@ -67,6 +70,7 @@ class ListingController extends Controller
             'condition' => $request->condition,
             'availability_info' => $request->availability_info,
             'desired_in_return' => $request->desired_in_return,
+            'approval_status' => 'pending', // Default to pending
         ]);
 
         if ($request->hasFile('images')) {
@@ -85,6 +89,7 @@ class ListingController extends Controller
         return response()->json([
             'message' => 'Listing created successfully',
             'data' => $listing->load('images'),
+            'approval_status' => 'pending'
         ], 201);
     }
 
@@ -107,11 +112,11 @@ class ListingController extends Controller
             try {
                 $publicId = basename(parse_url($image->image_url, PHP_URL_PATH), '.' . pathinfo($image->image_url, PATHINFO_EXTENSION));
 
-                \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::uploadApi()->destroy('swapify/listings/' . $publicId);
+                Cloudinary::uploadApi()->destroy('swapify/listings/' . $publicId);
 
                 $image->delete();
             } catch (\Exception $e) {
-                \Log::error('خطأ أثناء حذف الصورة من Cloudinary: ' . $e->getMessage());
+                Log::error('Error deleting image from Cloudinary: ' . $e->getMessage());
             }
         }
 

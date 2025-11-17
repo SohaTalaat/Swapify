@@ -45,7 +45,7 @@ export class Subscription {
   loading = false;
   walletNumber = '';
   private pollInterval: any;
-  apiUrl = 'https://pound-counties-senator-trail.trycloudflare.com/api';
+  apiUrl = 'https://continues-answers-mumbai-signatures.trycloudflare.com/api';
 
   constructor(private http: HttpClient, private paymentService: PaymentService) { }
 

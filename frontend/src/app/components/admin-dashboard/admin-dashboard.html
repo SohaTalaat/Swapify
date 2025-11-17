@@ -13,10 +13,15 @@
       <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
         <i class="fa-solid fa-tags me-2"></i> Offers
       </li>
+      <li
+        [class.active]="activeSection === 'listings-approval'"
+        (click)="setSection('listings-approval')"
+      >
+        <i class="fa-solid fa-file me-2"></i> Manage Listings
+      </li>
       <li [class.active]="activeSection === 'barter-stats'" (click)="setSection('barter-stats')">
         <i class="fa-solid fa-chart-pie me-2"></i> Barter Stats
       </li>
-
       <li [class.active]="activeSection === 'content'" (click)="setSection('content')">
         <i class="fa-solid fa-ban me-2"></i> Content
       </li>
@@ -25,6 +30,9 @@
       </li>
       <li [class.active]="activeSection === 'shipping'" (click)="setSection('shipping')">
         <i class="fa-solid fa-truck me-2"></i> Shipping
+      </li>
+      <li [class.active]="activeSection === 'disputes'" (click)="setSection('disputes')">
+        <i class="fa-solid fa-gavel me-2"></i> Disputes
       </li>
     </ul>
   </aside>
@@ -37,9 +45,12 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
+
     <!-- Overview -->
     <section *ngIf="activeSection === 'overview' && !loading">
       <h3>Overview</h3>
+
+      <!-- ==== ORIGINAL 3 STAT CARDS ==== -->
       <div class="stats-grid">
         <div class="stat-card">
           <i class="fa-solid fa-user-check icon"></i>
@@ -57,11 +68,103 @@
           <p>{{ overviewStats.active_items }}</p>
         </div>
       </div>
+
+      <!-- ==== NEW: SUBSCRIPTION PLAN CARDS + CHART ==== -->
+      <h4 class="mt-5 mb-3">Subscription Plans</h4>
+
+      <div class="row g-4">
+        <!-- Cards (left column) -->
+        <div class="col-lg-6">
+          <div class="stats-grid">
+            <div class="stat-card bg-secondary text-white">
+              <i class="fa-solid fa-users icon"></i>
+              <h5>Free Plan</h5>
+              <p>{{ subscriptionStats.free }}</p>
+            </div>
+
+            <div class="stat-card bg-warning text-dark">
+              <i class="fa-solid fa-star icon"></i>
+              <h5>Basic Plan</h5>
+              <p>{{ subscriptionStats.basic }}</p>
+            </div>
+
+            <div class="stat-card bg-success text-white">
+              <i class="fa-solid fa-crown icon"></i>
+              <h5>Pro Plan</h5>
+              <p>{{ subscriptionStats.pro }}</p>
+            </div>
+          </div>
+
+          <p class="text-muted text-center mt-2">
+            Total subscribers:
+            {{ subscriptionStats.free + subscriptionStats.basic + subscriptionStats.pro }}
+          </p>
+        </div>
+
+        <!-- Chart (right column) -->
+        <div class="col-lg-6">
+          <div class="chart-container">
+            <canvas id="subscriptionChart"></canvas>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- Admin Ban Modal -->
+    <div
+      class="modal fade"
+      id="adminBanModal"
+      tabindex="-1"
+      aria-labelledby="adminBanModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="adminBanModalLabel">Ban User</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Provide a reason for banning <strong>{{ selectedUserForBan?.full_name }}</strong
+              >:
+            </p>
+            <textarea
+              class="form-control"
+              rows="4"
+              [(ngModel)]="banReasonInput"
+              placeholder="Enter ban reason"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" (click)="confirmBan()">Ban user</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Users -->
     <section *ngIf="activeSection === 'users' && !loading">
       <h3>Manage Users</h3>
+
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name or email..."
+          [(ngModel)]="searchUsers"
+          (ngModelChange)="onUserSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchUsers = ''">Clear</button>
+      </div>
+
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
           <tr>
@@ -73,7 +176,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let user of users">
+          <tr *ngFor="let user of filteredUsers">
             <td>{{ user.full_name }}</td>
             <td>{{ user.email }}</td>
             <td>
@@ -99,7 +202,7 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="users.length === 0">
+          <tr *ngIf="filteredUsers.length === 0">
             <td colspan="5" class="text-center text-muted">No users found</td>
           </tr>
         </tbody>
@@ -109,6 +212,19 @@
     <!-- Offers -->
     <section *ngIf="activeSection === 'offers' && !loading">
       <h3>Monitor Offers</h3>
+
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search title, category, or user..."
+          [(ngModel)]="searchListings"
+          (ngModelChange)="onListingSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchListings = ''">Clear</button>
+      </div>
+
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
           <tr>
@@ -121,7 +237,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let listing of listings">
+          <tr *ngFor="let listing of filteredListings">
             <td>{{ listing.title }}</td>
             <td>{{ listing.category }}</td>
             <td>{{ listing.user_name }}</td>
@@ -141,7 +257,7 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="listings.length === 0">
+          <tr *ngIf="filteredListings.length === 0">
             <td colspan="6" class="text-center text-muted">No listings found</td>
           </tr>
         </tbody>
@@ -151,8 +267,21 @@
     <!-- Content Reports -->
     <section *ngIf="activeSection === 'content' && !loading">
       <h3>Inappropriate Content</h3>
+
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search listing, reporter, or reason..."
+          [(ngModel)]="searchReports"
+          (ngModelChange)="onReportSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchReports = ''">Clear</button>
+      </div>
+
       <div
-        *ngFor="let r of reports"
+        *ngFor="let r of filteredReports"
         [ngClass]="{ 'bg-light': r.status === 'reviewed', 'bg-warning': r.status === 'pending' }"
         class="alert d-flex justify-content-between align-items-center mt-3 p-3"
       >
@@ -179,15 +308,31 @@
           </button>
         </div>
       </div>
-      <div *ngIf="reports.length === 0" class="text-center text-muted py-5">No reports found</div>
+      <div *ngIf="filteredReports.length === 0" class="text-center text-muted py-5">
+        No reports found
+      </div>
     </section>
 
     <!-- Verification -->
     <section *ngIf="activeSection === 'verification' && !loading">
       <h3 class="mb-4">Identity Verification Requests</h3>
 
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name or email..."
+          [(ngModel)]="searchVerifications"
+          (ngModelChange)="onVerificationSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchVerifications = ''">
+          Clear
+        </button>
+      </div>
+
       <div class="row g-4">
-        <div *ngFor="let v of verifications" class="col-md-6 col-lg-4">
+        <div *ngFor="let v of filteredVerifications" class="col-md-6 col-lg-4">
           <div class="card shadow-sm border-0 h-100">
             <div class="card-body d-flex flex-column">
               <!-- User Info -->
@@ -209,12 +354,14 @@
                 <img
                   [src]="v.id_document_url"
                   class="img-fluid rounded mb-2 clickable-img"
+                  style="width: 500px; height: 250px"
                   alt="ID Document"
                   (click)="openFullscreen(v.id_document_url)"
                 />
                 <img
                   [src]="v.selfie_url"
                   class="img-fluid rounded mb-2 clickable-img"
+                  style="width: 500px; height: 250px"
                   alt="Selfie"
                   (click)="openFullscreen(v.selfie_url)"
                 />
@@ -247,17 +394,9 @@
           </div>
         </div>
       </div>
-      <div *ngIf="verifications.length === 0" class="text-center text-muted py-5">
+      <div *ngIf="filteredVerifications.length === 0" class="text-center text-muted py-5">
         No verification requests
       </div>
-      <!-- <ng-template #loadingTpl>
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-2">Loading verifications...</p>
-        </div>
-      </ng-template> -->
     </section>
 
     <!-- Fullscreen Modal -->
@@ -279,6 +418,19 @@
     <!-- Shipping -->
     <section *ngIf="activeSection === 'shipping' && !loading">
       <h3>Shipping System</h3>
+
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by Barter ID, type, or tracking..."
+          [(ngModel)]="searchShipments"
+          (ngModelChange)="onShipmentSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchShipments = ''">Clear</button>
+      </div>
+
       <table class="table table-striped mt-3 shadow-sm">
         <thead class="table-light">
           <tr>
@@ -290,7 +442,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let shipment of shipments">
+          <tr *ngFor="let shipment of filteredShipments">
             <td>#{{ shipment.barter_id }}</td>
             <td>{{ shipment.shipping_type }}</td>
             <td>
@@ -311,8 +463,8 @@
             <td>
               <select
                 class="form-select form-select-sm"
-                [value]="shipment.status"
-                (change)="updateShipmentStatus(shipment, $event)"
+                [(ngModel)]="shipment.status"
+                (ngModelChange)="updateShipmentStatus(shipment, $event)"
               >
                 <option value="pending">Pending</option>
                 <option value="picked_up">Picked Up</option>
@@ -322,12 +474,126 @@
               </select>
             </td>
           </tr>
-          <tr *ngIf="shipments.length === 0">
+          <tr *ngIf="filteredShipments.length === 0">
             <td colspan="5" class="text-center text-muted">No shipments found</td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <!-- Disputes -->
+    <section *ngIf="activeSection === 'disputes' && !loading">
+      <h3>Disputes Management</h3>
+
+      <!-- Search Filter -->
+      <div class="d-flex mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by ID, initiator, barter, or reason..."
+          [(ngModel)]="searchDisputes"
+          (ngModelChange)="onDisputeSearch($event)"
+        />
+        <button class="btn btn-outline-secondary ms-2" (click)="searchDisputes = ''">Clear</button>
+      </div>
+
+      <table class="table table-striped mt-3 shadow-sm">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Initiator</th>
+            <th>Barter</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dispute of filteredDisputes">
+            <td>#{{ dispute.id }}</td>
+            <td>{{ dispute.initiator?.username || 'N/A' }}</td>
+            <td>#{{ dispute.barter_id }}</td>
+            <td>{{ dispute.reason }}</td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-warning text-dark': dispute.status === 'open',
+                  'bg-success': dispute.status === 'resolved',
+                  'bg-danger': dispute.status === 'closed'
+                }"
+              >
+                {{ dispute.status }}
+              </span>
+            </td>
+            <td>{{ dispute.created_at | date : 'short' }}</td>
+            <td>
+              <button
+                *ngIf="dispute.status === 'open'"
+                class="btn btn-primary btn-sm"
+                (click)="openResolveDisputeModal(dispute)"
+              >
+                Resolve
+              </button>
+              <span *ngIf="dispute.status !== 'open'" class="text-muted">-</span>
+            </td>
+          </tr>
+          <tr *ngIf="filteredDisputes.length === 0">
+            <td colspan="7" class="text-center text-muted">No disputes found</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Resolve Dispute Modal -->
+    <div
+      class="modal fade"
+      id="resolveDisputeModal"
+      tabindex="-1"
+      aria-labelledby="resolveDisputeModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resolveDisputeModalLabel">
+              Resolve Dispute #{{ selectedDisputeForResolve?.id }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Reason:</strong> {{ selectedDisputeForResolve?.reason }}</p>
+            <p><strong>Description:</strong> {{ selectedDisputeForResolve?.description }}</p>
+            <p>
+              <strong>Initiated by:</strong> {{ selectedDisputeForResolve?.initiator?.username }}
+            </p>
+            <hr />
+            <label for="resolutionNotes" class="form-label"
+              ><strong>Resolution Notes:</strong></label
+            >
+            <textarea
+              id="resolutionNotes"
+              class="form-control"
+              rows="4"
+              [(ngModel)]="resolutionNotes"
+              placeholder="Enter resolution notes and action taken"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" (click)="confirmResolveDispute()">
+              Resolve Dispute
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Barter Statistics -->
     <section *ngIf="activeSection === 'barter-stats' && !loading">
@@ -352,11 +618,25 @@
         </div>
       </div>
 
-      <!-- Cancellation Reasons Table -->
       <!-- Cancelled Barters List -->
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-body">
           <h5 class="mb-3">Cancelled Barters</h5>
+
+          <!-- Search Filter -->
+          <div class="d-flex mb-3">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by Barter ID, user, or reason..."
+              [(ngModel)]="searchCancelledBarters"
+              (ngModelChange)="onCancelledSearch($event)"
+            />
+            <button class="btn btn-outline-secondary ms-2" (click)="searchCancelledBarters = ''">
+              Clear
+            </button>
+          </div>
+
           <table class="table table-bordered">
             <thead class="table-light">
               <tr>
@@ -367,13 +647,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let cb of cancelledBarters">
+              <tr *ngFor="let cb of filteredCancelledBarters">
                 <td>#{{ cb.id }}</td>
                 <td>{{ cb.cancelled_by_username || 'Unknown' }}</td>
                 <td>{{ cb.cancel_reason }}</td>
                 <td>{{ cb.cancelled_at | date : 'short' }}</td>
               </tr>
-              <tr *ngIf="cancelledBarters.length === 0">
+              <tr *ngIf="filteredCancelledBarters.length === 0">
                 <td colspan="4" class="text-center text-muted">No cancelled barters</td>
               </tr>
             </tbody>
@@ -385,13 +665,190 @@
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-body text-center">
           <h6 class="mb-3">Cancellation Reasons</h6>
-
-          <!-- Sized Container -->
           <div class="chart-container">
             <canvas id="reasonsChart"></canvas>
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Listings Approval Section -->
+    <section *ngIf="activeSection === 'listings-approval' && !loading">
+      <h3>Manage Listings</h3>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <i class="fa-solid fa-hourglass-end icon text-warning"></i>
+          <h5>Pending</h5>
+          <p>{{ getPendingListingsCount() }}</p>
+        </div>
+      </div>
+
+      <!-- Listings Table -->
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+          <h5 class="mb-3">Pending Listings</h5>
+
+          <!-- Search Filter -->
+          <div class="d-flex mb-3">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search by title, user, or category..."
+              [(ngModel)]="searchPendingListings"
+              (ngModelChange)="onPendingSearch($event)"
+            />
+            <button class="btn btn-outline-secondary ms-2" (click)="searchPendingListings = ''">
+              Clear
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let listing of filteredPendingListings">
+                  <td>
+                    <img
+                      *ngIf="listing.image_url"
+                      [src]="listing.image_url"
+                      alt="Listing"
+                      class="img-thumbnail"
+                      style="width: 50px; height: 50px; object-fit: cover"
+                    />
+                    <span *ngIf="!listing.image_url" class="text-muted">N/A</span>
+                  </td>
+                  <td>{{ listing.title }}</td>
+                  <td>{{ listing.user_name || 'Unknown' }}</td>
+                  <td>{{ listing.category || 'N/A' }}</td>
+                  <td>
+                    <span class="badge bg-warning">{{ listing.approval_status || 'Pending' }}</span>
+                  </td>
+                  <td>
+                    <button
+                      class="btn btn-sm btn-success me-2"
+                      (click)="approveListing(listing)"
+                      [disabled]="approvingIds.has(listing.id)"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      class="btn btn-sm btn-danger"
+                      (click)="openRejectModal(listing)"
+                      [disabled]="approvingIds.has(listing.id)"
+                    >
+                      Reject
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredPendingListings.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">
+                    No pending listings for approval
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <nav *ngIf="approvingListingsLastPage > 1" class="mt-3">
+            <ul class="pagination justify-content-center">
+              <li class="page-item" [class.disabled]="approvingListingsPage === 1">
+                <button
+                  class="page-link"
+                  (click)="prevApprovingListingsPage()"
+                  [disabled]="approvingListingsPage === 1"
+                >
+                  Previous
+                </button>
+              </li>
+              <li
+                *ngFor="let page of [].constructor(approvingListingsLastPage); let i = index"
+                class="page-item"
+                [class.active]="i + 1 === approvingListingsPage"
+              >
+                <button class="page-link" (click)="goToApprovingListingsPage(i + 1)">
+                  {{ i + 1 }}
+                </button>
+              </li>
+              <li
+                class="page-item"
+                [class.disabled]="approvingListingsPage === approvingListingsLastPage"
+              >
+                <button
+                  class="page-link"
+                  (click)="nextApprovingListingsPage()"
+                  [disabled]="approvingListingsPage === approvingListingsLastPage"
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center text-muted small mt-2" *ngIf="approvingListingsLastPage > 0">
+            Page {{ approvingListingsPage }} of {{ approvingListingsLastPage }} (Total:
+            {{ approvingListingsTotal }})
+          </div>
+        </div>
+      </div>
+
+      <!-- Rejection Modal -->
+      <div
+        class="modal fade"
+        id="rejectModal"
+        [class.show]="showRejectModal"
+        [style.display]="showRejectModal ? 'block' : 'none'"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Reject Listing</h5>
+              <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Provide a reason for rejecting this listing:</p>
+              <textarea
+                class="form-control"
+                rows="4"
+                [(ngModel)]="rejectionReason"
+                placeholder="Enter rejection reason"
+              ></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeRejectModal()">
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="submitReject()"
+                [disabled]="isSubmittingReject || !rejectionReason.trim()"
+              >
+                <span *ngIf="!isSubmittingReject">Reject</span>
+                <span *ngIf="isSubmittingReject"> Submitting... </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Backdrop -->
+      <div
+        class="modal-backdrop fade"
+        [class.show]="showRejectModal"
+        [style.display]="showRejectModal ? 'block' : 'none'"
+      ></div>
     </section>
   </main>
 </div>

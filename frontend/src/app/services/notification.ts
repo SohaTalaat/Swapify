@@ -12,6 +12,8 @@ export class NotificationService {
 
   notifications = new BehaviorSubject<any[]>([]);
   unreadCount = new BehaviorSubject<number>(0);
+  // Pagination state
+  pagination = new BehaviorSubject<any>({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
 
   // Notification settings
   private settings = {
@@ -42,43 +44,57 @@ export class NotificationService {
         Authorization: `Bearer ${token}`,
       };
     }
-    // Listen for real-time notifications
-    window.Echo.private(`user.${userId}`)
-      .listen('.notification.created', (data: any) => {
-        console.log('📩 New notification (Pusher):', data);
+    // Preferred: use Echo.notification to receive Laravel notification broadcasts
+    const channel = window.Echo.private(`user.${userId}`);
 
-        this.zone.run(() => {
-          // Prevent duplicates
-          const current = this.notifications.value;
-          const isDuplicate = current.some(n =>
-            n.id === data.id ||
-            (n.message === data.message &&
-              n.type === data.type &&
-              n.related_barter_id === data.related_barter_id)
-          );
-
-          if (!isDuplicate) {
-            this.notifications.next([data, ...current]);
-            this.unreadCount.next(this.unreadCount.value + 1);
-
-            //  Play sound
-            this.playSound();
-
-            // ✅ Show desktop notification
-            this.showDesktopNotification(data);
-          } else {
-            console.log('⚠️ Duplicate notification prevented:', data);
-          }
-        });
+    if (channel && typeof channel.notification === 'function') {
+      channel.notification((data: any) => {
+        console.log('📩 New notification (Pusher) via .notification():', data);
+        this.handleIncomingNotification(data);
       });
+    }
+
+    // Fallback: some setups broadcast a custom event name
+    channel.listen('.notification.created', (data: any) => {
+      console.log('📩 New notification (Pusher) via .listen fallback:', data);
+      this.handleIncomingNotification(data);
+    });
 
     console.log(' Notifications initialized for user:', userId);
     this.loadNotifications(token);
   }
 
-  loadNotifications(token: string) {
+  private handleIncomingNotification(data: any) {
+    this.zone.run(() => {
+      const current = this.notifications.value;
+      const isDuplicate = current.some(n =>
+        n.id === data.id ||
+        (n.message === data.message && n.type === data.type && n.related_barter_id === data.related_barter_id)
+      );
+
+      if (!isDuplicate) {
+        this.notifications.next([data, ...current]);
+        this.unreadCount.next(this.unreadCount.value + 1);
+        // update pagination total
+        const p = this.pagination.value || { current_page: 1, last_page: 1, per_page: 10, total: 0 };
+        this.pagination.next({ ...p, total: (p.total || 0) + 1 });
+
+        // Play sound
+        this.playSound();
+
+        // Show desktop notification
+        this.showDesktopNotification(data);
+      } else {
+        console.log('⚠️ Duplicate notification prevented:', data);
+      }
+    });
+  }
+
+  loadNotifications(token: string, page: number = 1, perPage: number = 10) {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.http.get(`${this.apiUrl}/notifications`, { headers }).subscribe((res: any) => {
+    const params: any = { page: page.toString(), per_page: perPage.toString() };
+
+    this.http.get(`${this.apiUrl}/notifications`, { headers, params }).subscribe((res: any) => {
       this.zone.run(() => {
         // Remove duplicates by ID
         const unique = [
@@ -86,6 +102,12 @@ export class NotificationService {
         ];
         this.notifications.next(unique);
         this.unreadCount.next(res.count_unread);
+        this.pagination.next({
+          current_page: res.current_page || page,
+          last_page: res.last_page || 1,
+          per_page: res.per_page || perPage,
+          total: res.total || unique.length,
+        });
       });
     });
   }
