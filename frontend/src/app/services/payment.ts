@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class PaymentService {
-  private apiUrl = 'https://initial-preparation-recorded-binding.trycloudflare.com/api';
+  private apiUrl = 'https://edmonton-safari-foo-hopes.trycloudflare.com/api';
 
   constructor(private http: HttpClient) { }
 

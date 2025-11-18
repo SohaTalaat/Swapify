@@ -108,6 +108,79 @@
           </div>
         </div>
       </div>
+      <div class="col-12 mt-5">
+        <div class="revenue-card position-relative overflow-hidden rounded-4 shadow-xl border-0">
+          <!-- Premium gradient background -->
+          <div class="revenue-gradient"></div>
+
+          <!-- Content -->
+          <div class="position-relative p-5">
+            <div class="row align-items-center">
+              <!-- Left side: icon + texts -->
+              <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="icon-circle me-4">
+                    <i class="fa-solid fa-sack-dollar fa-2x"></i>
+                  </div>
+                  <div>
+                    <h5 class="text-white opacity-90 mb-1 fw-normal">
+                      Total Revenue from Subscriptions
+                    </h5>
+                    <p class="text-white opacity-75 mb-0 small">
+                      Up to now · Based on active subscribers
+                    </p>
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <h2 class="display-5 fw-bold text-white mb-1">
+                    {{ totalRevenue | number : '1.0-0' : 'en' }}
+                    <small class="fs-3 opacity-90">{{
+                      revenueCurrency === 'EGP' ? '$' : 'EGP'
+                    }}</small>
+                  </h2>
+                  <p class="text-white opacity-70 mb-0">
+                    <i class="fa-solid fa-arrow-trend-up text-success me-1"></i>
+                    +{{
+                      ((subscriptionStats.basic * 10 + subscriptionStats.pro * 20) /
+                        (subscriptionStats.basic * 10 + subscriptionStats.pro * 20 || 1)) *
+                        100 | number : '1.0-1'
+                    }}% from last month
+                  </p>
+                </div>
+              </div>
+
+              <!-- Right side: floating decorative orb -->
+              <div class="col-md-4 text-end">
+                <div class="floating-orb">
+                  <div class="orb-inner">
+                    <i class="fa-solid fa-coins fa-3x text-warning"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Animated shine effect -->
+          <div class="shine-effect"></div>
+        </div>
+      </div>
+      <!-- After the main revenue card -->
+      <div class="col-12 mt-5">
+        <div class="card bg-dark text-white border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="card-header bg-gradient-primary border-0 py-4">
+            <h4 class="mb-0 text-center">
+              <i class="fa-solid fa-chart-line me-2"></i>
+              Revenue Over the Months (Last 12 Months)
+            </h4>
+          </div>
+          <div class="card-body p-4">
+            <div class="chart-container" style="position: relative; height: 380px">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Admin Ban Modal -->
@@ -158,7 +231,7 @@
         <input
           type="text"
           class="form-control"
-          placeholder="Search by name or email..."
+          placeholder="Search by name , status or email..."
           [(ngModel)]="searchUsers"
           (ngModelChange)="onUserSearch($event)"
         />
