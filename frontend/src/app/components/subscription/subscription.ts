@@ -45,7 +45,7 @@ export class Subscription {
   loading = false;
   walletNumber = '';
   private pollInterval: any;
-  apiUrl = 'https://continues-answers-mumbai-signatures.trycloudflare.com/api';
+  apiUrl = 'https://initial-preparation-recorded-binding.trycloudflare.com/api';
 
   constructor(private http: HttpClient, private paymentService: PaymentService) { }
 
