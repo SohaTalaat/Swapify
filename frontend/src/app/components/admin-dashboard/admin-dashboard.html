@@ -497,7 +497,7 @@
         <input
           type="text"
           class="form-control"
-          placeholder="Search by Barter ID, type, or tracking..."
+          placeholder="Search by Barter ID, participants, or tracking..."
           [(ngModel)]="searchShipments"
           (ngModelChange)="onShipmentSearch($event)"
         />
@@ -508,16 +508,19 @@
         <thead class="table-light">
           <tr>
             <th>Barter ID</th>
-            <th>Type</th>
+            <th>Participants</th>
             <th>Status</th>
             <th>Tracking</th>
+            <th>Created</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let shipment of filteredShipments">
-            <td>#{{ shipment.barter_id }}</td>
-            <td>{{ shipment.shipping_type }}</td>
+            <td>
+              <strong>#{{ shipment.barter_id }}</strong>
+            </td>
+            <td>{{ shipment.participants || 'Loading...' }}</td>
             <td>
               <span
                 class="badge"
@@ -529,10 +532,17 @@
                   'bg-danger': shipment.status === 'failed'
                 }"
               >
-                {{ shipment.status }}
+                {{ shipment.status | uppercase }}
               </span>
             </td>
-            <td>{{ shipment.tracking_number || 'N/A' }}</td>
+            <td>
+              <small>{{ shipment.tracking_number || 'N/A' }}</small>
+            </td>
+            <td>
+              <small>{{
+                shipment.created_at ? (shipment.created_at | date : 'short') : 'N/A'
+              }}</small>
+            </td>
             <td>
               <select
                 class="form-select form-select-sm"
@@ -548,7 +558,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredShipments.length === 0">
-            <td colspan="5" class="text-center text-muted">No shipments found</td>
+            <td colspan="6" class="text-center text-muted">No shipments found</td>
           </tr>
         </tbody>
       </table>

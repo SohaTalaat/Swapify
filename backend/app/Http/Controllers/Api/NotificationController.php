@@ -51,7 +51,7 @@ class NotificationController extends Controller
 
     public function test()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user) {
             return response()->json(['error' => 'Not authenticated'], 401);

@@ -18,9 +18,9 @@ class UpdateUserRequest extends FormRequest
             'phone' => 'nullable|string|max:20',
             'location' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:1000',
-            
+
             // ✅ تعديل هنا لقبول صور مرفوعة
-            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
             // ✅ لو عندك إعدادات تواصل
             'communication_preferences' => 'nullable|array',

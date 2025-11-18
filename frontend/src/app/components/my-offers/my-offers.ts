@@ -13,7 +13,7 @@ export class MyOffers {
   offers: any[] = [];
   loading = true;
 
-  constructor(private router: Router, private offerService: Offer) {}
+  constructor(private router: Router, private offerService: Offer) { }
 
   ngOnInit() {
     this.loadMyOffers();
@@ -28,7 +28,7 @@ export class MyOffers {
           id: o.id,
           title: o.title,
           type: o.type === 'product' ? 'Product' : 'Service',
-          status: o.status || 'Active',
+          status: o.approval_status || 'pending',
           image: o.images?.[0]?.image_url || 'assets/no-image.png',
         }));
         this.loading = false;
