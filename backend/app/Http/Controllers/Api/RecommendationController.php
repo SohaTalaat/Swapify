@@ -17,6 +17,7 @@ class RecommendationController extends Controller
         // Cache key per user
         $cacheKey = "recommendations:{$user->id}";
 
+        // Return cached recommendations if available
         if (Cache::has($cacheKey)) {
             return response()->json([
                 'message' => 'Personalized recommendations (cached).',
@@ -24,87 +25,83 @@ class RecommendationController extends Controller
             ]);
         }
 
-        // User AI vector from embeddings
         $userVector = $this->getUserProfileVector($user);
 
-        // If user has no barters → fallback to latest listings
+        // If the user has no barters yet, show latest listings
         if (! $userVector) {
             $fallbackListings = Listing::with(['category', 'images'])
                 ->where('user_id', '!=', $user->id)
                 ->where('is_active', true)
-                ->where('approval_status', 'approved')
+                ->where('approval_status', 'approved') // Only approved listings
                 ->latest()
                 ->take(10)
                 ->get();
 
             return response()->json([
-                'message' => 'Not enough data → showing latest listings.',
-                'recommendations' => $fallbackListings,
+                'message' => 'Not enough data to generate personalized recommendations. Showing latest listings instead.',
+                'recommendations' => $fallbackListings->map(function ($listing) {
+                    return [
+                        'listing' => [
+                            'id' => $listing->id,
+                            'title' => $listing->title,
+                            'description' => $listing->description,
+                            'type' => $listing->type,
+                            'condition' => $listing->condition,
+                            'category' => $listing->category,
+                            'images' => $listing->images->map(fn($img) => ['url' => $img->image_url])->toArray(),
+                        ],
+                        'similarity' => 0,
+                    ];
+                }),
             ]);
         }
-
-        // ================================
-        // NEW: price preference detection
-        // ================================
-        $priceRange = $this->getUserPreferredPriceRange($user);
-        $minPrice   = $priceRange['min'];
-        $maxPrice   = $priceRange['max'];
-
-        // Category preference
+        //  Determine user’s preferred category (for boosting)
         $userPreferredCategoryId = $this->getUserPreferredCategoryId($user);
 
-        // Fetch listings with embeddings
+        // Load all embeddings with listings
         $listings = ListingEmbedding::with(['listing.category', 'listing.images'])
-            ->whereHas('listing', function ($q) use ($user, $minPrice, $maxPrice) {
+            ->whereHas('listing', function ($q) use ($user) {
                 $q->where('user_id', '!=', $user->id)
                     ->where('is_active', true)
-                    ->where('approval_status', 'approved')
-                    ->whereBetween('price', [$minPrice, $maxPrice]);
+                    ->where('approval_status', 'approved');
             })
             ->get();
-
-        // Ranking logic
-        $results = $listings->map(function ($item) use ($userVector, $userPreferredCategoryId, $minPrice, $maxPrice) {
-
-            $listing = $item->listing;
-
-            // Base cosine similarity
+        // Calculate similarities, apply category boost, and filter
+        $results = $listings->map(function ($item) use ($userVector, $user, $userPreferredCategoryId) {
             $similarity = $this->cosineSimilarity($userVector, $item->embedding);
 
-            // Category boost
-            if ($userPreferredCategoryId && $listing->category_id === $userPreferredCategoryId) {
-                $similarity *= 1.1; // extra 10%
-            }
-
-            // Price boost
-            $targetPrice    = ($minPrice + $maxPrice) / 2;
-            $priceDistance  = abs($listing->price - $targetPrice);
-
-            if ($priceDistance < ($targetPrice * 0.2)) { // within ±20%
-                $similarity *= 1.15; // extra 15%
+            // Boost listings from the same preferred category
+            if ($userPreferredCategoryId && $item->listing->category_id === $userPreferredCategoryId) {
+                $similarity *= 1.1; // small boost
             }
 
             return [
-                'listing'     => $listing,
-                'similarity'  => $similarity,
+                'listing' => [
+                    'id' => $item->listing->id,
+                    'title' => $item->listing->title,
+                    'description' => $item->listing->description,
+                    'type' => $item->listing->type,
+                    'condition' => $item->listing->condition,
+                    'category' => $item->listing->category,
+                    'images' => $item->listing->images->map(fn($img) => ['url' => $img->image_url])->toArray(),
+                ],
+                'similarity' => $similarity,
             ];
         })
             ->sortByDesc('similarity')
             ->take(10)
             ->values();
 
-        // Cache for 30 mins
+        //  Cache the results for 30 minutes
         Cache::put($cacheKey, $results, 1800);
 
         return response()->json([
-            'message' => 'Personalized hybrid AI recommendations.',
+            'message' => 'Personalized recommendations based on your activity.',
             'recommendations' => $results,
         ]);
     }
 
-    // ======================================================
-    // AI SIMILARITY + USER VECTOR HELPERS
-    // ======================================================
+    // ------------------------- HELPER FUNCTIONS -------------------------
 
     protected function cosineSimilarity(array $a, array $b): float
     {
@@ -112,9 +109,9 @@ class RecommendationController extends Controller
         $count = min(count($a), count($b));
 
         for ($i = 0; $i < $count; $i++) {
-            $dot   += $a[$i] * $b[$i];
-            $sumA  += $a[$i] ** 2;
-            $sumB  += $b[$i] ** 2;
+            $dot += $a[$i] * $b[$i];
+            $sumA += $a[$i] ** 2;
+            $sumB += $b[$i] ** 2;
         }
 
         return $sumA && $sumB ? $dot / (sqrt($sumA) * sqrt($sumB)) : 0;
@@ -122,7 +119,8 @@ class RecommendationController extends Controller
 
     protected function getUserProfileVector($user): ?array
     {
-        $embeddings = $user->barters()
+        // Get all embeddings from listings user has bartered with
+        $listings = $user->barters()
             ->with('listings.listingEmbedding')
             ->get()
             ->pluck('listings')
@@ -130,15 +128,15 @@ class RecommendationController extends Controller
             ->pluck('listingEmbedding.embedding')
             ->filter();
 
-        if ($embeddings->isEmpty()) {
+        if ($listings->isEmpty()) {
             return null;
         }
 
-        $count = $embeddings->count();
-        $dim   = count($embeddings->first());
-        $sum   = array_fill(0, $dim, 0.0);
+        $count = count($listings);
+        $dim = count($listings->first());
+        $sum = array_fill(0, $dim, 0.0);
 
-        foreach ($embeddings as $vec) {
+        foreach ($listings as $vec) {
             foreach ($vec as $i => $v) {
                 $sum[$i] += $v;
             }
@@ -149,6 +147,7 @@ class RecommendationController extends Controller
 
     protected function getUserPreferredCategoryId($user): ?int
     {
+        // Find the most frequent category from user’s previous listings
         $categoryCounts = $user->barters()
             ->with('listings')
             ->get()
@@ -163,30 +162,5 @@ class RecommendationController extends Controller
         }
 
         return (int) $categoryCounts->sortDesc()->keys()->first();
-    }
-
-    protected function getUserPreferredPriceRange($user): array
-    {
-        $prices = $user->barters()
-            ->with('listings')
-            ->get()
-            ->pluck('listings')
-            ->flatten()
-            ->pluck('price')
-            ->filter();
-
-        if ($prices->isEmpty()) {
-            return [
-                'min' => 0,
-                'max' => 999999,
-            ];
-        }
-
-        $avg = $prices->avg();
-
-        return [
-            'min' => max(0, $avg * 0.6),  // -40%
-            'max' => $avg * 1.4,         // +40%
-        ];
     }
 }

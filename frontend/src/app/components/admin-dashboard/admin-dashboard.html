@@ -10,9 +10,9 @@
       <li [class.active]="activeSection === 'users'" (click)="setSection('users')">
         <i class="fa-solid fa-users me-2"></i> Manage Users
       </li>
-      <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
+      <!-- <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
         <i class="fa-solid fa-tags me-2"></i> Offers
-      </li>
+      </li> -->
       <li
         [class.active]="activeSection === 'listings-approval'"
         (click)="setSection('listings-approval')"
@@ -283,11 +283,11 @@
     </section>
 
     <!-- Offers -->
-    <section *ngIf="activeSection === 'offers' && !loading">
-      <h3>Monitor Offers</h3>
+    <!-- <section *ngIf="activeSection === 'offers' && !loading">
+      <h3>Monitor Offers</h3> -->
 
-      <!-- Search Filter -->
-      <div class="d-flex mb-3">
+    <!-- Search Filter -->
+    <!-- <div class="d-flex mb-3">
         <input
           type="text"
           class="form-control"
@@ -335,7 +335,7 @@
           </tr>
         </tbody>
       </table>
-    </section>
+    </section> -->
 
     <!-- Content Reports -->
     <section *ngIf="activeSection === 'content' && !loading">
