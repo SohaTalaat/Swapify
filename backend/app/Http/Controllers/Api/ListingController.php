@@ -16,6 +16,10 @@ class ListingController extends Controller
         return Listing::with(['category', 'images', 'user:id,username,profile_picture_url'])
             ->where('is_active', true)
             ->where('approval_status', 'approved')
+            ->whereDoesntHave('barters', function ($q) {
+                // Exclude listings that are part of an accepted or completed barter
+                $q->whereIn('status', ['accepted', 'completed']);
+            })
             ->latest()
             ->get();
     }
@@ -58,7 +62,7 @@ class ListingController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|string',
             'category_id' => 'required|exists:categories,id',
-            'images.*' => 'image|mimes:jpg,jpeg,png|max:4096',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $listing = Listing::create([
@@ -132,6 +136,7 @@ class ListingController extends Controller
         $user = $request->user();
 
         $offers = $user->listings()
+            ->select(['id', 'title', 'type', 'user_id', 'category_id', 'is_active', 'approval_status', 'created_at', 'updated_at'])
             ->with(['category', 'images'])
             ->get();
 

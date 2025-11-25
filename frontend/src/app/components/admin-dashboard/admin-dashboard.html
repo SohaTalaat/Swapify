@@ -10,9 +10,9 @@
       <li [class.active]="activeSection === 'users'" (click)="setSection('users')">
         <i class="fa-solid fa-users me-2"></i> Manage Users
       </li>
-      <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
+      <!-- <li [class.active]="activeSection === 'offers'" (click)="setSection('offers')">
         <i class="fa-solid fa-tags me-2"></i> Offers
-      </li>
+      </li> -->
       <li
         [class.active]="activeSection === 'listings-approval'"
         (click)="setSection('listings-approval')"
@@ -283,11 +283,11 @@
     </section>
 
     <!-- Offers -->
-    <section *ngIf="activeSection === 'offers' && !loading">
-      <h3>Monitor Offers</h3>
+    <!-- <section *ngIf="activeSection === 'offers' && !loading">
+      <h3>Monitor Offers</h3> -->
 
-      <!-- Search Filter -->
-      <div class="d-flex mb-3">
+    <!-- Search Filter -->
+    <!-- <div class="d-flex mb-3">
         <input
           type="text"
           class="form-control"
@@ -335,7 +335,7 @@
           </tr>
         </tbody>
       </table>
-    </section>
+    </section> -->
 
     <!-- Content Reports -->
     <section *ngIf="activeSection === 'content' && !loading">
@@ -377,7 +377,7 @@
             class="btn btn-secondary btn-sm"
             (click)="dismissReport(r)"
           >
-            Dismiss
+            Ignore
           </button>
         </div>
       </div>
@@ -497,7 +497,7 @@
         <input
           type="text"
           class="form-control"
-          placeholder="Search by Barter ID, type, or tracking..."
+          placeholder="Search by Barter ID, participants, or tracking..."
           [(ngModel)]="searchShipments"
           (ngModelChange)="onShipmentSearch($event)"
         />
@@ -508,16 +508,19 @@
         <thead class="table-light">
           <tr>
             <th>Barter ID</th>
-            <th>Type</th>
+            <th>Participants</th>
             <th>Status</th>
             <th>Tracking</th>
+            <th>Created</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let shipment of filteredShipments">
-            <td>#{{ shipment.barter_id }}</td>
-            <td>{{ shipment.shipping_type }}</td>
+            <td>
+              <strong>#{{ shipment.barter_id }}</strong>
+            </td>
+            <td>{{ shipment.participants || 'Loading...' }}</td>
             <td>
               <span
                 class="badge"
@@ -529,10 +532,17 @@
                   'bg-danger': shipment.status === 'failed'
                 }"
               >
-                {{ shipment.status }}
+                {{ shipment.status | uppercase }}
               </span>
             </td>
-            <td>{{ shipment.tracking_number || 'N/A' }}</td>
+            <td>
+              <small>{{ shipment.tracking_number || 'N/A' }}</small>
+            </td>
+            <td>
+              <small>{{
+                shipment.created_at ? (shipment.created_at | date : 'short') : 'N/A'
+              }}</small>
+            </td>
             <td>
               <select
                 class="form-select form-select-sm"
@@ -548,7 +558,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredShipments.length === 0">
-            <td colspan="5" class="text-center text-muted">No shipments found</td>
+            <td colspan="6" class="text-center text-muted">No shipments found</td>
           </tr>
         </tbody>
       </table>

@@ -313,13 +313,12 @@ class PaymobController extends Controller
     private function determineTierFromAmount($amount)
     {
         return match (true) {
-            $amount >= 20 => 'pro',
-            $amount >= 10 => 'basic',
+            $amount >= 5000 => 'pro',
+            $amount >= 2500 => 'basic',
             default => 'free'
         };
     }
 
-    // تفعيل/تحديث الاشتراك
     private function updateOrCreateSubscription($user, $tier)
     {
         $limits = ['free' => 2, 'basic' => 5, 'pro' => 10];

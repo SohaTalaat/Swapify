@@ -62,9 +62,9 @@ class BarterController extends Controller
                 'current_limit' => $barterLimit,
                 'barters_used' => $activeBarterCount,
                 'plans' => [
-                    ['tier' => 'free', 'limit' => 2, 'price' => 0],
-                    ['tier' => 'pro', 'limit' => 5, 'price' => 'TBD'],
-                    ['tier' => 'premium', 'limit' => 20, 'price' => 'TBD'],
+                    ['tier' => 'free', 'limit' => 2, 'price' => 0, 'duration' => 'lifetime'],
+                    ['tier' => 'basic', 'limit' => 5, 'price' => 2500],
+                    ['tier' => 'pro', 'limit' => 10, 'price' => 5000],
                 ],
                 'message' => 'Upgrade your subscription to create more barters'
             ], 402);
@@ -94,6 +94,10 @@ class BarterController extends Controller
             'owner_user_id' => $data['receiver_id'],
         ]);
 
+        // Increment barters_used in subscription
+        if ($subscription) {
+            $subscription->increment('barters_used');
+        }
         event(new BarterCreated($barter));
 
         return $barter->load([
@@ -115,7 +119,7 @@ class BarterController extends Controller
             return 2; // Free plan default
         }
 
-        $tierLimits = ['free' => 2, 'pro' => 5, 'premium' => 20];
+        $tierLimits = ['free' => 2, 'basic' => 5, 'pro' => 10];
         return $tierLimits[$subscription->tier] ?? 2;
     }
 

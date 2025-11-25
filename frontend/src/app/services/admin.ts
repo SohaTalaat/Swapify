@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class AdminService {
   private apiUrl = 'http://127.0.0.1:8000/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('swapify_token');
@@ -130,6 +130,12 @@ export class AdminService {
 
   getCancelledBarters(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/admin/barters/cancelled`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  getBarter(barterId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/barters/${barterId}`, {
       headers: this.getHeaders(),
     });
   }

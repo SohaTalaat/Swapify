@@ -105,7 +105,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     private adminService: AdminService,
     private echoService: EchoService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadOverview();
@@ -177,13 +177,13 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   private applyUserFilter() {
     // no extra work – filteredUsers getter does the job
   }
-  private applyListingFilter() {}
-  private applyReportFilter() {}
-  private applyVerificationFilter() {}
-  private applyShipmentFilter() {}
-  private applyDisputeFilter() {}
-  private applyCancelledFilter() {}
-  private applyPendingFilter() {}
+  private applyListingFilter() { }
+  private applyReportFilter() { }
+  private applyVerificationFilter() { }
+  private applyShipmentFilter() { }
+  private applyDisputeFilter() { }
+  private applyCancelledFilter() { }
+  private applyPendingFilter() { }
 
   /*** ────── COMPUTED FILTERED ARRAYS ────── ***/
   get filteredUsers() {
@@ -235,7 +235,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     return this.shipments.filter(
       (s) =>
         s.barter_id?.toString().includes(term) ||
-        s.shipping_type?.toLowerCase().includes(term) ||
+        s.participants?.toLowerCase().includes(term) ||
         s.tracking_number?.toLowerCase().includes(term)
     );
   }
@@ -318,7 +318,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
       this.searchDisputes =
       this.searchCancelledBarters =
       this.searchPendingListings =
-        '';
+      '';
   }
 
   // ────── ECHO LISTENERS ──────
@@ -557,7 +557,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     if (!confirm(`Sure to ${action} this listing?`)) return;
     this.adminService.toggleListingStatus(listing.id).subscribe({
       next: (res: any) => (listing.is_active = res.is_active),
-      error: () => {},
+      error: () => { },
     });
   }
 
@@ -566,7 +566,19 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     this.loading = true;
     this.adminService.getShipments().subscribe({
       next: (res: any) => {
-        this.shipments = res;
+        // Fetch barter details for each shipment to get participant info
+        this.shipments = res.map((shipment: any) => {
+          this.adminService.getBarter(shipment.barter_id).subscribe({
+            next: (barter: any) => {
+              shipment.barter = barter;
+              shipment.participants = barter.participants?.map((p: any) => p.username).join(', ') || 'N/A';
+            },
+            error: () => {
+              shipment.participants = 'N/A';
+            },
+          });
+          return shipment;
+        });
         this.loading = false;
       },
       error: () => (this.loading = false),
@@ -693,7 +705,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   loadCancelledBarters() {
     this.adminService.getCancelledBarters().subscribe({
       next: (data: any[]) => (this.cancelledBarters = data),
-      error: () => {},
+      error: () => { },
     });
   }
 

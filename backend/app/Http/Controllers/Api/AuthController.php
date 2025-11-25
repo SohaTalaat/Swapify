@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -37,6 +38,18 @@ class AuthController extends Controller
             'verification_token' => $verification_token,
             'verification_expires_at' => now()->addHours(24)
 
+        ]);
+
+        // Create free subscription plan for new user
+        Subscription::create([
+            'user_id' => $user->id,
+            'tier' => 'free',
+            'start_date' => now(),
+            'end_date' => now()->addYear(), // Free plan doesn't expire
+            'payment_method' => 'manual',
+            'is_active' => true,
+            'barter_limit' => 2,
+            'barters_used' => 0,
         ]);
 
         // Send verification email

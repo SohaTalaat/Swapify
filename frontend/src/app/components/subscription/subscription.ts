@@ -20,23 +20,26 @@ export class Subscription {
       tier: 'free',
       icon: 'fa-solid fa-gift',
       description: 'Perfect for beginners.',
+      duration: 'Lifetime',
     },
     {
       name: 'Basic',
-      price: 10,
+      price: 2500,
       barters: 5,
       tier: 'basic',
       icon: 'fa-solid fa-star',
       description: 'Unlock more barters.',
       popular: true,
+      duration: '1 Month',
     },
     {
       name: 'Pro',
-      price: 20,
+      price: 5000,
       barters: 10,
       tier: 'pro',
       icon: 'fa-solid fa-gem',
-      description: 'Unlimited exposure.',
+      description: 'Maximum exposure.',
+      duration: '1 Month',
     },
   ];
 
@@ -45,9 +48,9 @@ export class Subscription {
   loading = false;
   walletNumber = '';
   private pollInterval: any;
-  apiUrl = 'https://edmonton-safari-foo-hopes.trycloudflare.com/api';
+  apiUrl = 'https://proof-donna-haven-occupations.trycloudflare.com/api';
 
-  constructor(private http: HttpClient, private paymentService: PaymentService) {}
+  constructor(private http: HttpClient, private paymentService: PaymentService) { }
 
   ngOnInit() {
     this.loadCurrentSubscription();

@@ -17,7 +17,7 @@ class FileUploadController extends Controller
     public function uploadProfilePicture(Request $request)
     {
         $request->validate([
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $user = $request->user();
@@ -57,7 +57,7 @@ class FileUploadController extends Controller
     public function uploadListingImage(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
             'listing_id' => 'required|exists:listings,id',
         ]);
 
@@ -100,7 +100,7 @@ class FileUploadController extends Controller
     {
         $request->validate([
             'id_document' => 'required|file|mimes:jpeg,png,pdf|max:10240',
-            'selfie' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'selfie' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         try {

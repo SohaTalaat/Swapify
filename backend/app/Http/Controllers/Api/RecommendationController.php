@@ -55,7 +55,10 @@ class RecommendationController extends Controller
                 }),
             ]);
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 686b7212ad8a209a6692079dedb260f5f0352461
         //  Determine user’s preferred category (for boosting)
         $userPreferredCategoryId = $this->getUserPreferredCategoryId($user);
 
@@ -67,7 +70,10 @@ class RecommendationController extends Controller
                     ->where('approval_status', 'approved');
             })
             ->get();
+<<<<<<< HEAD
 
+=======
+>>>>>>> 686b7212ad8a209a6692079dedb260f5f0352461
         // Calculate similarities, apply category boost, and filter
         $results = $listings->map(function ($item) use ($userVector, $user, $userPreferredCategoryId) {
             $similarity = $this->cosineSimilarity($userVector, $item->embedding);

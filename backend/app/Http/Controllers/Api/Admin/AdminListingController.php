@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Listing;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -61,9 +62,18 @@ class AdminListingController extends Controller
             'is_active' => true, // Auto-activate on approval
         ]);
 
-        // Notify user
+        // Notify user via Laravel Notification (mail + database) and create a custom Notification record
         try {
             $listing->user->notify(new \App\Notifications\ListingApproved($listing));
+
+            // Also create an app Notification model entry so NotificationCreated event dispatches
+            Notification::create([
+                'user_id' => $listing->user_id,
+                'type' => 'listing_approved',
+                'message' => 'Your listing "' . $listing->title . '" has been approved.',
+                'related_barter_id' => null,
+                'related_user_id' => Auth::id(),
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to notify user about listing approval: ' . $e->getMessage());
         }
@@ -90,9 +100,17 @@ class AdminListingController extends Controller
             'is_active' => false,
         ]);
 
-        // Notify user
+        // Notify user via Laravel Notification (mail + database) and create a custom Notification record
         try {
             $listing->user->notify(new \App\Notifications\ListingRejected($listing, $request->rejection_reason));
+
+            Notification::create([
+                'user_id' => $listing->user_id,
+                'type' => 'listing_rejected',
+                'message' => 'Your listing "' . $listing->title . '" was rejected. Reason: ' . $request->rejection_reason,
+                'related_barter_id' => null,
+                'related_user_id' => Auth::id(),
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to notify user about listing rejection: ' . $e->getMessage());
         }
